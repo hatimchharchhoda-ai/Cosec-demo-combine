@@ -1,21 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
-using MatGenServer.Models;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using Microsoft.EntityFrameworkCore;
 
-namespace MatGenServer.Data
-{
-    public class AppDbContext : DbContext
+namespace MatGenServer.Data { }
+
+public class AppDbContext : DbContext { 
+    private readonly string _connectionString;
+
+    public AppDbContext(IConfiguration configuration)
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
-       
-        public DbSet<Mat_DeviceMst> Devices { get; set; }
-        public DbSet<Mat_CommTrn> CommTrns { get; set; }
-        public DbSet<Mat_UserMst> MatUserMsts { get; set; }
-
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            
-        }
+        _connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     }
 
+    public IDbConnection CreateConnection() => new SqlConnection(_connectionString);
 }

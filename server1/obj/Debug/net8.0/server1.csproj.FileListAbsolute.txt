@@ -149,3 +149,4 @@ D:\Cosec-demo-combine\server1\obj\Debug\net8.0\refint\server1.dll
 D:\Cosec-demo-combine\server1\obj\Debug\net8.0\server1.pdb
 D:\Cosec-demo-combine\server1\obj\Debug\net8.0\server1.genruntimeconfig.cache
 D:\Cosec-demo-combine\server1\obj\Debug\net8.0\ref\server1.dll
+D:\Cosec-demo-combine\server1\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
