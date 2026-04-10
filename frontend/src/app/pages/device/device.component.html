@@ -1,0 +1,59 @@
+<div class="device-page">
+
+  <!-- SCROLLABLE DEVICE LIST AREA -->
+  <div class="device-list">
+
+    <div
+      class="device-card mb-3"
+      *ngFor="let d of devices"
+      (click)="openDevice(d)"
+    >
+      <div class="row align-items-center">
+
+        <!-- Device Info -->
+        <div class="col-md-9">
+          <div class="row">
+            <div class="col-md-3"><b>{{ d.deviceName }}</b></div>
+            <div class="col-md-3">{{ d.macAddr }}</div>
+            <div class="col-md-3">{{ d.ipAddr }}</div>
+            <div class="col-md-3">Type: {{ d.deviceType }}</div>
+          </div>
+        </div>
+
+        <!-- Operations Box (per device) -->
+        <div class="col-md-3 text-end">
+          <div class="device-ops">
+            Future Operations
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FIXED PAGINATION -->
+  <div class="pagination-bar">
+    <ul class="pagination justify-content-center mb-0">
+
+      <li class="page-item" (click)="prev()">
+        <a class="page-link">&lt;</a>
+      </li>
+
+      <li
+        class="page-item"
+        *ngFor="let p of pages"
+        [class.active]="p === currentPage"
+        (click)="setPage(p)"
+      >
+        <a class="page-link">{{ p }}</a>
+      </li>
+
+      <li class="page-item" (click)="next()">
+        <a class="page-link">&gt;</a>
+      </li>
+
+    </ul>
+  </div>
+
+</div>

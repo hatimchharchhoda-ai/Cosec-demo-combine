@@ -1,0 +1,6 @@
+@COSEC_demo_HostAddress = http://localhost:5210
+
+GET {{COSEC_demo_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

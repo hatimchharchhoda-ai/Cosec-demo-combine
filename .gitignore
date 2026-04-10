@@ -1,0 +1,45 @@
+# =====================
+# ANGULAR / NODE
+# =====================
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# =====================
+# DOTNET
+# =====================
+backend/bin/
+backend/obj/
+
+# =====================
+# ANGULAR CLIENT / NODE
+# =====================
+clientSide/node_modules/
+clientSide/.angular/
+clientSide/dist/
+clientSide/dist/
+
+# =====================
+# VISUAL STUDIO
+# =====================
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# =====================
+# ENV FILES
+# =====================
+*.env
+
+# =====================
+# OS FILES
+# =====================
+Thumbs.db
+.DS_Store
+
+# =====================
+# VS CODE
+# =====================
+.vscode/

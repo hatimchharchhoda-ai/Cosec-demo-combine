@@ -1,0 +1,23 @@
+.device-detail {
+  padding-bottom: 80px;
+}
+
+.label {
+  font-weight: 600;
+  color: #555;
+  display: flex;
+  align-items: center;
+}
+
+.operation-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  padding: 10px 20px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}

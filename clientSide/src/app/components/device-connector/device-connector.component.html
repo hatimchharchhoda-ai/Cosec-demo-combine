@@ -1,0 +1,49 @@
+<div style="max-width:700px;margin:auto">
+
+  <h2>Device WebSocket Connector</h2>
+
+  <div>
+    <label>Device ID</label>
+    <input type="number" [(ngModel)]="device.DeviceID" [disabled]="isAuthenticated">
+  </div>
+
+  <div>
+    <label>MAC Address</label>
+    <input type="text" [(ngModel)]="device.MACAddr" [disabled]="isAuthenticated">
+  </div>
+
+  <div>
+    <label>IP Address</label>
+    <input type="text" [(ngModel)]="device.IPAddr" [disabled]="isAuthenticated">
+  </div>
+
+  <button (click)="connectDevice()" [disabled]="isAuthenticated">
+    Connect
+  </button>
+
+  <hr>
+
+  <h3>CommTrn Records from Server</h3>
+
+  <table border="1" width="100%">
+    <thead>
+      <tr>
+        <th>TrnID</th>
+        <th>Message</th>
+        <th>Retry</th>
+        <th>Status</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let trn of commTrnList">
+        <td>{{trn.TrnID}}</td>
+        <td>{{trn.MsgStr}}</td>
+        <td>{{trn.RetryCnt}}</td>
+        <td>{{trn.TrnStat}}</td>
+        <td>{{trn.CreatedAt}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
