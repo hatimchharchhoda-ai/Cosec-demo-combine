@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace COSEC_demo.Entities
@@ -15,5 +16,7 @@ namespace COSEC_demo.Entities
         public decimal RetryCnt { get; set; }
 
         public decimal TrnStat { get; set; }
+
+        public DateTime CreatedAt { get; set; }
     }
 }

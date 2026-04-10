@@ -8,6 +8,7 @@ import { AuthServiceService } from './services/auth/auth-service.service';
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
+  <div  [class.with-nav]="auth.isLoggedIn()">
     <div class="shell">
       <nav class="topnav" >
    
@@ -25,9 +26,18 @@ import { AuthServiceService } from './services/auth/auth-service.service';
             Device List
           </a>
         </div>
+         <div class="nav-right">
+        
+          <button class="btn-logout" (click)="logout()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
       </nav>
       
         <router-outlet />
+    </div>
+
     </div>
   `,
   styles: [`
@@ -60,4 +70,14 @@ import { AuthServiceService } from './services/auth/auth-service.service';
 })
 export class AppComponent {
   constructor(public auth: AuthServiceService, private router: Router) { }
+
+
+    logout() {
+    this.auth.logout().subscribe({
+      next:     () => this.router.navigate(['']),
+      error:    () => this.router.navigate(['']),  // navigate even if API fails
+      complete: () => this.router.navigate([''])
+    });
+  }
+
 }
