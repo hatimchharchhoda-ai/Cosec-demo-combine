@@ -1,0 +1,58 @@
+<div *ngIf="device as d" class="container mt-4 device-detail">
+
+  <div class="card p-4">
+
+    <!-- Device Fields -->
+    <div class="row mb-3">
+      <div class="col-4 label">Device Name</div>
+      <div class="col-8">
+        <input class="form-control" [(ngModel)]="d.deviceName" [disabled]="!isEdit">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-4 label">MAC Address</div>
+      <div class="col-8">
+        <input class="form-control" [(ngModel)]="d.macAddr" [disabled]="!isEdit">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-4 label">IP Address</div>
+      <div class="col-8">
+        <input class="form-control" [(ngModel)]="d.ipAddr" [disabled]="!isEdit">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-4 label">Device Type</div>
+      <div class="col-8">
+        <input class="form-control" [(ngModel)]="d.deviceType" [disabled]="!isEdit">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Fixed Operation Bar -->
+  <div class="operation-bar shadow">
+
+    <button class="btn btn-secondary" (click)="back()">View</button>
+
+    <!-- ADD MODE -->
+    <button class="btn btn-success" *ngIf="isAddMode" (click)="save()">
+      Save
+    </button>
+
+    <!-- EDIT MODE -->
+    <button class="btn btn-success" *ngIf="!isAddMode" routerLink="/device/add"> Add </button>
+
+    <button class="btn btn-primary" *ngIf="!isAddMode && !isEdit" (click)="edit()"> Edit </button>
+
+    <button class="btn btn-success" *ngIf="!isAddMode && isEdit" (click)="update()"> Update </button>
+
+    <button class="btn btn-danger" *ngIf="!isAddMode" (click)="delete()"> Delete </button>
+
+    <button class="btn btn-warning" *ngIf="!isAddMode" (click)="syncUser()">Sync</button>
+  </div>
+
+</div>
