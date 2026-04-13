@@ -88,7 +88,7 @@ public class AuthController : ControllerBase
             });
 
         // Validate the old token manually to read claims
-        string userId;
+      
         decimal deviceId;
         try
         {
