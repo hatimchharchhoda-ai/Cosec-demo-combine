@@ -1,7 +1,3 @@
-export interface PollRequestDto {
-  lastBatchToken?: string | null;
-}
-
 export interface TrnItemDto {
   trnID: number;
   msgStr: string;
@@ -10,13 +6,13 @@ export interface TrnItemDto {
 
 export interface PollResponseDto {
   hasData: boolean;
+  needAckFirst?: boolean;
   batchToken?: string;
-  pendingAckRequired?: boolean;
-  pendingBatchToken?: string;
-  items?: TrnItemDto[];
+  totalPending: number;
+  rows?: TrnItemDto[];
 }
 
 export interface AckRequestDto {
   batchToken: string;
-  ackedTrnIDs: number[];
+  trnIDs: number[];
 }

@@ -12,6 +12,12 @@ backend/bin/
 backend/obj/
 
 # =====================
+# DOTNET
+# =====================
+MatPoll/bin/
+MatPoll/obj/
+
+# =====================
 # ANGULAR CLIENT / NODE
 # =====================
 clientSide/node_modules/

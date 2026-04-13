@@ -1,18 +1,15 @@
 import { Injectable } from '@angular/core';
-import { AckRequestDto, PollRequestDto, PollResponseDto, TrnItemDto } from '../models/poll';
+import { BehaviorSubject, interval, switchMap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs/internal/BehaviorSubject';
-import { interval } from 'rxjs/internal/observable/interval';
-import { switchMap } from 'rxjs/internal/operators/switchMap';
 import { environment } from '../../environment/env';
+import { PollResponseDto, TrnItemDto, AckRequestDto } from '../models/poll';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PollService {
   private apiUrl = `${environment.baseUrl}/poll`;
 
-  private lastBatchToken: string | null = null;
+  private currentBatchToken: string | null = null;
+  private currentRows: TrnItemDto[] = [];
 
   private trnStream = new BehaviorSubject<TrnItemDto[]>([]);
   trn$ = this.trnStream.asObservable();
@@ -22,41 +19,44 @@ export class PollService {
   startPolling() {
     interval(8000)
       .pipe(
-        switchMap(() => {
-          const body: PollRequestDto = {
-            lastBatchToken: this.lastBatchToken
-          };
-
-          // POST, not GET
-          return this.http.post<PollResponseDto>(
-            this.apiUrl,
-            body,
-            { withCredentials: true }
-          );
-        })
+        switchMap(() =>
+          this.http.get<PollResponseDto>(this.apiUrl, {
+            withCredentials: true
+          })
+        )
       )
-      .subscribe(res => this.handlePollResponse(res));
+      .subscribe(res => this.handleResponse(res));
   }
 
-  private handlePollResponse(res: PollResponseDto) {
-    if (res.pendingAckRequired && res.pendingBatchToken) {
-      this.lastBatchToken = res.pendingBatchToken;
+  private handleResponse(res: PollResponseDto) {
+    // CASE: Server says ACK first
+    if (res.needAckFirst && res.batchToken) {
+      this.currentBatchToken = res.batchToken;
       return;
     }
 
-    if (res.hasData && res.items && res.batchToken) {
-      this.lastBatchToken = res.batchToken;
-
-      this.trnStream.next(res.items);
-
-      const ack: AckRequestDto = {
-        batchToken: res.batchToken,
-        ackedTrnIDs: res.items.map(x => x.trnID)
-      };
-
-      this.http.post(`${this.apiUrl}/ack`, ack, {
-        withCredentials: true
-      }).subscribe();
+    // CASE: New data arrived
+    if (res.hasData && res.rows && res.batchToken) {
+      this.currentBatchToken = res.batchToken;
+      this.currentRows = res.rows;
+      this.trnStream.next(res.rows);
     }
+  }
+
+  // Component calls this AFTER device processing is done
+  ackBatch() {
+    if (!this.currentBatchToken || this.currentRows.length === 0) return;
+
+    const ack: AckRequestDto = {
+      batchToken: this.currentBatchToken,
+      trnIDs: this.currentRows.map(x => x.trnID)
+    };
+
+    this.http
+      .post(`${this.apiUrl}/ack`, ack, { withCredentials: true })
+      .subscribe(() => {
+        this.currentBatchToken = null;
+        this.currentRows = [];
+      });
   }
 }
