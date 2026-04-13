@@ -6,10 +6,23 @@ frontend/dist/
 frontend/.angular/
 
 # =====================
+# ANGULAR / NODE
+# =====================
+MatPollClient/node_modules/
+MatPollClient/dist/
+MatPollClient/.angular/
+
+# =====================
 # DOTNET
 # =====================
 backend/bin/
 backend/obj/
+
+# =====================
+# DOTNET
+# =====================
+MatPoll/bin/
+MatPoll/obj/
 
 # =====================
 # VISUAL STUDIO

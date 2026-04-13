@@ -1,0 +1,62 @@
+<div class="login-wrap">
+
+  <div class="login-card">
+
+    <div class="login-header">
+      <div class="logo">M</div>
+      <h1>MatPoll</h1>
+      <p>Device Login</p>
+    </div>
+
+    <form (ngSubmit)="submit()">
+
+      <div class="field">
+        <label>Device ID</label>
+        <input
+          type="number"
+          [(ngModel)]="form.deviceId"
+          name="deviceId"
+          placeholder="e.g. 1"
+          required />
+      </div>
+
+      <div class="field">
+        <label>MAC Address</label>
+        <input
+          type="text"
+          [(ngModel)]="form.mACAddr"
+          name="mACAddr"
+          placeholder="e.g. AA:BB:CC:DD:EE:01"
+          required />
+      </div>
+
+      <div class="field">
+        <label>IP Address</label>
+        <input
+          type="text"
+          [(ngModel)]="form.iPAddr"
+          name="iPAddr"
+          placeholder="e.g. 192.168.1.101"
+          required />
+      </div>
+
+      <div class="error-box" *ngIf="error">
+        {{ error }}
+      </div>
+
+      <button type="submit" [disabled]="loading" class="btn-login">
+        {{ loading ? 'Connecting...' : 'Login' }}
+      </button>
+
+    </form>
+
+    <div class="hint">
+      <strong>Sample credentials:</strong><br>
+      Device ID: 1 &nbsp;|&nbsp;
+      MAC: AA:BB:CC:DD:EE:01 &nbsp;|&nbsp;
+      IP: 192.168.1.101
+    </div>
+
+  </div>
+
+</div>

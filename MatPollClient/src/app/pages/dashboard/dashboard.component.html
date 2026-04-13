@@ -1,0 +1,103 @@
+<div class="page">
+
+  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-sm">M</div>
+      <span class="app-title">MatPoll</span>
+    </div>
+    <div class="topbar-right">
+      <span class="device-badge">{{ deviceName }}</span>
+      <button class="btn btn-ghost" (click)="logout()">Logout</button>
+    </div>
+  </header>
+
+  <!-- ── Status bar ──────────────────────────────────────────────────────── -->
+  <div class="status-bar">
+    <div class="status-dot" [class.active]="isPolling"></div>
+    <span class="status-text">{{ status || 'Idle' }}</span>
+    <span class="pending-badge" *ngIf="totalPending > 0">
+      {{ totalPending }} pending in DB
+    </span>
+  </div>
+
+  <!-- ── Controls ────────────────────────────────────────────────────────── -->
+  <div class="controls">
+    <button class="btn btn-primary" (click)="startPolling()" [disabled]="isPolling">
+      Start Polling
+    </button>
+    <button class="btn btn-danger" (click)="stopPolling()" [disabled]="!isPolling">
+      Stop
+    </button>
+    <span class="interval-note">Polls every 8 seconds</span>
+  </div>
+
+  <!-- ── Main grid ───────────────────────────────────────────────────────── -->
+  <div class="grid">
+
+    <!-- Left: received rows -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Received Rows</span>
+        <span class="badge">{{ rows.length }}</span>
+      </div>
+
+      <div class="panel-body">
+        <div *ngIf="rows.length === 0" class="empty-state">
+          No rows yet. Start polling to receive data.
+        </div>
+
+        <div *ngFor="let row of rows" class="row-card">
+          <div class="row-id">#{{ row.trnID }}</div>
+          <div class="row-msg">{{ parseMsg(row.msgStr) }}</div>
+          <div class="row-meta">
+            Retry: {{ row.retryCnt }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: log -->
+    <div class="panel">
+      <div class="panel-header">
+        <span>Activity Log</span>
+        <button class="btn-clear" (click)="clearLogs()">Clear</button>
+      </div>
+
+      <div class="panel-body log-body">
+        <div *ngIf="logs.length === 0" class="empty-state">
+          Log is empty.
+        </div>
+
+        <div *ngFor="let entry of logs" class="log-entry" [class]="logClass(entry.type)">
+          <span class="log-time">{{ entry.time }}</span>
+          <span class="log-msg">{{ entry.message }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Stats row ───────────────────────────────────────────────────────── -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Status</div>
+      <div class="stat-value" [class.green]="isPolling" [class.gray]="!isPolling">
+        {{ isPolling ? 'Running' : 'Stopped' }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Rows in current batch</div>
+      <div class="stat-value">{{ rows.length }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total pending in DB</div>
+      <div class="stat-value">{{ totalPending }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Log entries</div>
+      <div class="stat-value">{{ logs.length }}</div>
+    </div>
+  </div>
+
+</div>

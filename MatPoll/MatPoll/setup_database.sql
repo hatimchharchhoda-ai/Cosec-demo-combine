@@ -1,0 +1,108 @@
+-- ============================================================
+-- Run this in SSMS on your matgen database
+-- Creates exact tables from your schema + sample data
+-- Safe to run multiple times
+-- ============================================================
+
+USE [matgen]
+GO
+
+-- ── Mat_DeviceMst ─────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Mat_DeviceMst')
+BEGIN
+    CREATE TABLE [dbo].[Mat_DeviceMst] (
+        [DeviceID]   [numeric](5, 0)   NOT NULL PRIMARY KEY,
+        [DeviceName] [nvarchar](200)   NULL,
+        [MACAddr]    [nvarchar](50)    NULL,
+        [IPAddr]     [nvarchar](50)    NULL,
+        [IsActive]   [numeric](1, 0)   NULL,
+        [DeviceType] [numeric](2, 0)   NULL
+    )
+    PRINT 'Created Mat_DeviceMst'
+END
+GO
+
+-- ── Mat_UserMst ───────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Mat_UserMst')
+BEGIN
+    CREATE TABLE [dbo].[Mat_UserMst] (
+        [UserID]        [nvarchar](10)   NOT NULL PRIMARY KEY,
+        [UserName]      [nvarchar](200)  NULL,
+        [IsActive]      [numeric](1, 0)  NULL,
+        [UserShortName] [nvarchar](16)   NULL,
+        [UserIDN]       [numeric](20, 0) NULL
+    )
+    PRINT 'Created Mat_UserMst'
+END
+GO
+
+-- ── Mat_CommTrn ───────────────────────────────────────────────────────────────
+IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'Mat_CommTrn')
+BEGIN
+    CREATE TABLE [dbo].[Mat_CommTrn] (
+        [TrnID]    [numeric](18, 0) IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        [MsgStr]   [nvarchar](max)  NULL,
+        [RetryCnt] [numeric](2, 0)  NULL DEFAULT 0,
+        [TrnStat]  [numeric](1, 0)  NULL DEFAULT 0,
+        [Time]     [timestamp]      NULL,
+        [CreatedAt][datetime]       NULL DEFAULT GETDATE()
+    ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+    PRINT 'Created Mat_CommTrn'
+END
+GO
+
+-- ── Sample Devices ────────────────────────────────────────────────────────────
+DELETE FROM [dbo].[Mat_DeviceMst] WHERE DeviceID IN (1, 2, 3)
+
+INSERT INTO [dbo].[Mat_DeviceMst] (DeviceID, DeviceName, MACAddr, IPAddr, IsActive, DeviceType)
+VALUES
+    (1, 'Terminal Floor 1',   'AA:BB:CC:DD:EE:01', '192.168.1.101', 1, 10),
+    (2, 'Terminal Floor 2',   'AA:BB:CC:DD:EE:02', '192.168.1.102', 1, 10),
+    (3, 'Warehouse Scanner',  'AA:BB:CC:DD:EE:03', '192.168.1.103', 1, 20)
+
+PRINT 'Sample devices inserted'
+GO
+
+-- ── Sample Users ──────────────────────────────────────────────────────────────
+DELETE FROM [dbo].[Mat_UserMst] WHERE UserID IN ('USR001','USR002','USR003')
+
+INSERT INTO [dbo].[Mat_UserMst] (UserID, UserName, IsActive, UserShortName, UserIDN)
+VALUES
+    ('USR001', 'Rahul Sharma',  1, 'RAHUL', 1001),
+    ('USR002', 'Priya Patel',   1, 'PRIYA', 1002),
+    ('USR003', 'Amit Desai',    0, 'AMIT',  1003)  -- IsActive=0, login will be rejected
+GO
+
+PRINT 'Sample users inserted'
+GO
+
+-- ── Sample CommTrn rows (TrnStat=0 = pending) ─────────────────────────────────
+INSERT INTO [dbo].[Mat_CommTrn] (MsgStr, RetryCnt, TrnStat, CreatedAt)
+VALUES
+    ('{"cmd":"SYNC","item":"ITM001","qty":10}',  0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM002","qty":5}',   0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM003","qty":20}',  0, 0, GETDATE()),
+    ('{"cmd":"ALERT","msg":"Low stock ITM004"}', 0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM005","qty":8}',   0, 0, GETDATE()),
+    ('{"cmd":"PRINT","label":"LABEL_A1"}',       0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM006","qty":15}',  0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM007","qty":3}',   0, 0, GETDATE()),
+    ('{"cmd":"ALERT","msg":"Shift end"}',        0, 0, GETDATE()),
+    ('{"cmd":"SYNC","item":"ITM008","qty":12}',  0, 0, GETDATE())
+
+PRINT 'Sample CommTrn rows inserted'
+GO
+
+-- ── Show what was created ─────────────────────────────────────────────────────
+SELECT 'DEVICES' AS [Table], COUNT(*) AS [Rows] FROM dbo.Mat_DeviceMst
+UNION ALL
+SELECT 'USERS',   COUNT(*) FROM dbo.Mat_UserMst
+UNION ALL
+SELECT 'COMMTRN (pending)', COUNT(*) FROM dbo.Mat_CommTrn WHERE TrnStat = 0
+
+PRINT ''
+PRINT 'USE THESE TO LOGIN:'
+PRINT '  UserID  : USR001'
+PRINT '  MACAddr : AA:BB:CC:DD:EE:01'
+PRINT '  IPAddr  : 192.168.1.101'
+GO
