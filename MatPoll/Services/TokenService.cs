@@ -15,25 +15,24 @@ public class TokenService
     }
 
     // Create a JWT that stores userId + deviceId inside
-    public string CreateToken(string userId, decimal deviceId)
+    public string CreateToken(decimal deviceId)
     {
-        var secret  = _config["Jwt:Secret"]!;
+        var secret = _config["Jwt:Secret"]!;
         var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
-        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim("userId",   userId),
-            new Claim("deviceId", deviceId.ToString())
-        };
+        new Claim("deviceId", deviceId.ToString())
+    };
 
         var token = new JwtSecurityToken(
-            issuer:             "MatPoll",
-            audience:           "MatPollClient",
-            claims:             claims,
-            expires:            DateTime.UtcNow.AddMinutes(expMins),
+            issuer: "MatPoll",
+            audience: "MatPollClient",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expMins),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);

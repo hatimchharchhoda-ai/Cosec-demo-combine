@@ -14,7 +14,7 @@ import { TrnItemDto } from '../../models/poll';
 })
 export class DeviceConnectorComponent {
   device = {
-    userID: '',
+    deviceID: 0,
     MACAddr: '',
     IPAddr: ''
   };
@@ -41,11 +41,14 @@ export class DeviceConnectorComponent {
         this.poll.startPolling();
         this.cdr.markForCheck();
       },
-      error: err => console.error(err)
+      error: err => {
+        alert(err.error?.message || 'Device authentication failed');
+        console.error(err);
+      }
     });
   }
 
-  // 🔥 This simulates sending rows to actual device
+  // This simulates sending rows to actual device
   private processRows(rows: TrnItemDto[]) {
     console.log('Processing rows on device...', rows);
 

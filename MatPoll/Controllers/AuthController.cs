@@ -34,51 +34,39 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
-        // 1. Validate user
-        var user = await _repo.FindUserAsync(req.UserID);
-        if (user == null)
-            return Unauthorized(new LoginResponse
-            {
-                Success = false,
-                Message = "User not found."
-            });
+        // Validate device by DeviceID + MAC + IP
+        var device = await _repo.FindDeviceAsync(req.DeviceID, req.MACAddr, req.IPAddr);
 
-        if (user.IsActive != 1)
-            return Unauthorized(new LoginResponse
-            {
-                Success = false,
-                Message = "User account is inactive."
-            });
-
-        // 2. Validate device — must match both MAC and IP
-        var device = await _repo.FindDeviceAsync(req.MACAddr, req.IPAddr);
         if (device == null)
+        {
             return Unauthorized(new LoginResponse
             {
                 Success = false,
-                Message = "Device not found. Check MAC address and IP address."
+                Message = "Invalid DeviceID, MAC address, or IP address."
             });
+        }
 
         if (device.IsActive != 1)
+        {
             return Unauthorized(new LoginResponse
             {
                 Success = false,
-                Message = "Device is inactive."
+                Message = "Device is inactive. Contact administrator."
             });
+        }
 
-        // 3. Create token
-        var token   = _tokenService.CreateToken(user.UserID, device.DeviceID);
+        // Create token with ONLY deviceId
+        var token = _tokenService.CreateToken(device.DeviceID);
         var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
-        // Set token in HttpOnly cookie
         TokenService.SetCookie(Response, token, expMins);
 
         return Ok(new LoginResponse
         {
-            Success    = true,
-            Message    = "Login successful.",
+            Success = true,
+            Message = "Device authentication successful.",
             DeviceName = device.DeviceName,
-            Token      = token          // also in body for non-browser clients
+            Token = token
         });
     }
 
@@ -119,7 +107,6 @@ public class AuthController : ControllerBase
                     ValidateLifetime = false
                 }, out _);
 
-            userId   = TokenService.GetUserId(principal);
             deviceId = TokenService.GetDeviceId(principal);
         }
         catch
@@ -131,11 +118,10 @@ public class AuthController : ControllerBase
             });
         }
 
-        // Re-check user and device are still active
-        var user   = await _repo.FindUserAsync(userId);
+        // Re-check device are still active
         var device = await _repo.FindDeviceByIdAsync(deviceId);
 
-        if (user == null || user.IsActive != 1 || device == null || device.IsActive != 1)
+        if (device == null || device.IsActive != 1)
             return Unauthorized(new RefreshResponse
             {
                 Success = false,
@@ -143,7 +129,7 @@ public class AuthController : ControllerBase
             });
 
         // Issue new token
-        var newToken = _tokenService.CreateToken(userId, deviceId);
+        var newToken = _tokenService.CreateToken(deviceId);
         var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
         TokenService.SetCookie(Response, newToken, expMins);

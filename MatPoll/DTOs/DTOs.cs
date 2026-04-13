@@ -6,7 +6,7 @@ namespace MatPoll.DTOs;
 
 public class LoginRequest
 {
-    public string UserID  { get; set; } = string.Empty;   // e.g. "USR001"
+    public decimal DeviceID { get; set; }   // e.g. "USR001"
     public string MACAddr { get; set; } = string.Empty;   // e.g. "AA:BB:CC:DD:EE:01"
     public string IPAddr  { get; set; } = string.Empty;   // e.g. "192.168.1.101"
 }

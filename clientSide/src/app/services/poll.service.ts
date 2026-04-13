@@ -14,7 +14,7 @@ export class PollService {
   private trnStream = new BehaviorSubject<TrnItemDto[]>([]);
   trn$ = this.trnStream.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   startPolling() {
     interval(8000)
