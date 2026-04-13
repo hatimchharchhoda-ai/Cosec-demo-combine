@@ -1,4 +1,4 @@
-﻿using COSEC_demo.Entities;
+﻿﻿using COSEC_demo.Entities;
 
 namespace COSEC_demo.Repositories.Interfaces
 {

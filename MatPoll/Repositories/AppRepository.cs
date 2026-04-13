@@ -16,10 +16,12 @@ public class AppRepository
     // ── Device ────────────────────────────────────────────────────────────────
 
     // Login: find device by MAC address AND IP address
-    public Task<MatDeviceMst?> FindDeviceAsync(string mac, string ip)
+    public Task<MatDeviceMst?> FindDeviceAsync(decimal deviceId, string mac, string ip)
     {
-        return _db.Devices
-            .FirstOrDefaultAsync(d => d.MACAddr == mac && d.IPAddr == ip);
+        return _db.Devices.FirstOrDefaultAsync(d =>
+            d.DeviceID == deviceId &&
+            d.MACAddr == mac &&
+            d.IPAddr == ip);
     }
 
     // Refresh token: find device by DeviceID

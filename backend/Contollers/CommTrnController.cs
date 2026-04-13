@@ -28,7 +28,7 @@ namespace COSEC_demo.Contollers
                 {
                     Success = true,
                     Message = "CommTrn created successfully",
-                    Data = result
+                    Data = null
                 });
             }
             catch (ArgumentException ex)

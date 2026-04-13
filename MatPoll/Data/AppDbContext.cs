@@ -23,10 +23,5 @@ public class AppDbContext : DbContext
         b.Entity<MatCommTrn>()
             .Property(t => t.TrnID)
             .ValueGeneratedOnAdd();
-
-        // timestamp column is rowversion — EF handles concurrency automatically
-        //b.Entity<MatCommTrn>()
-        //    .Property(t => t.Time)
-        //    .IsRowVersion();
     }
 }

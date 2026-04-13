@@ -52,20 +52,6 @@ namespace COSEC_demo.Contollers
             }
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
-        {
-            Response.Cookies.Delete("auth_token", new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Path = "/"
-            });
-            return Ok(new ApiResponseDto<object> { Success = true, Message = "Logged out." });
-        }
-
-
         [Authorize]
         [HttpGet("check")]
         public IActionResult CheckAuth()

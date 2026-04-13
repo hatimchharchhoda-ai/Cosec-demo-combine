@@ -1,0 +1,17 @@
+<div>
+  <h2>Device Login</h2>
+
+  <input type="number" [(ngModel)]="device.deviceID" placeholder="Device ID" />
+  <input [(ngModel)]="device.MACAddr" placeholder="MAC Address" />
+  <input [(ngModel)]="device.IPAddr" placeholder="IP Address" />
+
+  <button (click)="connectDevice()">Connect</button>
+
+  <h3 *ngIf="isLoggedIn">Receiving CommTrn...</h3>
+
+  <ul>
+    <li *ngFor="let item of commTrnList">
+      {{ item.msgStr }}
+    </li>
+  </ul>
+</div>

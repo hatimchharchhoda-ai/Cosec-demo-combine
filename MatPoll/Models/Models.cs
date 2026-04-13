@@ -3,6 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MatPoll.Models;
 
+// ────────────────────────────────────────────────────────────────────────────
+// Exact match to:  CREATE TABLE [dbo].[Mat_DeviceMst]
+// ────────────────────────────────────────────────────────────────────────────
 [Table("Mat_DeviceMst")]
 public class MatDeviceMst
 {
@@ -27,7 +30,9 @@ public class MatDeviceMst
     public decimal? DeviceType { get; set; }
 }
 
-
+// ────────────────────────────────────────────────────────────────────────────
+// Exact match to:  CREATE TABLE [dbo].[Mat_UserMst]
+// ────────────────────────────────────────────────────────────────────────────
 [Table("Mat_UserMst")]
 public class MatUserMst
 {
@@ -48,7 +53,11 @@ public class MatUserMst
     public decimal? UserIDN       { get; set; }
 }
 
-
+// ────────────────────────────────────────────────────────────────────────────
+// Exact match to:  CREATE TABLE [dbo].[Mat_CommTrn]
+// NOTE: We do NOT change any column. TrnStat values:
+//   0 = Pending  |  1 = Dispatched  |  2 = Acknowledged  |  9 = Failed
+// ────────────────────────────────────────────────────────────────────────────
 [Table("Mat_CommTrn")]
 public class MatCommTrn
 {
@@ -65,10 +74,6 @@ public class MatCommTrn
     // 0=Pending  1=Dispatched  2=Acknowledged  9=Failed
     [Column(TypeName = "numeric(1,0)")]
     public decimal? TrnStat { get; set; }
-
-    // timestamp is auto-managed by SQL Server — EF maps it as byte[]
-    [Timestamp]
-    //public byte[]? Time { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 }

@@ -233,6 +233,5 @@ namespace NMatGen.API.Controllers
                 });
             }
         }
-
     }
 }

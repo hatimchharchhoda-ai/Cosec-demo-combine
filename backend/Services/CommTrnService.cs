@@ -1,14 +1,8 @@
-﻿using COSEC_demo.DTOs;
+﻿﻿using COSEC_demo.DTOs;
 using COSEC_demo.Entities;
 using COSEC_demo.Repositories.Interfaces;
-using COSEC_demo.Services;
 using COSEC_demo.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using NMatGen.API.Controllers;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace COSEC_demo.Services
 {
@@ -20,7 +14,6 @@ namespace COSEC_demo.Services
         {
             _repo = repo;
         }
-
 
         public async Task<CommTrnResponseDto> CreateCommTrn(CommTrnRequestDto dto)
         {
@@ -36,8 +29,7 @@ namespace COSEC_demo.Services
             {
                 MsgStr = message,
                 RetryCnt = 0,
-                TrnStat = 0,
-                CreatedAt = DateTime.Now,
+                TrnStat = 0
             };
 
             var created = await _repo.AddCommTrn(entity);
@@ -62,9 +54,3 @@ namespace COSEC_demo.Services
         }
     }
 }
-
-
-
-
-
-

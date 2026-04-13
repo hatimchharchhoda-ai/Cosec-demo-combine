@@ -1,4 +1,4 @@
-﻿namespace COSEC_demo.DTOs
+﻿﻿namespace COSEC_demo.DTOs
 {
     public class CommTrnRequestDto
     {

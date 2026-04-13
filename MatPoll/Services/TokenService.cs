@@ -17,22 +17,22 @@ public class TokenService
     // Create a JWT that stores userId + deviceId inside
     public string CreateToken(decimal deviceId)
     {
-        var secret  = _config["Jwt:Secret"]!;
+        var secret = _config["Jwt:Secret"]!;
         var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
-        var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var claims = new[]
         {
-            new Claim("deviceId", deviceId.ToString())
-        };
+        new Claim("deviceId", deviceId.ToString())
+    };
 
         var token = new JwtSecurityToken(
-            issuer:             "MatPoll",
-            audience:           "MatPollClient",
-            claims:             claims,
-            expires:            DateTime.UtcNow.AddMinutes(expMins),
+            issuer: "MatPoll",
+            audience: "MatPollClient",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expMins),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -55,8 +55,8 @@ public class TokenService
         response.Cookies.Append("mat_auth", token, new CookieOptions
         {
             HttpOnly  = true,                          // JS cannot access
-            Secure    = false,                         // set true in production (HTTPS)
-            SameSite  = SameSiteMode.Strict,
+            Secure    = true,                         // set true in production (HTTPS)
+            SameSite  = SameSiteMode.None,
             Expires   = DateTimeOffset.UtcNow.AddMinutes(expiryMinutes)
         });
     }

@@ -15,7 +15,7 @@ export class AuthService {
   }
 
   login(req: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('https://localhost:44327/api/auth/login', req, { withCredentials: true })
+    return this.http.post<LoginResponse>('https://localhost:58388/api/auth/login', req, { withCredentials: true })
       .pipe(tap(res => {
         if (res.success) {
           this.token = res.token;
@@ -26,7 +26,7 @@ export class AuthService {
   }
 
   refresh(): Observable<any> {
-    return this.http.post<any>('https://localhost:44327/api/auth/refresh', {}, { withCredentials: true })
+    return this.http.post<any>('https://localhost:58388/api/auth/refresh', {}, { withCredentials: true })
       .pipe(tap(res => {
         if (res.success) {
           this.token = res.token;
@@ -36,7 +36,7 @@ export class AuthService {
   }
 
   logout(): void {
-    this.http.post('https://localhost:44327/api/auth/logout', {}, { withCredentials: true }).subscribe();
+    this.http.post('https://localhost:58388/api/auth/logout', {}, { withCredentials: true }).subscribe();
     this.token = null;
     localStorage.removeItem('mat_token');
     localStorage.removeItem('mat_device');

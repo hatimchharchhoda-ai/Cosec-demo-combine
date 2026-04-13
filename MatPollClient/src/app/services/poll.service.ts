@@ -49,7 +49,7 @@ export class PollService {
   private poll(): void {
     this.status$.next('Polling server...');
 
-    this.http.get<PollResponse>('https://localhost:44327/api/poll', {
+    this.http.get<PollResponse>('https://localhost:58388/api/poll', {
       headers: this.headers(),
       withCredentials: true
     }).subscribe({
@@ -95,7 +95,7 @@ export class PollService {
     const body: AckRequest = { batchToken, trnIDs };
     this.log('info', `Sending ACK for ${trnIDs.length} rows...`);
 
-    this.http.post<AckResponse>('https://localhost:44327/api/poll/ack', body, {
+    this.http.post<AckResponse>('https://localhost:58388/api/poll/ack', body, {
       headers: this.headers(),
       withCredentials: true
     }).subscribe({
