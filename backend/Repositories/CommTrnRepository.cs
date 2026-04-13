@@ -14,11 +14,10 @@ namespace COSEC_demo.Repositories
             _context = context;
         }
 
-        public async Task<CommTrn> AddCommTrn(CommTrn commTrn)
+        public async Task AddCommTrnRange(List<CommTrn> list)
         {
-            await _context.CommTrns.AddAsync(commTrn);
+            await _context.CommTrns.AddRangeAsync(list);
             await _context.SaveChangesAsync();
-            return commTrn;
         }
     }
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <div style="max-width:700px;margin:auto">
 
   <h2>Device WebSocket Connector</h2>
@@ -46,4 +47,22 @@
     </tbody>
   </table>
 
+=======
+<div>
+  <h2>Device Login</h2>
+
+  <input [(ngModel)]="device.DeviceID" placeholder="Device ID" />
+  <input [(ngModel)]="device.MACAddr" placeholder="MAC Address" />
+  <input [(ngModel)]="device.IPAddr" placeholder="IP Address" />
+
+  <button (click)="connectDevice()">Connect</button>
+
+  <h3 *ngIf="isLoggedIn">Receiving CommTrn...</h3>
+
+  <ul>
+    <li *ngFor="let item of commTrnList">
+      {{ item.msgStr }}
+    </li>
+  </ul>
+>>>>>>> 89794c4 (WIP: my local changes before merging server branch)
 </div>

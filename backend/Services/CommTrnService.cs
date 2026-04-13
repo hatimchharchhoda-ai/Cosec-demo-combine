@@ -9,44 +9,53 @@ namespace COSEC_demo.Services
     public class CommTrnService : ICommTrnService
     {
         private readonly ICommTrnRepository _repo;
+        private readonly IUserRepository _userRepo;
 
-        public CommTrnService(ICommTrnRepository repo)
+        public CommTrnService(ICommTrnRepository repo, IUserRepository userRepo)
         {
             _repo = repo;
+            _userRepo = userRepo;
         }
 
-        public async Task<CommTrnResponseDto> CreateCommTrn(CommTrnRequestDto dto)
+        public async Task<string> CreateCommTrn(CommTrnRequestDto dto)
         {
-            if (dto.UserId.IsNullOrEmpty())
-                throw new ArgumentException("UserId is required.");
-
             if (dto.DeviceId <= 0)
                 throw new ArgumentException("DeviceId is required.");
 
-            string message = BuildMessage(dto.UserId, dto.DeviceId);
+            // 1. Fetch all active users
+            var userIds = await _userRepo.GetActiveUserIds();
 
-            var entity = new CommTrn
+            if (!userIds.Any())
+                throw new Exception("No active users found.");
+
+            var commList = new List<CommTrn>();
+
+            // 2. Create entry for each user
+            foreach (var userId in userIds)
             {
+<<<<<<< HEAD
                 MsgStr = message,
                 RetryCnt = 0,
                 TrnStat = 0,
                 CreatedAt = DateTime.Now,
             };
+=======
+                string message = BuildMessage(userId, dto.DeviceId);
+>>>>>>> 89794c4 (WIP: my local changes before merging server branch)
 
-            var created = await _repo.AddCommTrn(entity);
+                commList.Add(new CommTrn
+                {
+                    MsgStr = message,
+                    RetryCnt = 0,
+                    TrnStat = 0,
+                    CreatedAt = DateTime.Now
+                });
+            }
 
-            return MapToDto(created);
-        }
+            // 3. Bulk insert
+            await _repo.AddCommTrnRange(commList);
 
-        private CommTrnResponseDto MapToDto(CommTrn c)
-        {
-            return new CommTrnResponseDto
-            {
-                TrnID = (int)c.TrnID,
-                MsgStr = c.MsgStr,
-                RetryCnt = (int)c.RetryCnt,
-                TrnStat = (int)c.TrnStat
-            };
+            return $"{commList.Count} CommTrn records created successfully.";
         }
 
         private string BuildMessage(string userId, int deviceId)

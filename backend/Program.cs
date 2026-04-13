@@ -35,6 +35,8 @@ namespace COSEC_demo
             builder.Services.AddScoped<ICommTrnRepository, CommTrnRepository>();
             builder.Services.AddScoped<ICommTrnService, CommTrnService>();
 
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

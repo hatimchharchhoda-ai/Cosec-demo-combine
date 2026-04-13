@@ -4,6 +4,6 @@ namespace COSEC_demo.Repositories.Interfaces
 {
     public interface ICommTrnRepository
     {
-        Task<CommTrn> AddCommTrn(CommTrn commTrn);
+        Task AddCommTrnRange(List<CommTrn> list);
     }
 }
