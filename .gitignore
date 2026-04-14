@@ -6,7 +6,6 @@ frontend/dist/
 frontend/.angular/
 
 # =====================
-<<<<<<< HEAD
 # ANGULAR / NODE
 # =====================
 MatPollClient/node_modules/
@@ -14,8 +13,6 @@ MatPollClient/dist/
 MatPollClient/.angular/
 
 # =====================
-=======
->>>>>>> 50e94b4286174a5607e2042b680733b061c11111
 # DOTNET
 # =====================
 backend/bin/
@@ -28,17 +25,6 @@ MatPoll/bin/
 MatPoll/obj/
 
 # =====================
-<<<<<<< HEAD
-=======
-# ANGULAR CLIENT / NODE
-# =====================
-clientSide/node_modules/
-clientSide/.angular/
-clientSide/dist/
-clientSide/dist/
-
-# =====================
->>>>>>> 50e94b4286174a5607e2042b680733b061c11111
 # VISUAL STUDIO
 # =====================
 .vs/
