@@ -74,7 +74,7 @@ public class PollController : ControllerBase
         // Step 2: No in-flight rows. Fetch fresh TrnStat=0 rows.
         // FetchAndMarkDispatchedAsync: SELECT TOP N WHERE TrnStat=0
         //                              then UPDATE TrnStat=1 in same call.
-        var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "50");
+        var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "3");
         var rows      = await _repo.FetchAndMarkDispatchedAsync(typeMid, bunchSize);
         var pending   = await _repo.CountPendingAsync();
 

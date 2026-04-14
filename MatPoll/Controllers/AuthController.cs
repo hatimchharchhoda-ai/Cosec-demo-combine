@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
             });
         }
 
-        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
         var token   = _tokenService.CreateToken(device.DeviceID, typeMid);
         TokenService.SetCookie(Response, token, expMins);
 
@@ -133,7 +133,7 @@ public class AuthController : ControllerBase
         var freshTypeMid = TypeMidService.Generate(
             device.MACAddr ?? "", device.IPAddr ?? "");
 
-        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
         var newToken = _tokenService.CreateToken(deviceId, freshTypeMid);
         TokenService.SetCookie(Response, newToken, expMins);
 

@@ -19,6 +19,8 @@
 
         await api.Login(deviceId, mac, ip);
 
+        await api.Restore();
+
         while (true)
         {
             await api.PollAndProcess();

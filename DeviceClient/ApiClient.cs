@@ -9,16 +9,13 @@ public class ApiClient
     public ApiClient()
     {
         _http = new HttpClient();
-        _http.BaseAddress = new Uri("https://localhost:58388/api/");
+        _http.BaseAddress = new Uri("http://localhost:5000/api/");
     }
 
-    private void AddHeaders()
+    private void AddAuth()
     {
         _http.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
-
-        _http.DefaultRequestHeaders.Remove("TypeMID");
-        _http.DefaultRequestHeaders.Add("TypeMID", DeviceSession.TypeMID.ToString());
     }
 
     public async Task Login(int deviceId, string mac, string ip)
@@ -26,83 +23,86 @@ public class ApiClient
         var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip };
 
         var res = await _http.PostAsync("auth/login",
-            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+            new StringContent(JsonSerializer.Serialize(payload),
+            Encoding.UTF8, "application/json"));
 
         var json = await res.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(json).RootElement;
 
         DeviceSession.Token = doc.GetProperty("token").GetString();
-        DeviceSession.TypeMID = doc.GetProperty("typeMID").GetInt32();
+        DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
         DeviceLogger.Log($"LOGIN SUCCESS | TypeMID={DeviceSession.TypeMID}");
+    }
+
+    public async Task Restore()
+    {
+        AddAuth();
+        await _http.PostAsync("poll/restore", null);
+        DeviceLogger.Log("RESTORE called");
     }
 
     public async Task PollAndProcess()
     {
         try
         {
-            AddHeaders();
+            AddAuth();
 
             var res = await _http.GetAsync("poll");
             var json = await res.Content.ReadAsStringAsync();
 
-            var root = JsonDocument.Parse(json).RootElement;
+            var poll = JsonSerializer.Deserialize<PollResponse>(json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            bool needAckFirst = root.GetProperty("needAckFirst").GetBoolean();
-            bool hasData = root.GetProperty("hasData").GetBoolean();
-            string batchToken = root.GetProperty("batchToken").GetString();
+            if (poll == null) return;
 
-            // CASE 1: Server asks ACK first
-            if (needAckFirst)
+            // CASE 1 — Need ACK first
+            if (poll.NeedAckFirst)
             {
-                DeviceLogger.Log($"ACK-FIRST requested | Token={batchToken}");
-                await Ack(batchToken, new List<decimal>());
+                if (DeviceMemory.LastIds.Count > 0)
+                {
+                    DeviceLogger.Log($"ACK-FIRST received. Sending ACK. | TypeMID={DeviceSession.TypeMID} | {string.Join(",", DeviceMemory.LastIds)}");
+                    await Ack(DeviceMemory.LastIds);
+                    DeviceMemory.LastIds.Clear();
+                }
                 return;
             }
 
-            // CASE 2: Data received
-            if (hasData)
+            // CASE 2 — New data
+            if (poll.HasData && poll.Rows.Count > 0)
             {
-                var rows = root.GetProperty("rows");
+                var ids = poll.Rows.Select(x => x.TrnID).ToList();
 
-                List<decimal> ids = new();
+                DeviceLogger.Log($"DATA RECEIVED | TypeMID={DeviceSession.TypeMID} | {string.Join(",", ids)}");
 
-                foreach (var row in rows.EnumerateArray())
-                {
-                    decimal id = row.GetProperty("trnID").GetDecimal();
-                    ids.Add(id);
-                }
+                DeviceMemory.LastIds = ids;
 
-                DeviceLogger.Log($"DATA RECEIVED | IDs={string.Join(",", ids)}");
+                await Task.Delay(2000); // simulate device work
 
-                // Simulate device processing
-                await Task.Delay(2000);
+                await Ack(ids);
 
-                await Ack(batchToken, ids);
+                DeviceMemory.LastIds.Clear();
             }
         }
         catch (Exception ex)
         {
-            DeviceLogger.Log($"ERROR | {ex.Message}");
+            DeviceLogger.Log($"ERROR | TypeMID={DeviceSession.TypeMID} | {ex.Message}");
         }
     }
 
-    private async Task Ack(string batchToken, List<decimal> trnIds)
+    private async Task Ack(List<decimal> ids)
     {
-        AddHeaders();
+        AddAuth();
 
-        var payload = new { batchToken, trnIDs = trnIds };
+        var payload = new { TrnIDs = ids };
 
         var res = await _http.PostAsync("poll/ack",
-            new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json"));
+            new StringContent(JsonSerializer.Serialize(payload),
+            Encoding.UTF8, "application/json"));
 
         if (res.IsSuccessStatusCode)
-        {
-            DeviceLogger.Log($"ACK SENT | IDs={string.Join(",", trnIds)}");
-        }
+            DeviceLogger.Log($"ACK SENT | TypeMID={DeviceSession.TypeMID} | {string.Join(",", ids)} ");
         else
-        {
-            DeviceLogger.Log($"ACK FAILED | Status={res.StatusCode}");
-        }
+            DeviceLogger.Log($"ACK FAILED | TypeMID={DeviceSession.TypeMID}");
     }
 }

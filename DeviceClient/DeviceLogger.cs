@@ -1,12 +1,11 @@
 public static class DeviceLogger
 {
-    private static readonly string logPath =
-        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "device-log.txt");
+    private static readonly string path = "device-log.txt";
 
-    public static void Log(string message)
+    public static void Log(string msg)
     {
-        var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {message}";
-        File.AppendAllText(logPath, line + Environment.NewLine);
+        var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | {msg}";
+        File.AppendAllText(path, line + Environment.NewLine);
         Console.WriteLine(line);
     }
 }
