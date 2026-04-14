@@ -9,32 +9,38 @@ namespace COSEC_demo.Services
     public class CommTrnService : ICommTrnService
     {
         private readonly ICommTrnRepository _repo;
+        private readonly IUserRepository _userRepo;
 
-        public CommTrnService(ICommTrnRepository repo)
+        public CommTrnService(ICommTrnRepository repo, IUserRepository userRepo)
         {
             _repo = repo;
+            _userRepo = userRepo;
         }
 
-        public async Task<CommTrnResponseDto> CreateCommTrn(CommTrnRequestDto dto)
+        public async Task<List<CommTrnResponseDto>> CreateCommTrnForAllUsers(int deviceId, string typeMid)
         {
-            if (dto.UserId.IsNullOrEmpty())
-                throw new ArgumentException("UserId is required.");
+            var userIds = await _userRepo.GetActiveUserIds();
 
-            if (dto.DeviceId <= 0)
-                throw new ArgumentException("DeviceId is required.");
+            var result = new List<CommTrnResponseDto>();
 
-            string message = BuildMessage(dto.UserId, dto.DeviceId);
-
-            var entity = new CommTrn
+            foreach (var userId in userIds)
             {
-                MsgStr = message,
-                RetryCnt = 0,
-                TrnStat = 0
-            };
+                string message = BuildMessage(userId, deviceId);
 
-            var created = await _repo.AddCommTrn(entity);
+                var entity = new CommTrn
+                {
+                    MsgStr = message,
+                    RetryCnt = 0,
+                    TrnStat = 0,
+                    CreatedAt = DateTime.Now,
+                    TypeMID = typeMid
+                };
 
-            return MapToDto(created);
+                var created = await _repo.AddCommTrn(entity);
+                result.Add(MapToDto(created));
+            }
+
+            return result;
         }
 
         private CommTrnResponseDto MapToDto(CommTrn c)
@@ -50,7 +56,7 @@ namespace COSEC_demo.Services
 
         private string BuildMessage(string userId, int deviceId)
         {
-            return $"UID:{userId} | DID:{deviceId} | CMD:SYNC";
+            return $"ENROLL|UID:{userId}|DID:{deviceId}";
         }
     }
 }

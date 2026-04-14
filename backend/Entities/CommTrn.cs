@@ -17,5 +17,7 @@ namespace COSEC_demo.Entities
         public decimal TrnStat { get; set; }
 
         public DateTime CreatedAt { get; set; }
+
+        public string TypeMID { get; set; }
     }
 }
