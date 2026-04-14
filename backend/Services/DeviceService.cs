@@ -1,4 +1,6 @@
-﻿using COSEC_demo.DTOs;
+﻿using System.Security.Cryptography;
+using System.Text;
+using COSEC_demo.DTOs;
 using COSEC_demo.Entities;
 using COSEC_demo.Repositories.Interfaces;
 using COSEC_demo.Services.Interfaces;
@@ -50,7 +52,7 @@ namespace COSEC_demo.Services
                 MACAddr = dto.MACAddr,
                 IPAddr = dto.IPAddr,
                 DeviceType = dto.DeviceType,
-                IsActive = dto.IsActive ? 1 : 0
+                IsActive = dto.IsActive ? 1 : 0,
             };
 
             var created = await _repo.AddDevice(device);
@@ -88,8 +90,23 @@ namespace COSEC_demo.Services
                 MACAddr = d.MACAddr,
                 IPAddr = d.IPAddr,
                 DeviceType = (int)d.DeviceType,
-                IsActive = d.IsActive == 1
+                IsActive = d.IsActive == 1,
+                TypeMID = GenerateTypeMID(d.MACAddr, d.IPAddr) // generated here
             };
+        }
+
+
+        private string GenerateTypeMID(string mac, string ip)
+        {
+            var input = $"{mac}|{ip}";
+            using var md5 = MD5.Create();
+            var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
+
+            var sb = new StringBuilder();
+            foreach (var b in hashBytes)
+                sb.Append(b.ToString("x2"));
+
+            return sb.ToString().Substring(0, 12);
         }
     }
 }

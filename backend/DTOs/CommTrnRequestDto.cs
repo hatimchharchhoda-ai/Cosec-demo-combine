@@ -1,8 +1,8 @@
-﻿﻿namespace COSEC_demo.DTOs
+﻿namespace COSEC_demo.DTOs
 {
     public class CommTrnRequestDto
     {
-        public string UserId { get; set; }
         public int DeviceId { get; set; }
+        public string TypeMID { get; set; }
     }
 }

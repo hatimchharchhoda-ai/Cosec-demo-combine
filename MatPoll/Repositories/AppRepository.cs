@@ -8,84 +8,66 @@ public class AppRepository
 {
     private readonly AppDbContext _db;
 
-    public AppRepository(AppDbContext db)
-    {
-        _db = db;
-    }
+    public AppRepository(AppDbContext db) => _db = db;
 
     // ── Device ────────────────────────────────────────────────────────────────
 
-    // Login: find device by MAC address AND IP address
     public Task<MatDeviceMst?> FindDeviceAsync(decimal deviceId, string mac, string ip)
-    {
-        return _db.Devices.FirstOrDefaultAsync(d =>
+        => _db.Devices.FirstOrDefaultAsync(d =>
             d.DeviceID == deviceId &&
-            d.MACAddr == mac &&
-            d.IPAddr == ip);
-    }
+            d.MACAddr  == mac      &&
+            d.IPAddr   == ip);
 
-    // Refresh token: find device by DeviceID
     public Task<MatDeviceMst?> FindDeviceByIdAsync(decimal deviceId)
-    {
-        return _db.Devices
-            .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
-    }
-
-    // ── User ──────────────────────────────────────────────────────────────────
-
-    public Task<MatUserMst?> FindUserAsync(string userId)
-    {
-        return _db.Users
-            .FirstOrDefaultAsync(u => u.UserID == userId);
-    }
+        => _db.Devices.FirstOrDefaultAsync(d => d.DeviceID == deviceId);
 
     // ── CommTrn ───────────────────────────────────────────────────────────────
 
-    // How many TrnStat=0 rows are waiting? (shown in poll response)
+    // Count how many TrnStat=0 rows are waiting (for all devices)
     public Task<int> CountPendingAsync()
-    {
-        return _db.CommTrns
-            .Where(t => t.TrnStat == 0)
-            .CountAsync();
-    }
+        => _db.CommTrns.CountAsync(t => t.TrnStat == 0);
 
-    // Fetch next bunch of TrnStat=0 rows AND mark them TrnStat=1 (dispatched)
-    // bunchSize comes from appsettings.json → "BunchSize": 50
-    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(int bunchSize)
+    // Check: does this device (TypeMID) have un-ACKed rows (TrnStat=1)?
+    // THIS replaces the BatchCache — TrnStat=1 in DB IS the lock
+    public Task<bool> HasDispatchedRowsAsync(string typeMid)
+        => _db.CommTrns.AnyAsync(t => t.TrnStat == 1 && t.TypeMID == typeMid);
+
+    // Get dispatched rows for this device (for re-sending on reconnect)
+    public Task<List<MatCommTrn>> GetDispatchedRowsAsync(string typeMid)
+        => _db.CommTrns
+            .Where(t => t.TrnStat == 1 && t.TypeMID == typeMid)
+            .OrderBy(t => t.TrnID)
+            .ToListAsync();
+
+    // Fetch next bunch of TrnStat=0 rows and mark them TrnStat=1 with TypeMID
+    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(string typeMid, int bunchSize)
     {
-        // Get the rows
         var rows = await _db.CommTrns
             .Where(t => t.TrnStat == 0)
             .OrderBy(t => t.TrnID)
             .Take(bunchSize)
             .ToListAsync();
 
-        if (rows.Count == 0)
-            return rows;
+        if (rows.Count == 0) return rows;
 
-        // Mark them as dispatched in the same save
         foreach (var row in rows)
-            row.TrnStat = 1;
+        {
+            row.TrnStat  = 1;
+            row.TypeMID  = typeMid;          // stamp device fingerprint
+            row.RetryCnt = (row.RetryCnt ?? 0) + 1;
+        }
 
         await _db.SaveChangesAsync();
         return rows;
     }
 
-    // Get rows currently TrnStat=1 (already dispatched, waiting ACK)
-    // Used to detect: client polling again before ACKing
-    public Task<List<MatCommTrn>> GetDispatchedRowsAsync()
-    {
-        return _db.CommTrns
-            .Where(t => t.TrnStat == 1)
-            .OrderBy(t => t.TrnID)
-            .ToListAsync();
-    }
-
-    // ACK: mark rows as TrnStat=2
-    public async Task<int> MarkAcknowledgedAsync(List<decimal> trnIds)
+    // ACK: mark TrnStat=2 for rows belonging to this TypeMID
+    public async Task<int> MarkAcknowledgedAsync(List<decimal> trnIds, string typeMid)
     {
         var rows = await _db.CommTrns
-            .Where(t => trnIds.Contains(t.TrnID) && t.TrnStat == 1)
+            .Where(t => trnIds.Contains(t.TrnID) &&
+                        t.TypeMID == typeMid      &&
+                        t.TrnStat == 1)
             .ToListAsync();
 
         foreach (var row in rows)
@@ -95,7 +77,25 @@ public class AppRepository
         return rows.Count;
     }
 
-    // Stall recovery: TrnStat=1 rows older than X minutes → reset to 0
+    // RESTORE: reset all TrnStat=1 rows for this TypeMID back to TrnStat=0
+    // Used when device reconnects or user clicks Restore button
+    public async Task<int> RestoreDispatchedAsync(string typeMid)
+    {
+        var rows = await _db.CommTrns
+            .Where(t => t.TrnStat == 1 && t.TypeMID == typeMid)
+            .ToListAsync();
+
+        foreach (var row in rows)
+        {
+            row.TrnStat = 0;
+            row.TypeMID = null;   // clear so they can be picked up fresh
+        }
+
+        await _db.SaveChangesAsync();
+        return rows.Count;
+    }
+
+    // Stall recovery: rows stuck at TrnStat=1 too long → reset back to 0
     public async Task ResetStalledRowsAsync(int timeoutMinutes)
     {
         var cutoff = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
@@ -106,13 +106,14 @@ public class AppRepository
 
         foreach (var row in stalled)
         {
-            var retry = (int)(row.RetryCnt ?? 0) + 1;
-            row.RetryCnt = retry;
-
+            var retry = (int)(row.RetryCnt ?? 0);
             if (retry >= 5)
-                row.TrnStat = 9;   // Failed — give up after 5 tries
+                row.TrnStat = 9;
             else
-                row.TrnStat = 0;   // Back to pending — will be sent again
+            {
+                row.TrnStat = 0;
+                row.TypeMID = null;
+            }
         }
 
         if (stalled.Count > 0)

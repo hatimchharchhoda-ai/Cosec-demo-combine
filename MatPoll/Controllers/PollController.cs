@@ -3,6 +3,7 @@ using MatPoll.Repositories;
 using MatPoll.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace MatPoll.Controllers;
 
@@ -11,160 +12,161 @@ namespace MatPoll.Controllers;
 [Authorize]
 public class PollController : ControllerBase
 {
-    private readonly AppRepository _repo;
-    private readonly BatchCache    _cache;
+    private readonly AppRepository  _repo;
+    private readonly ActivityLogger _actLog;
     private readonly IConfiguration _config;
 
-    public PollController(
-        AppRepository  repo,
-        BatchCache     cache,
-        IConfiguration config)
+    public PollController(AppRepository repo, ActivityLogger actLog, IConfiguration config)
     {
         _repo   = repo;
-        _cache  = cache;
+        _actLog = actLog;
         _config = config;
     }
 
     // ── GET /api/poll ─────────────────────────────────────────────────────────
-    // Device calls this every 8 seconds.
     //
-    // CASE 1 — No pending batch in cache:
-    //   → fetch next 50 rows from DB (TrnStat=0 → TrnStat=1)
-    //   → store BatchToken in cache
-    //   → return rows
+    // TrnStat state machine:
+    //   0 = Pending     → Poll picks these up, flips to 1, sends to client
+    //   1 = Dispatched  → Already sent, waiting for ACK. Poll returns NeedAckFirst.
+    //   2 = Acknowledged→ Client confirmed. Done forever. Never sent again.
+    //   9 = Failed      → Too many retries. Ignored.
     //
-    // CASE 2 — Batch already in cache (device polling again before ACKing):
-    //   → return NeedAckFirst=true with the same BatchToken
-    //   → device must POST /api/poll/ack before it gets new data
-    //
-    // CASE 3 — Cache is empty BUT TrnStat=1 rows exist in DB (server restarted):
-    //   → rebuild cache token from DB rows
-    //   → re-send same rows (idempotent delivery)
+    // RULE: Poll ONLY ever returns TrnStat=0 rows (freshly fetched).
+    //       It NEVER returns TrnStat=1 rows.
+    //       If TrnStat=1 rows exist → tell client to ACK first (no data sent).
+    //       If client lost TrnStat=1 rows (crash) → call POST /api/poll/restore.
     [HttpGet]
     public async Task<IActionResult> Poll()
     {
+        var reqTime  = DateTime.UtcNow;
+        var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
-        if (deviceId == 0)
+        var typeMid  = TokenService.GetTypeMid(User);
+
+        if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
-        // ── CASE 2: batch already in-flight ──────────────────────────────────
-        var existingToken = _cache.Get(deviceId);
-        if (existingToken != null)
-        {
-            // Confirm DB still has TrnStat=1 rows
-            var inFlight = await _repo.GetDispatchedRowsAsync();
-            if (inFlight.Count > 0)
-            {
-                // Tell device: you must ACK batch first
-                return Ok(new PollResponse
-                {
-                    HasData      = false,
-                    NeedAckFirst = true,
-                    BatchToken   = existingToken,
-                    TotalPending = await _repo.CountPendingAsync()
-                });
-            }
+        // Step 1: Any TrnStat=1 rows for this device in DB?
+        var hasDispatched = await _repo.HasDispatchedRowsAsync(typeMid);
 
-            // Rows are gone somehow — clean up stale cache entry
-            _cache.Remove(deviceId);
-        }
-
-        // ── CASE 3: server restarted, cache lost, TrnStat=1 rows still in DB ─
-        var orphaned = await _repo.GetDispatchedRowsAsync();
-        if (orphaned.Count > 0)
+        if (hasDispatched)
         {
-            var recoveredToken = Guid.NewGuid().ToString("N");
-            _cache.Set(deviceId, recoveredToken);
+            // Do NOT send any rows.
+            // Client already has them (they are TrnStat=1 = already sent).
+            // Just tell the client: ACK your pending batch first.
+            var total = await _repo.CountPendingAsync();
+
+            _actLog.LogPoll(typeMid, deviceId,
+                hasData: false, needAckFirst: true,
+                rowsSent: 0, totalPending: total,
+                reqTime, sw.ElapsedMilliseconds);
 
             return Ok(new PollResponse
             {
-                HasData      = true,
-                BatchToken   = recoveredToken,
-                TotalPending = await _repo.CountPendingAsync(),
-                Rows = orphaned.Select(r => new TrnRow
-                {
-                    TrnID    = r.TrnID,
-                    MsgStr   = r.MsgStr,
-                    RetryCnt = r.RetryCnt ?? 0
-                }).ToList()
+                HasData      = false,
+                NeedAckFirst = true,
+                TotalPending = total,
+                TypeMID      = typeMid,
+                Rows         = new List<TrnRow>()  // always empty when NeedAckFirst
             });
         }
 
-        // ── CASE 1: normal — fetch next bunch ─────────────────────────────────
+        // Step 2: No in-flight rows. Fetch fresh TrnStat=0 rows.
+        // FetchAndMarkDispatchedAsync: SELECT TOP N WHERE TrnStat=0
+        //                              then UPDATE TrnStat=1 in same call.
         var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "50");
-        var rows = await _repo.FetchAndMarkDispatchedAsync(bunchSize);
+        var rows      = await _repo.FetchAndMarkDispatchedAsync(typeMid, bunchSize);
+        var pending   = await _repo.CountPendingAsync();
 
         if (rows.Count == 0)
         {
             // Nothing to send right now
+            _actLog.LogPoll(typeMid, deviceId,
+                false, false, 0, pending, reqTime, sw.ElapsedMilliseconds);
+
             return Ok(new PollResponse
             {
                 HasData      = false,
-                TotalPending = 0
+                NeedAckFirst = false,
+                TotalPending = pending,
+                TypeMID      = typeMid,
+                Rows         = new List<TrnRow>()
             });
         }
 
-        var batchToken = Guid.NewGuid().ToString("N");
-        _cache.Set(deviceId, batchToken);
+        // Fresh rows fetched (were TrnStat=0, now TrnStat=1 in DB)
+        _actLog.LogPoll(typeMid, deviceId,
+            true, false, rows.Count, pending, reqTime, sw.ElapsedMilliseconds);
 
         return Ok(new PollResponse
         {
             HasData      = true,
-            BatchToken   = batchToken,
-            TotalPending = await _repo.CountPendingAsync(),
+            NeedAckFirst = false,
+            TotalPending = pending,
+            TypeMID      = typeMid,
             Rows = rows.Select(r => new TrnRow
             {
                 TrnID    = r.TrnID,
                 MsgStr   = r.MsgStr,
-                RetryCnt = r.RetryCnt ?? 0
+                RetryCnt = r.RetryCnt ?? 0,
+                TypeMID  = r.TypeMID
             }).ToList()
         });
     }
 
     // ── POST /api/poll/ack ────────────────────────────────────────────────────
-    // Device calls this after processing all rows in a batch.
-    // Body: { "batchToken": "abc", "trnIDs": [1, 2, 3] }
+    // Client processed the rows. Mark them TrnStat=2 (done forever).
     [HttpPost("ack")]
     public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
+        var reqTime  = DateTime.UtcNow;
+        var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
-        if (deviceId == 0)
+        var typeMid  = TokenService.GetTypeMid(User);
+
+        if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
-        // Check batch token matches what we issued
-        var expectedToken = _cache.Get(deviceId);
+        // Only marks rows that are TrnStat=1 AND TypeMID matches this device.
+        // Prevents ACKing someone else's rows or already-ACKed rows.
+        var count = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
 
-        if (expectedToken == null)
-        {
-            // No active batch — maybe already ACKed (duplicate request)
-            return Ok(new AckResponse
-            {
-                Success      = true,
-                Message      = "Already acknowledged (no active batch found).",
-                UpdatedCount = 0
-            });
-        }
-
-        if (expectedToken != req.BatchToken)
-        {
-            return BadRequest(new AckResponse
-            {
-                Success = false,
-                Message = $"Wrong batch token. Expected a different token."
-            });
-        }
-
-        // Mark TrnStat=2 in DB
-        var count = await _repo.MarkAcknowledgedAsync(req.TrnIDs);
-
-        // Clear cache — device is now free to get next bunch
-        _cache.Remove(deviceId);
+        _actLog.LogAck(typeMid, deviceId, req.TrnIDs, count,
+            true, reqTime, sw.ElapsedMilliseconds);
 
         return Ok(new AckResponse
         {
             Success      = true,
-            Message      = $"{count} rows acknowledged. Poll again for next batch.",
+            Message      = $"{count} rows marked as acknowledged (TrnStat=2).",
             UpdatedCount = count
+        });
+    }
+
+    // ── POST /api/poll/restore ────────────────────────────────────────────────
+    // Use when: device crashed and lost its TrnStat=1 rows from memory.
+    // Resets TrnStat=1 → TrnStat=0 for this device's TypeMID.
+    // On next poll, those rows come back as fresh TrnStat=0 → sent again.
+    [HttpPost("restore")]
+    public async Task<IActionResult> Restore()
+    {
+        var reqTime  = DateTime.UtcNow;
+        var sw       = Stopwatch.StartNew();
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
+
+        if (string.IsNullOrEmpty(typeMid))
+            return Unauthorized();
+
+        var count = await _repo.RestoreDispatchedAsync(typeMid);
+
+        _actLog.LogRestore(typeMid, deviceId, count, reqTime, sw.ElapsedMilliseconds);
+
+        return Ok(new RestoreResponse
+        {
+            Success       = true,
+            Message       = $"{count} rows restored to TrnStat=0. Poll again to receive them.",
+            RestoredCount = count,
+            TypeMID       = typeMid
         });
     }
 }

@@ -22,32 +22,18 @@ namespace COSEC_demo.Contollers
         {
             try
             {
-                var result = await _service.CreateCommTrn(dto);
+                var result = await _service.CreateCommTrnForAllUsers(dto.DeviceId, dto.TypeMID);
 
-                return Ok(new ApiResponseDto<CommTrnResponseDto>
+                return Ok(new ApiResponseDto<object>
                 {
                     Success = true,
-                    Message = "CommTrn created successfully",
-                    Data = null
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new ApiResponseDto<object>
-                {
-                    Success = false,
-                    Message = ex.Message,
+                    Message = $"CommTrn created for {result.Count} users",
                     Data = null
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiResponseDto<object>
-                {
-                    Success = false,
-                    Message = ex.InnerException?.Message ?? ex.Message,
-                    Data = null
-                });
+                return StatusCode(500, ex.Message);
             }
         }
     }

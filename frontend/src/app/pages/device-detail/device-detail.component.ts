@@ -38,7 +38,8 @@ export class DeviceDetailComponent implements OnInit {
         deviceName: '',
         macAddr: '',
         ipAddr: '',
-        deviceType: ''
+        deviceType: '',
+        typeMID: '',
       };
 
       return;
@@ -94,7 +95,7 @@ export class DeviceDetailComponent implements OnInit {
     }
     
     this.commTrn
-      .syncUserToDevice(userId, this.device.deviceID)
+      .syncUserToDevice(this.device.deviceID, this.device.typeMID)
       .subscribe({
         next: () => {
           this.toast.success('Sync request sent to device successfully');

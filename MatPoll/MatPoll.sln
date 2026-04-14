@@ -1,7 +1,6 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.37111.16 d17.14
+VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatPoll", "MatPoll.csproj", "{8CD1064E-96AD-F52F-6B69-AEC2488BE6B0}"
 EndProject
@@ -20,6 +19,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {32FD1EDF-17EF-4CF2-A990-287E4B01F613}
+		SolutionGuid = {CD4D1B8C-8BE0-44D3-BC4E-3A403F38E938}
 	EndGlobalSection
 EndGlobal
