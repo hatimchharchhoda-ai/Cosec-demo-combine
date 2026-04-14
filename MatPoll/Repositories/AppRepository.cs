@@ -31,14 +31,6 @@ public class AppRepository
             .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
     }
 
-    // ── User ──────────────────────────────────────────────────────────────────
-
-    public Task<MatUserMst?> FindUserAsync(string userId)
-    {
-        return _db.Users
-            .FirstOrDefaultAsync(u => u.UserID == userId);
-    }
-
     // ── CommTrn ───────────────────────────────────────────────────────────────
 
     // How many TrnStat=0 rows are waiting? (shown in poll response)
@@ -50,7 +42,7 @@ public class AppRepository
     }
 
     // Fetch next bunch of TrnStat=0 rows AND mark them TrnStat=1 (dispatched)
-    // bunchSize comes from appsettings.json → "BunchSize": 50
+    // bunchSize comes from appsettings.json → "BunchSize": 3
     public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(int bunchSize)
     {
         // Get the rows
@@ -98,7 +90,7 @@ public class AppRepository
     // Stall recovery: TrnStat=1 rows older than X minutes → reset to 0
     public async Task ResetStalledRowsAsync(int timeoutMinutes)
     {
-        var cutoff = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
+        var cutoff = DateTime.Now.AddMinutes(-timeoutMinutes);
 
         var stalled = await _db.CommTrns
             .Where(t => t.TrnStat == 1 && t.CreatedAt < cutoff)

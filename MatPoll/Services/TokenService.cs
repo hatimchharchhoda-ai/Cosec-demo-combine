@@ -18,7 +18,7 @@ public class TokenService
     public string CreateToken(decimal deviceId)
     {
         var secret = _config["Jwt:Secret"]!;
-        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

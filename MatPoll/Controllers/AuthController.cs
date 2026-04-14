@@ -57,7 +57,7 @@ public class AuthController : ControllerBase
 
         // Create token with ONLY deviceId
         var token = _tokenService.CreateToken(device.DeviceID);
-        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
 
         TokenService.SetCookie(Response, token, expMins);
 
@@ -72,7 +72,7 @@ public class AuthController : ControllerBase
 
     // ── POST /api/auth/refresh ────────────────────────────────────────────────
     // Client sends empty POST — server reads old token from cookie
-    // Re-validates user + device are still active
+    // Re-validates device are still active
     // Issues a fresh token with new expiry
     [HttpPost("refresh")]
     [AllowAnonymous]
@@ -125,12 +125,12 @@ public class AuthController : ControllerBase
             return Unauthorized(new RefreshResponse
             {
                 Success = false,
-                Message = "User or device is no longer active."
+                Message = "Device is no longer active."
             });
 
         // Issue new token
         var newToken = _tokenService.CreateToken(deviceId);
-        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
 
         TokenService.SetCookie(Response, newToken, expMins);
 
@@ -142,7 +142,7 @@ public class AuthController : ControllerBase
         });
     }
 
-    // ── POST /api/auth/logout ─────────────────────────────────────────────────
+    // ── POST /api/auth/logout 
     [HttpPost("logout")]
     [Authorize]
     public IActionResult Logout()

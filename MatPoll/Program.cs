@@ -46,6 +46,7 @@ builder.Services
             ValidIssuer              = "MatPoll",
             ValidateAudience         = true,
             ValidAudience            = "MatPollClient",
+            ValidateLifetime         = true,
             ClockSkew                = TimeSpan.Zero    // no grace period
         };
 

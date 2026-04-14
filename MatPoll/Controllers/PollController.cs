@@ -25,21 +25,6 @@ public class PollController : ControllerBase
         _config = config;
     }
 
-    // ── GET /api/poll ─────────────────────────────────────────────────────────
-    // Device calls this every 8 seconds.
-    //
-    // CASE 1 — No pending batch in cache:
-    //   → fetch next 50 rows from DB (TrnStat=0 → TrnStat=1)
-    //   → store BatchToken in cache
-    //   → return rows
-    //
-    // CASE 2 — Batch already in cache (device polling again before ACKing):
-    //   → return NeedAckFirst=true with the same BatchToken
-    //   → device must POST /api/poll/ack before it gets new data
-    //
-    // CASE 3 — Cache is empty BUT TrnStat=1 rows exist in DB (server restarted):
-    //   → rebuild cache token from DB rows
-    //   → re-send same rows (idempotent delivery)
     [HttpGet]
     public async Task<IActionResult> Poll()
     {
@@ -91,7 +76,7 @@ public class PollController : ControllerBase
         }
 
         // ── CASE 1: normal — fetch next bunch ─────────────────────────────────
-        var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "50");
+        var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "3");
         var rows = await _repo.FetchAndMarkDispatchedAsync(bunchSize);
 
         if (rows.Count == 0)
@@ -121,9 +106,6 @@ public class PollController : ControllerBase
         });
     }
 
-    // ── POST /api/poll/ack ────────────────────────────────────────────────────
-    // Device calls this after processing all rows in a batch.
-    // Body: { "batchToken": "abc", "trnIDs": [1, 2, 3] }
     [HttpPost("ack")]
     public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
