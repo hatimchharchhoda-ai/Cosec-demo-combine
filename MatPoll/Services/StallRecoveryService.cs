@@ -35,7 +35,7 @@ public class StallRecoveryService : BackgroundService
 
                 await repo.ResetStalledRowsAsync(timeoutMinutes: 5);
 
-                _logger.LogInformation("[StallRecovery] Ran at {Time}", DateTime.Now);
+                _logger.LogInformation("[StallRecovery] Ran at {Time}", DateTime.UtcNow);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex)

@@ -23,5 +23,9 @@ public class AppDbContext : DbContext
         b.Entity<MatCommTrn>()
             .Property(t => t.TrnID)
             .ValueGeneratedOnAdd();
+
+        b.Entity<MatCommTrn>()
+        .Property(x => x.CreatedAt)
+        .IsConcurrencyToken(false);
     }
 }

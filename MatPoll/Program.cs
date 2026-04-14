@@ -6,33 +6,36 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.Console(
+        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.File(
+        path:            "Logs/matpoll-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30,
+        outputTemplate:  "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
-// ── 1. Database ───────────────────────────────────────────────────────────────
+// ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── 2. App services ───────────────────────────────────────────────────────────
-builder.Services.AddScoped<AppRepository>();           // new instance per request
-builder.Services.AddSingleton<TokenService>();         // one instance for all
-builder.Services.AddSingleton<BatchCache>();           // one instance for all
-builder.Services.AddHostedService<StallRecoveryService>(); // background cleanup
+// ── Services ──────────────────────────────────────────────────────────────────
+builder.Services.AddScoped<AppRepository>();
+builder.Services.AddSingleton<TokenService>();
+builder.Services.AddSingleton<ActivityLogger>();   // structured event logger
+// BatchCache is REMOVED — TrnStat=1 in DB is the lock now
+builder.Services.AddHostedService<StallRecoveryService>();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AngularCors", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();   // 🔥 required for HttpOnly cookie
-    });
-});
-
-// ── 3. JWT Authentication ─────────────────────────────────────────────────────
+// ── JWT ───────────────────────────────────────────────────────────────────────
 var secret = builder.Configuration["Jwt:Secret"]
-    ?? throw new Exception("Jwt:Secret missing in appsettings.json");
+    ?? throw new Exception("Jwt:Secret missing");
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -41,24 +44,19 @@ builder.Services
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret)),
-            ValidateIssuer           = true,
-            ValidIssuer              = "MatPoll",
-            ValidateAudience         = true,
-            ValidAudience            = "MatPollClient",
-            ValidateLifetime         = true,
-            ClockSkew                = TimeSpan.Zero    // no grace period
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(secret)),
+            ValidateIssuer   = true, ValidIssuer   = "MatPoll",
+            ValidateAudience = true, ValidAudience = "MatPollClient",
+            ClockSkew        = TimeSpan.Zero
         };
-
-        // Read JWT from cookie "mat_auth" if no Authorization header present
+        // Read token from cookie if no Authorization header
         opt.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
             {
-                // Check cookie first
-                var cookieToken = ctx.Request.Cookies["mat_auth"];
-                if (!string.IsNullOrEmpty(cookieToken))
-                    ctx.Token = cookieToken;
+                var c = ctx.Request.Cookies["mat_auth"];
+                if (!string.IsNullOrEmpty(c)) ctx.Token = c;
                 return Task.CompletedTask;
             }
         };
@@ -67,60 +65,47 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// ── 4. Swagger ────────────────────────────────────────────────────────────────
+// ── Swagger ───────────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title   = "MatPoll API",
-        Version = "v1",
-        Description = "Polling server for Mat_CommTrn"
+        Title       = "MatPoll API",
+        Version     = "v1",
+        Description = "Device polling server — login by DeviceID+MAC+IP, TypeMID-based dispatch"
     });
-
-    // Add Bearer token input box in Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name        = "Authorization",
         Type        = SecuritySchemeType.Http,
         Scheme      = "bearer",
         BearerFormat = "JWT",
-        In          = ParameterLocation.Header,
-        Description = "After login, paste your token here"
+        In          = ParameterLocation.Header
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {{
         new OpenApiSecurityScheme
         {
             Reference = new OpenApiReference
-            {
-                Type = ReferenceType.SecurityScheme,
-                Id   = "Bearer"
-            }
+                { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
         },
         Array.Empty<string>()
     }});
 });
 
-// ── 5. Build pipeline ─────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// Always show Swagger (remove UseSwagger in production if you want)
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll API v1");
-    c.RoutePrefix = string.Empty;   // Swagger opens at root: http://localhost:5000/
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1");
+    c.RoutePrefix = string.Empty;
 });
 
-app.UseHttpsRedirection();
-
-app.UseCors("AngularCors");
-
-app.UseAuthentication();   // reads JWT from cookie or header
+app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
+Log.Information("MatPoll server started");
 app.Run();
