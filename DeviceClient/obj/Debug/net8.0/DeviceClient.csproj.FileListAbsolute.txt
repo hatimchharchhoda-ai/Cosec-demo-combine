@@ -1,0 +1,15 @@
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\DeviceClient.exe
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\DeviceClient.deps.json
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\DeviceClient.runtimeconfig.json
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\DeviceClient.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\DeviceClient.pdb
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.GeneratedMSBuildEditorConfig.editorconfig
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.AssemblyInfoInputs.cache
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.AssemblyInfo.cs
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.csproj.CoreCompileInputs.cache
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.sourcelink.json
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.dll
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\refint\DeviceClient.dll
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.pdb
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.genruntimeconfig.cache
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\ref\DeviceClient.dll
