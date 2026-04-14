@@ -6,7 +6,7 @@ import { ApiResponse, UserDto, UserListResponse } from '../Model/user.model';
 @Injectable({ providedIn: 'root' })
 export class UserService {
   // ← your actual API base URL
-  private apiUrl = 'https://localhost:7192/api/User';
+  private apiUrl = 'http://localhost:5210/api/User';
 
   constructor(private http: HttpClient) {}
 
