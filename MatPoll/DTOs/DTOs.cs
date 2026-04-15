@@ -50,16 +50,18 @@ public class TrnRow
 // ── ACK ───────────────────────────────────────────────────────────────────────
 public class AckRequest
 {
-    public List<decimal> TrnIDs { get; set; } = new();
+    public List<decimal> TrnIDs  { get; set; } = new();
+    public string?       Message { get; set; }   // NEW: optional message from client
+    public string?       Header  { get; set; }   // NEW: optional header from client
 }
-
+ 
 public class AckResponse
 {
     public bool   Success      { get; set; }
     public string Message      { get; set; } = string.Empty;
     public int    UpdatedCount { get; set; }
 }
-
+ 
 // ── Restore ───────────────────────────────────────────────────────────────────
 // Client calls this to reset all TrnStat=1 rows for its TypeMID back to 0
 public class RestoreResponse

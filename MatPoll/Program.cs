@@ -11,17 +11,21 @@ using Serilog;
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
 
-    // ❌ ONLY disable SQL logs (THIS is the key line)
+    // Suppress noisy EF SQL logs
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
+    // Suppress ASP.NET request pipeline noise
+    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
 
+    // Console: just the message — ActivityLogger already stamps the timestamp
     .WriteTo.Console(
-        outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+        outputTemplate: "{Message:lj}{NewLine}{Exception}")
 
+    // File: same clean message-only format
     .WriteTo.File(
         path: "Logs/matpoll-.log",
         rollingInterval: RollingInterval.Day,
         retainedFileCountLimit: 30,
-        outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+        outputTemplate: "{Message:lj}{NewLine}{Exception}")
 
     .CreateLogger();
 
@@ -35,8 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
-builder.Services.AddSingleton<ActivityLogger>();   // structured event logger
-// BatchCache is REMOVED — TrnStat=1 in DB is the lock now
+builder.Services.AddSingleton<ActivityLogger>();
 builder.Services.AddHostedService<StallRecoveryService>();
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
@@ -56,7 +59,6 @@ builder.Services
             ValidateAudience = true, ValidAudience = "MatPollClient",
             ClockSkew        = TimeSpan.Zero
         };
-        // Read token from cookie if no Authorization header
         opt.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
@@ -83,11 +85,11 @@ builder.Services.AddSwaggerGen(c =>
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name        = "Authorization",
-        Type        = SecuritySchemeType.Http,
-        Scheme      = "bearer",
+        Name         = "Authorization",
+        Type         = SecuritySchemeType.Http,
+        Scheme       = "bearer",
         BearerFormat = "JWT",
-        In          = ParameterLocation.Header
+        In           = ParameterLocation.Header
     });
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {{
@@ -113,5 +115,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-Log.Information("MatPoll server started");
+Log.Information("2026-04-15 00:00:00 | SERVER STARTED   | MatPoll is running");
 app.Run();

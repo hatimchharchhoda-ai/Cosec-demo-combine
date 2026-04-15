@@ -13,6 +13,7 @@ D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\refint\DeviceClient.dll
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.pdb
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.genruntimeconfig.cache
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\ref\DeviceClient.dll
+<<<<<<< HEAD
 D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\DeviceClient.exe
 D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\DeviceClient.deps.json
 D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\DeviceClient.runtimeconfig.json
@@ -28,3 +29,23 @@ D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\refint\DeviceClient.dll
 D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\DeviceClient.pdb
 D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\DeviceClient.genruntimeconfig.cache
 D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\ref\DeviceClient.dll
+=======
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.csproj.AssemblyReference.cache
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceCl.D87C4E42.Up2Date
+>>>>>>> 3217a3bad72cbb05c6d03f79e814064159bf59e8
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+D:\Cosec-demo-combine\DeviceClient\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\DeviceClient.csproj.AssemblyReference.cache
+D:\Cosec-demo-combine\DeviceClient\obj\Debug\net8.0\DeviceCl.D87C4E42.Up2Date
