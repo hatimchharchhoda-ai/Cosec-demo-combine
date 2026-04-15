@@ -1699,3 +1699,111 @@ The decimal property 'DeviceID' is part of a key on entity type 'MatDeviceMst'. 
 [StallRecovery] Ran at "2026-04-15T11:42:04.3441816+05:30"
 [StallRecovery] Ran at "2026-04-15T11:44:04.3872274+05:30"
 Application is shutting down...
+2026-04-15 00:00:00 | SERVER STARTED   | MatPoll is running
+Now listening on: http://localhost:5000
+Application started. Press Ctrl+C to shut down.
+Hosting environment: Production
+Content root path: D:\Cosec-demo-combine\MatPoll
+The decimal property 'TrnID' is part of a key on entity type 'MatCommTrn'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+The decimal property 'DeviceID' is part of a key on entity type 'MatDeviceMst'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+2026-04-15 11:53:16 | LOGIN SUCCESS    | TypeMID=1b4295cb5abd | Device=R&D1 - Ground Floor (1) | 628ms
+2026-04-15 11:53:42 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=0 | 80ms
+2026-04-15 11:53:42 | ACK HEADER       | TypeMID=1b4295cb5abd | string
+2026-04-15 11:53:42 | ACK MESSAGE      | TypeMID=1b4295cb5abd | string
+2026-04-15 11:54:06 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=0 | 98ms
+2026-04-15 11:54:06 | ACK HEADER       | TypeMID=1b4295cb5abd | string
+2026-04-15 11:54:06 | ACK MESSAGE      | TypeMID=1b4295cb5abd | sent sucess
+[StallRecovery] Ran at "2026-04-15T11:54:42.0579063+05:30"
+2026-04-15 11:56:05 | LOGIN SUCCESS    | TypeMID=1b4295cb5abd | Device=R&D1 - Ground Floor (1) | 3ms
+2026-04-15 11:56:05 | RESTORE called   | TypeMID=1b4295cb5abd | Rows=0 | 18ms
+2026-04-15 11:56:05 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40084,40085,40086
+2026-04-15 11:56:07 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 169ms
+2026-04-15 11:56:16 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40087,40088,40089
+2026-04-15 11:56:18 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 166ms
+2026-04-15 11:56:26 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40090,40091,40092
+2026-04-15 11:56:28 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 139ms
+2026-04-15 11:56:36 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40093,40094,40095
+2026-04-15 11:56:39 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 135ms
+[StallRecovery] Ran at "2026-04-15T11:56:42.1106518+05:30"
+[StallRecovery] Ran at "2026-04-15T11:58:42.1483641+05:30"
+2026-04-15 11:59:28 | LOGIN SUCCESS    | TypeMID=1b4295cb5abd | Device=R&D1 - Ground Floor (1) | 3ms
+2026-04-15 11:59:28 | RESTORE called   | TypeMID=1b4295cb5abd | Rows=0 | 4ms
+2026-04-15 11:59:28 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40096,40097,40098
+2026-04-15 11:59:30 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 14ms
+2026-04-15 11:59:38 | DATA RECEIVED    | TypeMID=1b4295cb5abd | 40099,40100,40101
+2026-04-15 11:59:40 | ACK SENT         | TypeMID=1b4295cb5abd | Rows=3 | 13ms
+[StallRecovery] Ran at "2026-04-15T12:00:42.1650159+05:30"
+[StallRecovery] Ran at "2026-04-15T12:02:42.1939953+05:30"
+[StallRecovery] Ran at "2026-04-15T12:04:42.2153913+05:30"
+[StallRecovery] Ran at "2026-04-15T12:06:42.2375883+05:30"
+[StallRecovery] Ran at "2026-04-15T12:08:42.2662059+05:30"
+[StallRecovery] Ran at "2026-04-15T12:10:42.2872815+05:30"
+[StallRecovery] Ran at "2026-04-15T12:12:42.3200031+05:30"
+[StallRecovery] Ran at "2026-04-15T12:14:42.3555803+05:30"
+[StallRecovery] Ran at "2026-04-15T12:16:42.3894765+05:30"
+[StallRecovery] Ran at "2026-04-15T12:18:42.4078479+05:30"
+[StallRecovery] Ran at "2026-04-15T12:20:42.4231780+05:30"
+[StallRecovery] Ran at "2026-04-15T12:22:42.4426972+05:30"
+[StallRecovery] Ran at "2026-04-15T12:24:42.4589993+05:30"
+[StallRecovery] Ran at "2026-04-15T12:26:42.4683948+05:30"
+[StallRecovery] Ran at "2026-04-15T12:28:42.4911893+05:30"
+[StallRecovery] Ran at "2026-04-15T12:30:42.5178144+05:30"
+[StallRecovery] Ran at "2026-04-15T12:32:48.6940906+05:30"
+[StallRecovery] Ran at "2026-04-15T12:34:48.7106994+05:30"
+[StallRecovery] Ran at "2026-04-15T12:36:48.7246995+05:30"
+[StallRecovery] Ran at "2026-04-15T12:38:48.7488530+05:30"
+[StallRecovery] Ran at "2026-04-15T12:40:48.8034765+05:30"
+[StallRecovery] Ran at "2026-04-15T12:42:48.8701221+05:30"
+[StallRecovery] Ran at "2026-04-15T12:44:48.8906673+05:30"
+[StallRecovery] Ran at "2026-04-15T12:46:48.8990953+05:30"
+[StallRecovery] Ran at "2026-04-15T12:48:48.9067227+05:30"
+[StallRecovery] Ran at "2026-04-15T12:50:48.9370811+05:30"
+[StallRecovery] Ran at "2026-04-15T12:52:48.9722533+05:30"
+[StallRecovery] Ran at "2026-04-15T12:54:49.0047382+05:30"
+[StallRecovery] Ran at "2026-04-15T12:56:49.0184992+05:30"
+[StallRecovery] Ran at "2026-04-15T12:58:49.0403241+05:30"
+[StallRecovery] Ran at "2026-04-15T13:00:49.0485250+05:30"
+[StallRecovery] Ran at "2026-04-15T13:02:49.0480342+05:30"
+[StallRecovery] Ran at "2026-04-15T13:04:49.0540184+05:30"
+[StallRecovery] Ran at "2026-04-15T13:06:49.0731334+05:30"
+[StallRecovery] Ran at "2026-04-15T13:08:49.1013710+05:30"
+[StallRecovery] Ran at "2026-04-15T13:10:49.1261899+05:30"
+[StallRecovery] Ran at "2026-04-15T13:12:49.1583835+05:30"
+[StallRecovery] Ran at "2026-04-15T13:14:49.1628853+05:30"
+[StallRecovery] Ran at "2026-04-15T13:16:49.1669704+05:30"
+[StallRecovery] Ran at "2026-04-15T13:18:49.1822162+05:30"
+[StallRecovery] Ran at "2026-04-15T13:20:49.1863712+05:30"
+[StallRecovery] Ran at "2026-04-15T13:22:49.1955917+05:30"
+[StallRecovery] Ran at "2026-04-15T13:24:49.2065198+05:30"
+[StallRecovery] Ran at "2026-04-15T13:26:49.2373344+05:30"
+[StallRecovery] Ran at "2026-04-15T13:28:49.2725743+05:30"
+[StallRecovery] Ran at "2026-04-15T13:30:49.2922850+05:30"
+[StallRecovery] Ran at "2026-04-15T13:32:49.3020941+05:30"
+[StallRecovery] Ran at "2026-04-15T13:34:49.3115149+05:30"
+[StallRecovery] Ran at "2026-04-15T13:36:49.3293138+05:30"
+[StallRecovery] Ran at "2026-04-15T13:38:49.3307788+05:30"
+[StallRecovery] Ran at "2026-04-15T13:40:49.3375718+05:30"
+[StallRecovery] Ran at "2026-04-15T13:42:49.3518826+05:30"
+[StallRecovery] Ran at "2026-04-15T13:44:49.3688455+05:30"
+[StallRecovery] Ran at "2026-04-15T13:46:49.3932761+05:30"
+[StallRecovery] Ran at "2026-04-15T13:48:49.4139395+05:30"
+[StallRecovery] Ran at "2026-04-15T13:50:49.4338045+05:30"
+[StallRecovery] Ran at "2026-04-15T13:52:49.4414199+05:30"
+[StallRecovery] Ran at "2026-04-15T13:54:49.4542392+05:30"
+[StallRecovery] Ran at "2026-04-15T13:56:49.4741007+05:30"
+[StallRecovery] Ran at "2026-04-15T13:58:49.4963990+05:30"
+[StallRecovery] Ran at "2026-04-15T14:00:49.5206079+05:30"
+[StallRecovery] Ran at "2026-04-15T14:02:49.5547103+05:30"
+[StallRecovery] Ran at "2026-04-15T14:04:49.5874449+05:30"
+[StallRecovery] Ran at "2026-04-15T14:06:49.5996598+05:30"
+[StallRecovery] Ran at "2026-04-15T14:08:49.6123804+05:30"
+[StallRecovery] Ran at "2026-04-15T14:10:49.6346335+05:30"
+[StallRecovery] Ran at "2026-04-15T14:12:49.6494496+05:30"
+[StallRecovery] Ran at "2026-04-15T14:14:49.6775135+05:30"
+[StallRecovery] Ran at "2026-04-15T14:16:49.7138893+05:30"
+[StallRecovery] Ran at "2026-04-15T14:18:49.7273045+05:30"
+[StallRecovery] Ran at "2026-04-15T14:20:49.7530032+05:30"
+[StallRecovery] Ran at "2026-04-15T14:22:49.7699533+05:30"
+[StallRecovery] Ran at "2026-04-15T14:24:49.7995478+05:30"
+[StallRecovery] Ran at "2026-04-15T14:26:49.8145025+05:30"
+Application is shutting down...
