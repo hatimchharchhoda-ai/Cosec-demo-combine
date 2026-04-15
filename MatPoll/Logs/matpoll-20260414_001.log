@@ -4301,3 +4301,835 @@ FROM [Mat_CommTrn] AS [m]
 WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
 [2026-04-14 16:43:25.525 INF] [StallRecovery] Ran at "2026-04-14T11:13:25.5255300Z"
 [2026-04-14 16:44:16.623 INF] Application is shutting down...
+[2026-04-14 16:57:53.234 INF] MatPoll server started
+[2026-04-14 16:57:53.282 INF] User profile is available. Using 'C:\Users\hatim.chharchhoda\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+[2026-04-14 16:57:53.324 INF] Now listening on: http://localhost:5000
+[2026-04-14 16:57:53.326 INF] Application started. Press Ctrl+C to shut down.
+[2026-04-14 16:57:53.327 INF] Hosting environment: Production
+[2026-04-14 16:57:53.328 INF] Content root path: D:\COSEC-demo\MatPoll
+[2026-04-14 16:59:53.518 WRN] The decimal property 'TrnID' is part of a key on entity type 'MatCommTrn'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+[2026-04-14 16:59:53.519 WRN] The decimal property 'DeviceID' is part of a key on entity type 'MatDeviceMst'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+[2026-04-14 16:59:53.782 INF] Executed DbCommand (18ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 16:59:53.796 INF] [StallRecovery] Ran at "2026-04-14T11:29:53.7965413Z"
+[2026-04-14 17:00:10.064 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json; charset=utf-8 69
+[2026-04-14 17:00:10.096 INF] Executing endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:00:10.105 INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(MatPoll.DTOs.LoginRequest) on controller MatPoll.Controllers.AuthController (MatPoll).
+[2026-04-14 17:00:10.143 INF] Executed DbCommand (2ms) [Parameters=[@__deviceId_0='?' (Precision = 5) (DbType = Decimal), @__mac_1='?' (Size = 50), @__ip_2='?' (Size = 50)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [m].[DeviceID], [m].[DeviceName], [m].[DeviceType], [m].[IPAddr], [m].[IsActive], [m].[MACAddr]
+FROM [Mat_DeviceMst] AS [m]
+WHERE [m].[DeviceID] = @__deviceId_0 AND [m].[MACAddr] = @__mac_1 AND [m].[IPAddr] = @__ip_2
+[2026-04-14 17:00:10.183 INF] [LOGIN] TypeMID:0c6fa9010957 DeviceID:2 Name:HO - Ground Floor Result:SUCCESS Duration:55ms
+[2026-04-14 17:00:10.186 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.LoginResponse'.
+[2026-04-14 17:00:10.193 INF] Executed action MatPoll.Controllers.AuthController.Login (MatPoll) in 85.013ms
+[2026-04-14 17:00:10.195 INF] Executed endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:00:10.198 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 135.3056ms
+[2026-04-14 17:00:10.210 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/restore - null 0
+[2026-04-14 17:00:10.233 INF] Executing endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:00:10.236 INF] Route matched with {action = "Restore", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Restore() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:10.278 INF] Executed DbCommand (1ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0
+[2026-04-14 17:00:10.287 WRN] [REST ] TypeMID:0c6fa9010957 DeviceID:2 RestoredRows:0 ReqTime:11:30:10.239 Duration:47ms
+[2026-04-14 17:00:10.288 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.RestoreResponse'.
+[2026-04-14 17:00:10.292 INF] Executed action MatPoll.Controllers.PollController.Restore (MatPoll) in 54.4269ms
+[2026-04-14 17:00:10.292 INF] Executed endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:00:10.293 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/restore - 200 null application/json; charset=utf-8 83.5473ms
+[2026-04-14 17:00:10.297 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:10.303 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:10.306 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:10.328 INF] Executed DbCommand (10ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:10.340 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:10.394 INF] Executed DbCommand (6ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:10.432 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:10.434 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:4022 ReqTime:11:30:10.308 Duration:126ms
+[2026-04-14 17:00:10.436 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:10.441 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 134.1464ms
+[2026-04-14 17:00:10.442 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:10.442 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 145.1101ms
+[2026-04-14 17:00:12.351 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json; charset=utf-8 69
+[2026-04-14 17:00:12.353 INF] Executing endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:00:12.354 INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(MatPoll.DTOs.LoginRequest) on controller MatPoll.Controllers.AuthController (MatPoll).
+[2026-04-14 17:00:12.358 INF] Executed DbCommand (0ms) [Parameters=[@__deviceId_0='?' (Precision = 5) (DbType = Decimal), @__mac_1='?' (Size = 50), @__ip_2='?' (Size = 50)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [m].[DeviceID], [m].[DeviceName], [m].[DeviceType], [m].[IPAddr], [m].[IsActive], [m].[MACAddr]
+FROM [Mat_DeviceMst] AS [m]
+WHERE [m].[DeviceID] = @__deviceId_0 AND [m].[MACAddr] = @__mac_1 AND [m].[IPAddr] = @__ip_2
+[2026-04-14 17:00:12.360 INF] [LOGIN] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor Result:SUCCESS Duration:3ms
+[2026-04-14 17:00:12.361 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.LoginResponse'.
+[2026-04-14 17:00:12.361 INF] Executed action MatPoll.Controllers.AuthController.Login (MatPoll) in 6.3091ms
+[2026-04-14 17:00:12.362 INF] Executed endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:00:12.363 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 11.4726ms
+[2026-04-14 17:00:12.378 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/restore - null 0
+[2026-04-14 17:00:12.380 INF] Executing endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:00:12.381 INF] Route matched with {action = "Restore", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Restore() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:12.384 INF] Executed DbCommand (1ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0
+[2026-04-14 17:00:12.385 WRN] [REST ] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:11:30:12.382 Duration:3ms
+[2026-04-14 17:00:12.386 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.RestoreResponse'.
+[2026-04-14 17:00:12.387 INF] Executed action MatPoll.Controllers.PollController.Restore (MatPoll) in 5.0956ms
+[2026-04-14 17:00:12.387 INF] Executed endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:00:12.388 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/restore - 200 null application/json; charset=utf-8 10.2305ms
+[2026-04-14 17:00:12.392 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:12.394 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:12.394 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:12.399 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:12.406 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:12.414 INF] Executed DbCommand (6ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:12.419 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:12.420 INF] [POLL ] TypeMID:1b4295cb5abd DeviceID:1 Result:DATA_SENT RowsSent:3 TotalPending:4019 ReqTime:11:30:12.395 Duration:24ms
+[2026-04-14 17:00:12.422 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:12.422 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 27.0848ms
+[2026-04-14 17:00:12.423 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:12.424 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 31.6682ms
+[2026-04-14 17:00:12.467 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:12.469 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:12.472 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:12.506 INF] Executed DbCommand (10ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:12.514 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:12.517 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[20014,20015,20016] ReqTime:11:30:12.477 Duration:37ms
+[2026-04-14 17:00:12.518 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:12.520 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 46.6636ms
+[2026-04-14 17:00:12.520 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:12.521 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 54.0982ms
+[2026-04-14 17:00:14.447 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:14.449 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:14.450 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:14.454 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:14.461 INF] Executed DbCommand (5ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:14.464 INF] [ACK  ] TypeMID:1b4295cb5abd DeviceID:1 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[20017,20018,30014] ReqTime:11:30:14.451 Duration:13ms
+[2026-04-14 17:00:14.465 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:14.466 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 15.5789ms
+[2026-04-14 17:00:14.467 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:14.468 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 21.0181ms
+[2026-04-14 17:00:20.530 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:20.536 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:20.537 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:20.545 INF] Executed DbCommand (4ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:20.552 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:20.560 INF] Executed DbCommand (6ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:20.565 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:20.568 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:4016 ReqTime:11:30:20.540 Duration:27ms
+[2026-04-14 17:00:20.571 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:20.575 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 35.1282ms
+[2026-04-14 17:00:20.578 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:20.579 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 49.2772ms
+[2026-04-14 17:00:22.476 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:22.482 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:22.484 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:22.492 INF] Executed DbCommand (4ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:22.499 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:22.507 INF] Executed DbCommand (6ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:22.512 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:22.513 INF] [POLL ] TypeMID:1b4295cb5abd DeviceID:1 Result:DATA_SENT RowsSent:3 TotalPending:4013 ReqTime:11:30:22.487 Duration:26ms
+[2026-04-14 17:00:22.514 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:22.515 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 28.7963ms
+[2026-04-14 17:00:22.516 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:22.517 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 40.656ms
+[2026-04-14 17:00:22.597 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:22.598 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:22.599 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:22.604 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:22.611 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:22.613 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30015,30016,30017] ReqTime:11:30:22.600 Duration:12ms
+[2026-04-14 17:00:22.614 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:22.615 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 15.0024ms
+[2026-04-14 17:00:22.616 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:22.617 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 20.1429ms
+[2026-04-14 17:00:24.523 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:24.527 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:24.528 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:24.533 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:24.542 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:24.545 INF] [ACK  ] TypeMID:1b4295cb5abd DeviceID:1 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30018,30019,30020] ReqTime:11:30:24.529 Duration:16ms
+[2026-04-14 17:00:24.547 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:24.548 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 18.9315ms
+[2026-04-14 17:00:24.549 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:24.549 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 26.5353ms
+[2026-04-14 17:00:30.631 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:30.633 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:30.634 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:30.638 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:30.644 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:30.653 INF] Executed DbCommand (7ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:30.658 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:30.659 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:4010 ReqTime:11:30:30.635 Duration:24ms
+[2026-04-14 17:00:30.661 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:30.661 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 26.7428ms
+[2026-04-14 17:00:30.662 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:30.663 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 31.6431ms
+[2026-04-14 17:00:32.555 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:32.557 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:32.558 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:32.562 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:32.570 INF] Executed DbCommand (6ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:32.580 INF] Executed DbCommand (7ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:32.587 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:32.589 INF] [POLL ] TypeMID:1b4295cb5abd DeviceID:1 Result:DATA_SENT RowsSent:3 TotalPending:4007 ReqTime:11:30:32.559 Duration:29ms
+[2026-04-14 17:00:32.591 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:32.592 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 33.4288ms
+[2026-04-14 17:00:32.593 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:32.594 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 39.3465ms
+[2026-04-14 17:00:32.664 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:32.667 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:32.668 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:32.673 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:32.682 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:32.686 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30021,30022,30023] ReqTime:11:30:32.669 Duration:16ms
+[2026-04-14 17:00:32.687 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:32.688 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 19.1711ms
+[2026-04-14 17:00:32.689 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:32.689 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 25.1916ms
+[2026-04-14 17:00:34.595 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:34.598 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:34.599 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:34.604 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:34.611 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:34.614 INF] [ACK  ] TypeMID:1b4295cb5abd DeviceID:1 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30024,30025,30026] ReqTime:11:30:34.600 Duration:14ms
+[2026-04-14 17:00:34.616 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:34.616 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 16.7845ms
+[2026-04-14 17:00:34.617 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:34.618 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 23.0814ms
+[2026-04-14 17:00:40.692 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:40.696 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:40.697 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:40.702 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:40.708 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:40.715 INF] Executed DbCommand (5ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:40.719 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:40.720 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:4004 ReqTime:11:30:40.699 Duration:20ms
+[2026-04-14 17:00:40.721 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:40.721 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 22.5549ms
+[2026-04-14 17:00:40.722 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:40.723 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 30.9087ms
+[2026-04-14 17:00:42.633 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:42.638 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:42.639 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:42.645 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:42.653 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:42.660 INF] Executed DbCommand (5ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:42.664 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:42.666 INF] [POLL ] TypeMID:1b4295cb5abd DeviceID:1 Result:DATA_SENT RowsSent:3 TotalPending:4001 ReqTime:11:30:42.641 Duration:25ms
+[2026-04-14 17:00:42.667 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:42.668 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 27.3757ms
+[2026-04-14 17:00:42.669 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:42.669 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 35.8758ms
+[2026-04-14 17:00:42.732 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:42.738 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:42.739 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:42.745 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:42.756 INF] Executed DbCommand (8ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:42.759 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30027,30028,30029] ReqTime:11:30:42.742 Duration:17ms
+[2026-04-14 17:00:42.760 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:42.761 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 19.8668ms
+[2026-04-14 17:00:42.762 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:42.763 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 30.6709ms
+[2026-04-14 17:00:44.689 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:44.693 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:44.693 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:44.698 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:44.706 INF] Executed DbCommand (7ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:44.710 INF] [ACK  ] TypeMID:1b4295cb5abd DeviceID:1 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30030,30031,30032] ReqTime:11:30:44.695 Duration:15ms
+[2026-04-14 17:00:44.711 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:44.712 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 17.4066ms
+[2026-04-14 17:00:44.712 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:44.713 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 23.8874ms
+[2026-04-14 17:00:50.771 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:00:50.777 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:50.778 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:50.783 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:00:50.789 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:00:50.796 INF] Executed DbCommand (5ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:00:50.801 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:00:50.802 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:3998 ReqTime:11:30:50.779 Duration:22ms
+[2026-04-14 17:00:50.803 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:00:50.804 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 25.0358ms
+[2026-04-14 17:00:50.805 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:00:50.805 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 34.3611ms
+[2026-04-14 17:00:52.811 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:00:52.812 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:52.813 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:00:52.817 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:00:52.825 INF] Executed DbCommand (6ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:00:52.828 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30033,30034,30035] ReqTime:11:30:52.814 Duration:14ms
+[2026-04-14 17:00:52.830 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:00:52.830 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 16.8741ms
+[2026-04-14 17:00:52.831 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:00:52.832 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 21.3093ms
+[2026-04-14 17:01:00.844 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:01:00.849 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:01:00.849 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:01:00.854 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:01:00.860 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:01:00.867 INF] Executed DbCommand (5ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:01:00.872 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:01:00.873 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:3995 ReqTime:11:31:00.850 Duration:22ms
+[2026-04-14 17:01:00.874 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:01:00.875 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 24.2483ms
+[2026-04-14 17:01:00.875 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:01:00.876 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 32.087ms
+[2026-04-14 17:01:53.818 INF] Executed DbCommand (1ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:01:53.819 INF] [StallRecovery] Ran at "2026-04-14T11:31:53.8199360Z"
+[2026-04-14 17:02:05.397 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/auth/login - application/json; charset=utf-8 69
+[2026-04-14 17:02:05.399 INF] Executing endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:02:05.400 INF] Route matched with {action = "Login", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(MatPoll.DTOs.LoginRequest) on controller MatPoll.Controllers.AuthController (MatPoll).
+[2026-04-14 17:02:05.402 INF] Executed DbCommand (0ms) [Parameters=[@__deviceId_0='?' (Precision = 5) (DbType = Decimal), @__mac_1='?' (Size = 50), @__ip_2='?' (Size = 50)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [m].[DeviceID], [m].[DeviceName], [m].[DeviceType], [m].[IPAddr], [m].[IsActive], [m].[MACAddr]
+FROM [Mat_DeviceMst] AS [m]
+WHERE [m].[DeviceID] = @__deviceId_0 AND [m].[MACAddr] = @__mac_1 AND [m].[IPAddr] = @__ip_2
+[2026-04-14 17:02:05.403 INF] [LOGIN] TypeMID:0c6fa9010957 DeviceID:2 Name:HO - Ground Floor Result:SUCCESS Duration:2ms
+[2026-04-14 17:02:05.405 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.LoginResponse'.
+[2026-04-14 17:02:05.405 INF] Executed action MatPoll.Controllers.AuthController.Login (MatPoll) in 4.6454ms
+[2026-04-14 17:02:05.406 INF] Executed endpoint 'MatPoll.Controllers.AuthController.Login (MatPoll)'
+[2026-04-14 17:02:05.407 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/auth/login - 200 null application/json; charset=utf-8 9.6492ms
+[2026-04-14 17:02:05.422 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/restore - null 0
+[2026-04-14 17:02:05.424 INF] Executing endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:02:05.425 INF] Route matched with {action = "Restore", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Restore() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:02:05.428 INF] Executed DbCommand (1ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0
+[2026-04-14 17:02:05.440 INF] Executed DbCommand (11ms) [Parameters=[@p2='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p1='?' (Size = 32), @p5='?' (Precision = 18) (DbType = Decimal), @p3='?' (Precision = 1) (DbType = Decimal), @p4='?' (Size = 32), @p8='?' (Precision = 18) (DbType = Decimal), @p6='?' (Precision = 1) (DbType = Decimal), @p7='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0, [TypeMID] = @p1
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p2;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p3, [TypeMID] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p6, [TypeMID] = @p7
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p8;
+[2026-04-14 17:02:05.444 WRN] [REST ] TypeMID:0c6fa9010957 DeviceID:2 RestoredRows:3 ReqTime:11:32:05.426 Duration:17ms
+[2026-04-14 17:02:05.445 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.RestoreResponse'.
+[2026-04-14 17:02:05.445 INF] Executed action MatPoll.Controllers.PollController.Restore (MatPoll) in 19.5075ms
+[2026-04-14 17:02:05.446 INF] Executed endpoint 'MatPoll.Controllers.PollController.Restore (MatPoll)'
+[2026-04-14 17:02:05.447 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/restore - 200 null application/json; charset=utf-8 24.6057ms
+[2026-04-14 17:02:05.451 INF] Request starting HTTP/1.1 GET http://localhost:5000/api/poll - null null
+[2026-04-14 17:02:05.453 INF] Executing endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:02:05.454 INF] Route matched with {action = "Poll", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Poll() on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:02:05.458 INF] Executed DbCommand (3ms) [Parameters=[@__typeMid_0='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Mat_CommTrn] AS [m]
+        WHERE [m].[TrnStat] = 1.0 AND [m].[TypeMID] = @__typeMid_0) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+[2026-04-14 17:02:05.465 INF] Executed DbCommand (5ms) [Parameters=[@__p_0='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(@__p_0) [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+ORDER BY [m].[TrnID]
+[2026-04-14 17:02:05.473 INF] Executed DbCommand (7ms) [Parameters=[@p3='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 2) (DbType = Decimal), @p1='?' (Precision = 1) (DbType = Decimal), @p2='?' (Size = 32), @p7='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 2) (DbType = Decimal), @p5='?' (Precision = 1) (DbType = Decimal), @p6='?' (Size = 32), @p11='?' (Precision = 18) (DbType = Decimal), @p8='?' (Precision = 2) (DbType = Decimal), @p9='?' (Precision = 1) (DbType = Decimal), @p10='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p0, [TrnStat] = @p1, [TypeMID] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p4, [TrnStat] = @p5, [TypeMID] = @p6
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p7;
+UPDATE [Mat_CommTrn] SET [RetryCnt] = @p8, [TrnStat] = @p9, [TypeMID] = @p10
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p11;
+[2026-04-14 17:02:05.477 INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 0.0
+[2026-04-14 17:02:05.478 INF] [POLL ] TypeMID:0c6fa9010957 DeviceID:2 Result:DATA_SENT RowsSent:3 TotalPending:3995 ReqTime:11:32:05.455 Duration:22ms
+[2026-04-14 17:02:05.479 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.PollResponse'.
+[2026-04-14 17:02:05.480 INF] Executed action MatPoll.Controllers.PollController.Poll (MatPoll) in 24.8142ms
+[2026-04-14 17:02:05.480 INF] Executed endpoint 'MatPoll.Controllers.PollController.Poll (MatPoll)'
+[2026-04-14 17:02:05.481 INF] Request finished HTTP/1.1 GET http://localhost:5000/api/poll - 200 null application/json; charset=utf-8 29.9463ms
+[2026-04-14 17:02:07.506 INF] Request starting HTTP/1.1 POST http://localhost:5000/api/poll/ack - application/json; charset=utf-8 30
+[2026-04-14 17:02:07.509 INF] Executing endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:02:07.509 INF] Route matched with {action = "Ack", controller = "Poll"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Ack(MatPoll.DTOs.AckRequest) on controller MatPoll.Controllers.PollController (MatPoll).
+[2026-04-14 17:02:07.513 INF] Executed DbCommand (3ms) [Parameters=[@__trnIds_0='?' (Size = 4000), @__typeMid_1='?' (Size = 32)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnID] IN (
+    SELECT [t].[value]
+    FROM OPENJSON(@__trnIds_0) WITH ([value] numeric(18,0) '$') AS [t]
+) AND [m].[TypeMID] = @__typeMid_1 AND [m].[TrnStat] = 1.0
+[2026-04-14 17:02:07.523 INF] Executed DbCommand (8ms) [Parameters=[@p1='?' (Precision = 18) (DbType = Decimal), @p0='?' (Precision = 1) (DbType = Decimal), @p3='?' (Precision = 18) (DbType = Decimal), @p2='?' (Precision = 1) (DbType = Decimal), @p5='?' (Precision = 18) (DbType = Decimal), @p4='?' (Precision = 1) (DbType = Decimal)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p0
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p1;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p2
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p3;
+UPDATE [Mat_CommTrn] SET [TrnStat] = @p4
+OUTPUT INSERTED.[CreatedAt]
+WHERE [TrnID] = @p5;
+[2026-04-14 17:02:07.526 INF] [ACK  ] TypeMID:0c6fa9010957 DeviceID:2 TrnIDsSent:3 TrnIDsUpdated:3 TrnIDs:[30036,30037,30038] ReqTime:11:32:07.510 Duration:16ms
+[2026-04-14 17:02:07.528 INF] Executing OkObjectResult, writing value of type 'MatPoll.DTOs.AckResponse'.
+[2026-04-14 17:02:07.528 INF] Executed action MatPoll.Controllers.PollController.Ack (MatPoll) in 18.5136ms
+[2026-04-14 17:02:07.529 INF] Executed endpoint 'MatPoll.Controllers.PollController.Ack (MatPoll)'
+[2026-04-14 17:02:07.530 INF] Request finished HTTP/1.1 POST http://localhost:5000/api/poll/ack - 200 null application/json; charset=utf-8 24.006ms
+[2026-04-14 17:03:53.831 INF] Executed DbCommand (2ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:03:53.833 INF] [StallRecovery] Ran at "2026-04-14T11:33:53.8338099Z"
+[2026-04-14 17:05:53.854 INF] Executed DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:05:53.857 INF] [StallRecovery] Ran at "2026-04-14T11:35:53.8576690Z"
+[2026-04-14 17:07:53.892 INF] Executed DbCommand (4ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:07:53.899 INF] [StallRecovery] Ran at "2026-04-14T11:37:53.8996425Z"
+[2026-04-14 17:09:53.930 INF] Executed DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:09:53.936 INF] [StallRecovery] Ran at "2026-04-14T11:39:53.9359791Z"
+[2026-04-14 17:11:53.945 INF] Executed DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:11:53.946 INF] [StallRecovery] Ran at "2026-04-14T11:41:53.9466017Z"
+[2026-04-14 17:13:53.958 INF] Executed DbCommand (1ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:13:53.959 INF] [StallRecovery] Ran at "2026-04-14T11:43:53.9595951Z"
+[2026-04-14 17:15:53.980 INF] Executed DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:15:53.983 INF] [StallRecovery] Ran at "2026-04-14T11:45:53.9830909Z"
+[2026-04-14 17:17:53.993 INF] Executed DbCommand (4ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:17:53.997 INF] [StallRecovery] Ran at "2026-04-14T11:47:53.9978819Z"
+[2026-04-14 17:19:54.001 INF] Executed DbCommand (3ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:19:54.004 INF] [StallRecovery] Ran at "2026-04-14T11:49:54.0048829Z"
+[2026-04-14 17:21:54.007 INF] Executed DbCommand (2ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:21:54.010 INF] [StallRecovery] Ran at "2026-04-14T11:51:54.0099731Z"
+[2026-04-14 17:23:54.026 INF] Executed DbCommand (1ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 17:23:54.028 INF] [StallRecovery] Ran at "2026-04-14T11:53:54.0280777Z"
+[2026-04-14 17:25:24.552 INF] Application is shutting down...
+[2026-04-14 17:59:08.799 INF] MatPoll server started
+[2026-04-14 17:59:08.847 INF] User profile is available. Using 'C:\Users\hatim.chharchhoda\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+[2026-04-14 17:59:08.890 INF] Now listening on: http://localhost:5000
+[2026-04-14 17:59:08.892 INF] Application started. Press Ctrl+C to shut down.
+[2026-04-14 17:59:08.893 INF] Hosting environment: Production
+[2026-04-14 17:59:08.893 INF] Content root path: D:\COSEC-demo\MatPoll
+[2026-04-14 18:01:09.087 WRN] The decimal property 'TrnID' is part of a key on entity type 'MatCommTrn'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+[2026-04-14 18:01:09.089 WRN] The decimal property 'DeviceID' is part of a key on entity type 'MatDeviceMst'. If the configured precision and scale don't match the column type in the database, this will cause values to be silently truncated if they do not fit in the default precision and scale. Consider using a different property as the key, or make sure that the database column type matches the model configuration and enable decimal rounding warnings using 'SET NUMERIC_ROUNDABORT ON'.
+[2026-04-14 18:01:09.365 INF] Executed DbCommand (21ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 18:01:09.379 INF] [StallRecovery] Ran at "2026-04-14T18:01:09.3796205+05:30"
+[2026-04-14 18:03:09.409 INF] Executed DbCommand (2ms) [Parameters=[@__cutoff_0='?' (DbType = DateTime2)], CommandType='"Text"', CommandTimeout='30']
+SELECT [m].[TrnID], [m].[CreatedAt], [m].[MsgStr], [m].[RetryCnt], [m].[TrnStat], [m].[TypeMID]
+FROM [Mat_CommTrn] AS [m]
+WHERE [m].[TrnStat] = 1.0 AND [m].[CreatedAt] < @__cutoff_0
+[2026-04-14 18:03:09.411 INF] [StallRecovery] Ran at "2026-04-14T18:03:09.4113651+05:30"
+[2026-04-14 18:03:47.121 INF] Application is shutting down...

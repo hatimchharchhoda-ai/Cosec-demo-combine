@@ -12,8 +12,11 @@ public class ApiClient
         _http.BaseAddress = new Uri("http://localhost:5000/api/");
     }
 
-    private void AddAuth()
+    // 🔹 ALWAYS called before any API call
+    private async Task AddAuthAsync()
     {
+        await EnsureTokenFreshAsync();
+
         _http.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
     }
@@ -29,7 +32,7 @@ public class ApiClient
         var json = await res.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(json).RootElement;
 
-        DeviceSession.Token = doc.GetProperty("token").GetString();
+        DeviceSession.Token   = doc.GetProperty("token").GetString();
         DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
         DeviceLogger.Log($"LOGIN SUCCESS | TypeMID={DeviceSession.TypeMID}");
@@ -37,18 +40,19 @@ public class ApiClient
 
     public async Task Restore()
     {
-        AddAuth();
+        await AddAuthAsync();
         await _http.PostAsync("poll/restore", null);
-        DeviceLogger.Log("RESTORE called");
+
+        DeviceLogger.Log($"RESTORE called | TypeMID={DeviceSession.TypeMID}");
     }
 
     public async Task PollAndProcess()
     {
         try
         {
-            AddAuth();
+            await AddAuthAsync();
 
-            var res = await _http.GetAsync("poll");
+            var res  = await _http.GetAsync("poll");
             var json = await res.Content.ReadAsStringAsync();
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
@@ -56,19 +60,19 @@ public class ApiClient
 
             if (poll == null) return;
 
-            // CASE 1 — Need ACK first
+            // ACK-FIRST case
             if (poll.NeedAckFirst)
             {
                 if (DeviceMemory.LastIds.Count > 0)
                 {
-                    DeviceLogger.Log($"ACK-FIRST received. Sending ACK. | TypeMID={DeviceSession.TypeMID} | {string.Join(",", DeviceMemory.LastIds)}");
+                    DeviceLogger.Log($"ACK-FIRST | TypeMID={DeviceSession.TypeMID}");
                     await Ack(DeviceMemory.LastIds);
                     DeviceMemory.LastIds.Clear();
                 }
                 return;
             }
 
-            // CASE 2 — New data
+            // DATA case
             if (poll.HasData && poll.Rows.Count > 0)
             {
                 var ids = poll.Rows.Select(x => x.TrnID).ToList();
@@ -77,7 +81,7 @@ public class ApiClient
 
                 DeviceMemory.LastIds = ids;
 
-                await Task.Delay(2000); // simulate device work
+                await Task.Delay(2000);
 
                 await Ack(ids);
 
@@ -92,7 +96,7 @@ public class ApiClient
 
     private async Task Ack(List<decimal> ids)
     {
-        AddAuth();
+        await AddAuthAsync();
 
         var payload = new { TrnIDs = ids };
 
@@ -101,8 +105,32 @@ public class ApiClient
             Encoding.UTF8, "application/json"));
 
         if (res.IsSuccessStatusCode)
-            DeviceLogger.Log($"ACK SENT | TypeMID={DeviceSession.TypeMID} | {string.Join(",", ids)} ");
+            DeviceLogger.Log($"ACK SENT | TypeMID={DeviceSession.TypeMID}");
         else
             DeviceLogger.Log($"ACK FAILED | TypeMID={DeviceSession.TypeMID}");
+    }
+
+    // 🔥 Auto refresh before expiry
+    private async Task EnsureTokenFreshAsync()
+    {
+        if (string.IsNullOrEmpty(DeviceSession.Token))
+            return;
+
+        var expiry = JwtHelper.GetExpiry(DeviceSession.Token!);
+
+        if ((expiry - DateTime.UtcNow).TotalSeconds < 60)
+        {
+            DeviceLogger.Log($"TOKEN EXPIRING | TypeMID={DeviceSession.TypeMID}");
+
+            var res  = await _http.PostAsync("auth/refresh", null);
+            var json = await res.Content.ReadAsStringAsync();
+
+            var doc = JsonDocument.Parse(json).RootElement;
+
+            DeviceSession.Token   = doc.GetProperty("token").GetString();
+            DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
+
+            DeviceLogger.Log($"TOKEN REFRESHED | TypeMID={DeviceSession.TypeMID}");
+        }
     }
 }

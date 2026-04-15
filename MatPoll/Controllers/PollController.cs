@@ -149,7 +149,7 @@ public class PollController : ControllerBase
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
     {
-        var reqTime  = DateTime.UtcNow;
+        var reqTime  = DateTime.Now;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
