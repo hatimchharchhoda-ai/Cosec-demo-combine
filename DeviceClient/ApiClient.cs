@@ -12,7 +12,7 @@ public class ApiClient
         _http.BaseAddress = new Uri("http://localhost:5000/api/");
     }
 
-    // 🔹 ALWAYS called before any API call
+    // ALWAYS called before any API call
     private async Task AddAuthAsync()
     {
         await EnsureTokenFreshAsync();
@@ -110,7 +110,7 @@ public class ApiClient
             DeviceLogger.Log($"ACK FAILED | TypeMID={DeviceSession.TypeMID}");
     }
 
-    // 🔥 Auto refresh before expiry
+    // Auto refresh before expiry
     private async Task EnsureTokenFreshAsync()
     {
         if (string.IsNullOrEmpty(DeviceSession.Token))

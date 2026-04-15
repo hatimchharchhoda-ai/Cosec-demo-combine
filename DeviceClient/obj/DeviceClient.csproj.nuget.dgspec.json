@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj": {}
+    "D:\\COSEC-demo\\deviceClient\\DeviceClient.csproj": {}
   },
   "projects": {
-    "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj": {
+    "D:\\COSEC-demo\\deviceClient\\DeviceClient.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj",
+        "projectUniqueName": "D:\\COSEC-demo\\deviceClient\\DeviceClient.csproj",
         "projectName": "DeviceClient",
-        "projectPath": "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj",
+        "projectPath": "D:\\COSEC-demo\\deviceClient\\DeviceClient.csproj",
         "packagesPath": "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\",
-        "outputPath": "D:\\COSEC-demo\\DeviceClient\\obj\\",
+        "outputPath": "D:\\COSEC-demo\\deviceClient\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
