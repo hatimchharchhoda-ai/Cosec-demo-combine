@@ -10,7 +10,11 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = DeviceClient
+<<<<<<< HEAD
 build_property.ProjectDir = D:\COSEC-demo\DeviceClient\
+=======
+build_property.ProjectDir = D:\Cosec-demo-combine\DeviceClient\
+>>>>>>> 5fb6584629a1ad79c697ceeeaf0fd2567e8f7ba0
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.EffectiveAnalysisLevelStyle = 8.0

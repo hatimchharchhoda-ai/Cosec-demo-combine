@@ -41,8 +41,8 @@ public class AuthController : ControllerBase
 
         if (device == null)
         {
-            _actLog.LogLogin(typeMid, req.DeviceID, "?",
-                false, "Device not found", sw.ElapsedMilliseconds);
+            // _actLog.LogLogin(typeMid, req.DeviceID, "?",
+            //     false, "Device not found", sw.ElapsedMilliseconds);
             return Unauthorized(new LoginResponse
             {
                 Success = false,
@@ -52,8 +52,8 @@ public class AuthController : ControllerBase
 
         if (device.IsActive != 1)
         {
-            _actLog.LogLogin(typeMid, req.DeviceID, device.DeviceName ?? "?",
-                false, "Device inactive", sw.ElapsedMilliseconds);
+            // _actLog.LogLogin(typeMid, req.DeviceID, device.DeviceName ?? "?",
+            //     false, "Device inactive", sw.ElapsedMilliseconds);
             return Unauthorized(new LoginResponse
             {
                 Success = false,
@@ -61,7 +61,7 @@ public class AuthController : ControllerBase
             });
         }
 
-        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
+        var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
         var token   = _tokenService.CreateToken(device.DeviceID, typeMid);
         TokenService.SetCookie(Response, token, expMins);
 
@@ -133,7 +133,7 @@ public class AuthController : ControllerBase
         var freshTypeMid = TypeMidService.Generate(
             device.MACAddr ?? "", device.IPAddr ?? "");
 
-        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "1");
+        var expMins  = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
         var newToken = _tokenService.CreateToken(deviceId, freshTypeMid);
         TokenService.SetCookie(Response, newToken, expMins);
 

@@ -122,7 +122,7 @@ public class ApiClient
 
             DeviceLogger.Log($"EVENT SENT | {message} | TypeMID={DeviceSession.TypeMID}");
 
-            var res = await _http.PostAsync("event",
+            var res = await _http.PostAsync("poll/event",
                 new StringContent(JsonSerializer.Serialize(payload),
                 Encoding.UTF8, "application/json"));
 
