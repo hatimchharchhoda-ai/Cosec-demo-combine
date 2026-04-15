@@ -12,7 +12,7 @@ public class ApiClient
         _http.BaseAddress = new Uri("http://localhost:5000/api/");
     }
 
-    // 🔹 ALWAYS called before any API call
+    // ALWAYS called before any API call
     private async Task AddAuthAsync()
     {
         await EnsureTokenFreshAsync();
@@ -94,6 +94,43 @@ public class ApiClient
         }
     }
 
+
+
+    //send events 
+
+
+    public async Task SendEventAsync(string message)
+    {
+        try
+        {
+            await AddAuthAsync();
+
+            var payload = new
+            {
+                TypeMID   = DeviceSession.TypeMID,
+                Message   = message,
+                EventTime = DateTime.Now
+            };
+
+            DeviceLogger.Log($"EVENT SENT | {message} | TypeMID={DeviceSession.TypeMID}");
+
+            var res = await _http.PostAsync("poll/event",
+                new StringContent(JsonSerializer.Serialize(payload),
+                Encoding.UTF8, "application/json"));
+
+            var ackMsg = await ReadMessageAsync(res);
+
+            if (res.IsSuccessStatusCode)
+                DeviceLogger.Log($"EVENT ACK RECEIVED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+            else
+                DeviceLogger.Log($"EVENT FAILED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Log($"EVENT ERROR | {ex.Message} | TypeMID={DeviceSession.TypeMID}");
+        }
+    }
+
     private async Task Ack(List<decimal> ids)
     {
         await AddAuthAsync();
@@ -110,7 +147,7 @@ public class ApiClient
             DeviceLogger.Log($"ACK FAILED | TypeMID={DeviceSession.TypeMID}");
     }
 
-    // 🔥 Auto refresh before expiry
+    // Auto refresh before expiry
     private async Task EnsureTokenFreshAsync()
     {
         if (string.IsNullOrEmpty(DeviceSession.Token))

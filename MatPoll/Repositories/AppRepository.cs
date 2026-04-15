@@ -43,7 +43,7 @@ public class AppRepository
     public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(string typeMid, int bunchSize)
     {
         var rows = await _db.CommTrns
-            .Where(t => t.TrnStat == 0)
+            .Where(t => t.TrnStat == 0 && t.TypeMID == typeMid) 
             .OrderBy(t => t.TrnID)
             .Take(bunchSize)
             .ToListAsync();
@@ -53,7 +53,6 @@ public class AppRepository
         foreach (var row in rows)
         {
             row.TrnStat  = 1;
-            row.TypeMID  = typeMid;          // stamp device fingerprint
             row.RetryCnt = (row.RetryCnt ?? 0) + 1;
         }
 
@@ -112,7 +111,6 @@ public class AppRepository
             else
             {
                 row.TrnStat = 0;
-                row.TypeMID = null;
             }
         }
 

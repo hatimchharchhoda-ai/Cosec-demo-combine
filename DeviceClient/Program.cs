@@ -21,10 +21,22 @@
 
         await api.Restore();
 
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                await api.PollAndProcess();
+                await Task.Delay(8000);
+            }
+        });
+
+
+        int eventCounter = 1;
         while (true)
         {
-            await api.PollAndProcess();
-            await Task.Delay(8000);
-        }
+            string msg = $"Heartbeat #{eventCounter}";
+            await api.SendEventAsync(msg);
+            await Task.Delay(3000);
+        }   
     }
 }

@@ -52,7 +52,7 @@ public class AckRequest
 {
     public List<decimal> TrnIDs  { get; set; } = new();
     public string?       Message { get; set; }   // NEW: optional message from client
-    public string?       Header  { get; set; }   // NEW: optional header from client
+    // public string?       Header  { get; set; }   // NEW: optional header from client
 }
  
 public class AckResponse

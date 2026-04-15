@@ -77,14 +77,14 @@ public class ActivityLogger
         List<decimal> trnIds, int updatedCount,
         bool success, DateTime reqTime, long ms)
     {
-        LogAck(typeMid, deviceId, trnIds, updatedCount, success, null, null, reqTime, ms);
+        LogAck(typeMid, deviceId, trnIds, updatedCount, success, null, reqTime, ms);
     }
 
     // ACK overload that accepts optional Message + Header from client
     public void LogAck(string typeMid, decimal deviceId,
         List<decimal> trnIds, int updatedCount,
         bool success,
-        string? message, string? header,
+        string? message,
         DateTime reqTime, long ms)
     {
         if (success)
@@ -94,9 +94,9 @@ public class ActivityLogger
                 Now(), typeMid, updatedCount, ms);
 
             // If client sent Message / Header, log them as extra detail lines
-            if (!string.IsNullOrWhiteSpace(header))
-                Log.Information("{Time} | ACK HEADER       | TypeMID={TypeMID} | {Header}",
-                    Now(), typeMid, header);
+            // if (!string.IsNullOrWhiteSpace(header))
+            //     Log.Information("{Time} | ACK HEADER       | TypeMID={TypeMID} | {Header}",
+            //         Now(), typeMid, header);
 
             if (!string.IsNullOrWhiteSpace(message))
                 Log.Information("{Time} | ACK MESSAGE      | TypeMID={TypeMID} | {Message}",
@@ -123,5 +123,19 @@ public class ActivityLogger
         if (reset > 0 || failed > 0)
             Log.Warning("{Time} | STALL RECOVERY   | Reset={Reset} | Failed={Failed}",
                 Now(), reset, failed);
+    }
+
+    public void LogLogout(string typeMid, decimal deviceId)
+    {
+        Log.Information("{Time} | LOGOUT           | TypeMID={TypeMID} | Device={DeviceID}",
+            Now(), typeMid, deviceId);
+    }
+
+   //typeMid, deviceId, eventData.ToString() ?? "No event data", reqTime, sw.ElapsedMilliseconds
+
+    public void LogEvent(string typeMid, decimal deviceId, string eventData, DateTime reqTime, long ms)
+    {
+        Log.Information("{Time} | EVENT RECEIVED   | TypeMID={TypeMID} | Device={DeviceID} | EventData={EventData} | {Ms}ms",
+            Now(), typeMid, deviceId, eventData, ms);
     }
 }

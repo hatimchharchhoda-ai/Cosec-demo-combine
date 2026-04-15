@@ -122,7 +122,7 @@ public class PollController : ControllerBase
 
         // Log ACK — pass Message + Header if client sent them
         _actLog.LogAck(typeMid, deviceId, req.TrnIDs, count,
-            true, req.Message, req.Header, reqTime, sw.ElapsedMilliseconds);
+            true, req.Message,  reqTime, sw.ElapsedMilliseconds);
 
         return Ok(new AckResponse
         {
@@ -158,4 +158,21 @@ public class PollController : ControllerBase
             TypeMID       = typeMid
         });
     }
+
+    // for reciving events from client 
+    [HttpPost("event")]
+    public IActionResult ReceiveEvent([FromBody] object eventData)
+    {
+         var reqTime  = DateTime.Now;
+        var sw       = Stopwatch.StartNew();
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
+
+        if (string.IsNullOrEmpty(typeMid))
+            return Unauthorized();
+        _actLog.LogEvent(typeMid, deviceId, eventData.ToString() ?? "No event data", reqTime, sw.ElapsedMilliseconds);
+
+        // Respond with success
+        return Ok(new { Success = true, Message = "Event received." });
+    }   
 }
