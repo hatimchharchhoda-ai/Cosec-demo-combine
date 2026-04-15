@@ -29,21 +29,27 @@ public class ApiClient
             new StringContent(JsonSerializer.Serialize(payload),
             Encoding.UTF8, "application/json"));
 
+        var message = await ReadMessageAsync(res);
+
+        if (!res.IsSuccessStatusCode)
+        {
+            DeviceLogger.Log($"LOGIN FAILED | {message}");
+            return;
+        }
+
         var json = await res.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(json).RootElement;
 
         DeviceSession.Token   = doc.GetProperty("token").GetString();
         DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
-        DeviceLogger.Log($"LOGIN SUCCESS | TypeMID={DeviceSession.TypeMID}");
+        DeviceLogger.Log($"LOGIN SUCCESS | {message} | TypeMID={DeviceSession.TypeMID}");
     }
 
     public async Task Restore()
     {
         await AddAuthAsync();
         await _http.PostAsync("poll/restore", null);
-
-        DeviceLogger.Log($"RESTORE called | TypeMID={DeviceSession.TypeMID}");
     }
 
     public async Task PollAndProcess()
@@ -54,6 +60,13 @@ public class ApiClient
 
             var res  = await _http.GetAsync("poll");
             var json = await res.Content.ReadAsStringAsync();
+
+            if (!res.IsSuccessStatusCode)
+            {
+                var msg = await ReadMessageAsync(res);
+                DeviceLogger.Log($"POLL FAILED | {msg} | TypeMID={DeviceSession.TypeMID}");
+                return;
+            }
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -94,6 +107,38 @@ public class ApiClient
         }
     }
 
+    public async Task SendEventAsync(string message)
+    {
+        try
+        {
+            await AddAuthAsync();
+
+            var payload = new
+            {
+                TypeMID   = DeviceSession.TypeMID,
+                Message   = message,
+                EventTime = DateTime.Now
+            };
+
+            DeviceLogger.Log($"EVENT SENT | {message} | TypeMID={DeviceSession.TypeMID}");
+
+            var res = await _http.PostAsync("event",
+                new StringContent(JsonSerializer.Serialize(payload),
+                Encoding.UTF8, "application/json"));
+
+            var ackMsg = await ReadMessageAsync(res);
+
+            if (res.IsSuccessStatusCode)
+                DeviceLogger.Log($"EVENT ACK RECEIVED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+            else
+                DeviceLogger.Log($"EVENT FAILED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Log($"EVENT ERROR | {ex.Message} | TypeMID={DeviceSession.TypeMID}");
+        }
+    }
+
     private async Task Ack(List<decimal> ids)
     {
         await AddAuthAsync();
@@ -104,10 +149,12 @@ public class ApiClient
             new StringContent(JsonSerializer.Serialize(payload),
             Encoding.UTF8, "application/json"));
 
+        var message = await ReadMessageAsync(res);
+
         if (res.IsSuccessStatusCode)
-            DeviceLogger.Log($"ACK SENT | TypeMID={DeviceSession.TypeMID}");
+            DeviceLogger.Log($"ACK SENT | {message} | TypeMID={DeviceSession.TypeMID}");
         else
-            DeviceLogger.Log($"ACK FAILED | TypeMID={DeviceSession.TypeMID}");
+            DeviceLogger.Log($"ACK FAILED | {message} | TypeMID={DeviceSession.TypeMID}");
     }
 
     // Auto refresh before expiry
@@ -123,6 +170,15 @@ public class ApiClient
             DeviceLogger.Log($"TOKEN EXPIRING | TypeMID={DeviceSession.TypeMID}");
 
             var res  = await _http.PostAsync("auth/refresh", null);
+            var message = await ReadMessageAsync(res);
+
+            if (!res.IsSuccessStatusCode)
+            {
+                DeviceLogger.Log($"TOKEN REFRESH FAILED | {message}");
+                DeviceSession.Token = null;
+                return;
+            }
+
             var json = await res.Content.ReadAsStringAsync();
 
             var doc = JsonDocument.Parse(json).RootElement;
@@ -130,7 +186,30 @@ public class ApiClient
             DeviceSession.Token   = doc.GetProperty("token").GetString();
             DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
-            DeviceLogger.Log($"TOKEN REFRESHED | TypeMID={DeviceSession.TypeMID}");
+            DeviceLogger.Log($"TOKEN REFRESHED | {message} | TypeMID={DeviceSession.TypeMID}");
+        }
+    }
+
+    // reading the response message for log
+    private async Task<string> ReadMessageAsync(HttpResponseMessage res)
+    {
+        var body = await res.Content.ReadAsStringAsync();
+
+        try
+        {
+            var doc = JsonDocument.Parse(body).RootElement;
+
+            if (doc.TryGetProperty("message", out var msg))
+                return msg.GetString() ?? body;
+
+            if (doc.TryGetProperty("Message", out var msg2))
+                return msg2.GetString() ?? body;
+
+            return body;
+        }
+        catch
+        {
+            return body;
         }
     }
 }

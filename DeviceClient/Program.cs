@@ -21,10 +21,24 @@
 
         await api.Restore();
 
+        // POLL LOOP
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                await api.PollAndProcess();
+                await Task.Delay(8000);
+            }
+        });
+
+        // EVENT LOOP (every 3 sec)
+        int eventCounter = 1;
         while (true)
         {
-            await api.PollAndProcess();
-            await Task.Delay(8000);
+            string msg = $"Heartbeat #{eventCounter}";
+            await api.SendEventAsync(msg);
+            eventCounter++;
+            await Task.Delay(3000);
         }
     }
 }
