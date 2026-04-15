@@ -56,7 +56,7 @@ namespace COSEC_demo.Services
 
         private string BuildMessage(string userId, int deviceId)
         {
-            return $"ENROLL|UID:{userId}|DID:{deviceId}";
+            return $"ENROLL| UID:{userId}|DID:{deviceId}";
         }
     }
 }

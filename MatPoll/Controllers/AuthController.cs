@@ -41,8 +41,8 @@ public class AuthController : ControllerBase
 
         if (device == null)
         {
-            _actLog.LogLogin(typeMid, req.DeviceID, "?",
-                false, "Device not found", sw.ElapsedMilliseconds);
+            // _actLog.LogLogin(typeMid, req.DeviceID, "?",
+            //     false, "Device not found", sw.ElapsedMilliseconds);
             return Unauthorized(new LoginResponse
             {
                 Success = false,
@@ -52,8 +52,8 @@ public class AuthController : ControllerBase
 
         if (device.IsActive != 1)
         {
-            _actLog.LogLogin(typeMid, req.DeviceID, device.DeviceName ?? "?",
-                false, "Device inactive", sw.ElapsedMilliseconds);
+            // _actLog.LogLogin(typeMid, req.DeviceID, device.DeviceName ?? "?",
+            //     false, "Device inactive", sw.ElapsedMilliseconds);
             return Unauthorized(new LoginResponse
             {
                 Success = false,

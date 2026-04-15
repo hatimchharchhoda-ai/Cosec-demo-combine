@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "40z5hovTEyI=",
+  "success": true,
+  "projectFilePath": "D:\\Cosec-demo-combine\\DeviceClient\\DeviceClient.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\hasti.movaliya\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.22\\microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\hasti.movaliya\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.22\\microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\hasti.movaliya\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.22\\microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\hasti.movaliya\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.22\\microsoft.netcore.app.host.win-x64.8.0.22.nupkg.sha512"
+  ],
+  "logs": []
+}
