@@ -53,7 +53,7 @@ public class ActivityLogger
         {
             // DATA RECEIVED is logged from PollController with TrnIDs — see LogPollWithIds
             // This overload used when caller doesn't have IDs (legacy path)
-            Log.Information("{Time} | DATA RECEIVED    | TypeMID={TypeMID} | Rows={Rows} | Pending={Pending} | {Ms}ms",
+            Log.Information("{Time} | DATA Sent    | TypeMID={TypeMID} | Rows={Rows} | Pending={Pending} | {Ms}ms",
                 Now(), typeMid, rowsSent, totalPending, ms);
         }
         else
@@ -68,7 +68,7 @@ public class ActivityLogger
         List<decimal> trnIds, int totalPending, long ms)
     {
         var ids = string.Join(",", trnIds);
-        Log.Information("{Time} | DATA RECEIVED    | TypeMID={TypeMID} | {TrnIDs}",
+        Log.Information("{Time} | DATA sent    | TypeMID={TypeMID} | {TrnIDs}",
             Now(), typeMid, ids);
     }
 
@@ -90,7 +90,7 @@ public class ActivityLogger
         if (success)
         {
             // Base log line — matches the example format exactly
-            Log.Information("{Time} | ACK SENT         | TypeMID={TypeMID} | Rows={Rows} | {Ms}ms",
+            Log.Information("{Time} | ACK RECEIVED     | TypeMID={TypeMID} | Rows={Rows} | {Ms}ms",
                 Now(), typeMid, updatedCount, ms);
 
             // If client sent Message / Header, log them as extra detail lines
