@@ -50,14 +50,16 @@ public class TrnRow
 // ── ACK ───────────────────────────────────────────────────────────────────────
 public class AckRequest
 {
-    public List<decimal> TrnIDs { get; set; } = new();
+    public List<decimal> TrnIDs      { get; set; } = new();
+    public DateTime?     T1          { get; set; }  // client sent THIS request
+    public DateTime?     T4Prev      { get; set; }  // client received PREVIOUS ack response
 }
-
 public class AckResponse
 {
-    public bool   Success      { get; set; }
-    public string Message      { get; set; } = string.Empty;
-    public int    UpdatedCount { get; set; }
+    public bool      Success      { get; set; }
+    public string    Message      { get; set; } = string.Empty;
+    public int       UpdatedCount { get; set; }
+    public DateTime? T3           { get; set; }  // server sent — client uses to compute downstream
 }
 
 // ── Restore ───────────────────────────────────────────────────────────────────
@@ -69,3 +71,5 @@ public class RestoreResponse
     public int    RestoredCount { get; set; }
     public string? TypeMID     { get; set; }
 }
+
+// ── ACK ───────────────────────────────────────────────────────────────────────

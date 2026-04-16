@@ -1,3 +1,0 @@
-[2026-04-16 11:46:19.960 WRN] [LOGIN] TypeMID:b1e582f6911c DeviceID:1 Result:FAILED Reason:Device not found
-[2026-04-16 11:46:19.968 WRN] [LOGIN] TypeMID:b1e582f6911c DeviceID:1 Result:FAILED Reason:Device not found Duration:620ms
-[2026-04-16 11:47:47.866 INF] MatPoll server started — TestingLog=false

@@ -152,75 +152,85 @@ public class ActivityLogger
 
     // ── ACK RECEIVED ──────────────────────────────────────────────────────────
 
-    public void LogAck(string typeMid, decimal deviceId,
-        List<decimal> clientIds, AckResult result,
-        DateTime reqTime, long durationMs,
-        int ackWarnSeconds)
+  // ── ACK RECEIVED ──────────────────────────────────────────────────────────────
+
+public void LogAck(string typeMid, decimal deviceId,
+    List<decimal> clientIds, AckResult result,
+    DateTime t2, long serverMs,
+    double upstreamMs, double downstreamMsPrev, double fullRoundTripPrev,
+    int ackWarnSeconds)
+{
+    var ids      = string.Join(",", clientIds);
+    var avgDelay = result.AckDelays.Count > 0
+        ? Math.Round(result.AckDelays.Values.Average(), 2) : 0.0;
+    var maxDelay = result.AckDelays.Count > 0
+        ? result.AckDelays.Values.Max() : 0.0;
+
+    var upLabel       = upstreamMs       >= 0 ? $"{upstreamMs}ms"       : "N/A";
+    var downLabel     = downstreamMsPrev >= 0 ? $"{downstreamMsPrev}ms" : "N/A";
+    var roundTripLabel= fullRoundTripPrev>= 0 ? $"{fullRoundTripPrev}ms": "N/A";
+
+    // info: summary
+ // info: summary
+_info.Information(
+    "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} " +
+    "ServerMs:{Server}ms UpstreamMs:{Up} DownstreamMs:{Down} FullRoundTrip:{Full} " +
+    "T2:{T2}",
+    typeMid, deviceId,
+    clientIds.Count, result.UpdatedCount,
+    serverMs, upLabel, downLabel, roundTripLabel,
+    t2.ToString("HH:mm:ss.fff"));
+
+// debug: with IDs
+_debug.Information(
+    "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} " +
+    "TrnIDs:[{IDs}] ServerMs:{Server}ms UpstreamMs:{Up} DownstreamMs:{Down} FullRoundTrip:{Full} " +
+    "T2:{T2}",
+    typeMid, deviceId,
+    clientIds.Count, result.UpdatedCount,
+    ids, serverMs, upLabel, downLabel, roundTripLabel,
+    t2.ToString("HH:mm:ss.fff"));
+
+    // debug: per-row delay
+    foreach (var kv in result.AckDelays)
+        _debug.Information("[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} Delay:{Delay}s",
+            kv.Key, typeMid, kv.Value);
+
+    // error: slow ACK
+    if (maxDelay > ackWarnSeconds)
+        _error.Warning(
+            "[ACK-SLOW] TypeMID:{TypeMID} DeviceID:{DeviceID} MaxDelay:{Max}s " +
+            "Threshold:{Threshold}s TrnIDs:[{IDs}]",
+            typeMid, deviceId, maxDelay, ackWarnSeconds, ids);
+
+    // error: nothing updated
+    if (result.UpdatedCount == 0 && clientIds.Count > 0)
+        _error.Error(
+            "[ACK-ZERO-UPDATED] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+            "Reason:NoRowsMatchedInDB " +
+            "Possible:AlreadyAcked|WrongTypeMID|WrongTrnStat|RowsNotFound " +
+            "ClaimedIDs:[{IDs}]",
+            typeMid, deviceId, ids);
+
+    // error: mismatch
+    if (result.MismatchedIds.Count > 0)
     {
-        var ids     = string.Join(",", clientIds);
-        var avgDelay = result.AckDelays.Count > 0
-            ? Math.Round(result.AckDelays.Values.Average(), 2)
-            : 0.0;
-        var maxDelay = result.AckDelays.Count > 0
-            ? result.AckDelays.Values.Max()
-            : 0.0;
-
-        // info: summary
-        _info.Information(
-            "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} AvgDelay:{Avg}s MaxDelay:{Max}s ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId,
-            clientIds.Count, result.UpdatedCount,
-            avgDelay, maxDelay,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        // debug: full detail
-        _debug.Information(
-            "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} " +
-            "TrnIDs:[{IDs}] AvgDelay:{Avg}s MaxDelay:{Max}s " +
-            "ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId,
-            clientIds.Count, result.UpdatedCount,
-            ids, avgDelay, maxDelay,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        // debug: per-row delay
-        foreach (var kv in result.AckDelays)
-        {
-            _debug.Information(
-                "[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} Delay:{Delay}s",
-                kv.Key, typeMid, kv.Value);
-        }
-
-        TestingLog("[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} AvgDelay:{Avg}s MaxDelay:{Max}s",
-            typeMid, deviceId,
-            clientIds.Count, result.UpdatedCount,
-            avgDelay, maxDelay);
-
-        // error: slow ACK warning
-        if (maxDelay > ackWarnSeconds)
-        {
-            _error.Warning(
-                "[ACK-SLOW] TypeMID:{TypeMID} DeviceID:{DeviceID} MaxDelay:{Max}s " +
-                "Threshold:{Threshold}s TrnIDs:[{IDs}]",
-                typeMid, deviceId, maxDelay, ackWarnSeconds, ids);
-        }
-
-        // error: mismatch — client said these IDs but DB didn't find them
-        if (result.MismatchedIds.Count > 0)
-        {
-            var missed = string.Join(",", result.MismatchedIds);
-            _error.Error(
-                "[ACK-MISMATCH] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
-                "ClientClaimed:{Claimed} DBUpdated:{Updated} " +
-                "MissingTrnIDs:[{Missed}]",
-                typeMid, deviceId,
-                clientIds.Count, result.UpdatedCount, missed);
-        }
-
-        TestingLog("[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} TrnIDs:[{IDs}] Updated:{Updated} AvgDelay:{Avg}s",
-            typeMid, deviceId, ids, result.UpdatedCount, avgDelay);
+        var missed = string.Join(",", result.MismatchedIds);
+        _error.Error(
+            "[ACK-MISMATCH] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+            "ClientClaimed:{Claimed} DBUpdated:{Updated} " +
+            "MissingTrnIDs:[{Missed}] " +
+            "Reason:RowsNotFoundWithTrnStat1AndMatchingTypeMID",
+            typeMid, deviceId, clientIds.Count, result.UpdatedCount, missed);
     }
 
+    TestingLog(
+        "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} TrnIDs:[{IDs}] " +
+        "Updated:{Updated} AvgDelay:{Avg}s " +
+        "ServerMs:{Server}ms Up:{Up} Down:{Down} Full:{Full}",
+        typeMid, deviceId, ids, result.UpdatedCount, avgDelay,
+        serverMs, upLabel, downLabel, roundTripLabel);
+}
     // ── RESTORE ───────────────────────────────────────────────────────────────
 
     public void LogRestore(string typeMid, decimal deviceId,
@@ -338,4 +348,22 @@ public class ActivityLogger
         if (!_testingEnabled) return;
         _testing.Debug(template, args);
     }
+
+    public void LogAckTiming(string typeMid, decimal deviceId,
+    long serverMs, double roundTripMs, double clientMs)
+{
+    _info.Information(
+        "[ACK-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+        "ServerMs:{Server}ms RoundTripMs:{RoundTrip}ms ClientMs:{Client}ms",
+        typeMid, deviceId, serverMs, 
+        Math.Round(roundTripMs, 1), 
+        Math.Round(clientMs, 1));
+
+    _debug.Information(
+        "[ACK-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+        "ServerMs:{Server}ms RoundTripMs:{RoundTrip}ms ClientMs:{Client}ms",
+        typeMid, deviceId, serverMs,
+        Math.Round(roundTripMs, 1),
+        Math.Round(clientMs, 1));
+}
 }

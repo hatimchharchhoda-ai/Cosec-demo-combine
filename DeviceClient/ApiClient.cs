@@ -219,55 +219,82 @@ public class ApiClient
     }
 
     private async Task Ack(List<decimal> ids)
+{
+    var action = "ACK";
+
+    try
     {
-        var action = "ACK";
+        var t1 = DateTime.UtcNow;  // T1: client sending now
+
+        DeviceLogger.Info(
+            $"{action} | Preparing ACK | TrnIDs={string.Join(",", ids)}");
+
+        var payload = new
+        {
+            TrnIDs  = ids,
+            T1      = t1,
+            T4Prev  = DeviceMemory.LastT4  // T4 from previous ACK response (null on first call)
+        };
+
+        var jsonPayload = JsonSerializer.Serialize(payload);
+
+        DeviceLogger.Debug($"{action} | Payload=\n{jsonPayload}");
+
+        var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+        var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
+
+        var res = await HttpLogger.SendAsync(_http, req, action);
+
+        var t4 = DateTime.UtcNow;  // T4: client received response
+
+        // Parse T3 from response body so we can compute downstream
+        DateTime? t3 = null;
+        var json = await res.Content.ReadAsStringAsync();
 
         try
         {
-            DeviceLogger.Info(
-                $"{action} | Preparing ACK | TrnIDs={string.Join(",", ids)}");
-
-            var payload = new { TrnIDs = ids };
-            var jsonPayload = JsonSerializer.Serialize(payload);
-
-            DeviceLogger.Debug(
-                $"{action} | Payload=\n{jsonPayload}");
-
-            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-            var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
-
-            var start = DateTime.Now;
-
-            var res = await HttpLogger.SendAsync(_http, req, action);
-
-            var end = DateTime.Now;
-
-            var message = await ReadMessageAsync(res);
-
-            if (res.IsSuccessStatusCode)
+            var doc = JsonDocument.Parse(json).RootElement;
+            if (doc.TryGetProperty("t3", out var t3Prop) ||
+                doc.TryGetProperty("T3", out t3Prop))
             {
-                DeviceLogger.Info(
-                    $"{action} | SUCCESS | ServerMessage={message}");
-
-                DeviceLogger.Debug(
-                    $"{action} | Start: {start:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms | Server Message: {message} | End: {end:HH:mm:ss.fff}");
-            }
-            else
-            {
-                DeviceLogger.Error(
-                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
-                    $"ServerMessage={message}");
+                t3 = t3Prop.GetDateTime();
             }
         }
-        catch (Exception ex)
+        catch { /* non-fatal */ }
+
+        // Save T4 for the NEXT ACK call
+        DeviceMemory.LastT4 = t4;
+
+        var message = await ReadMessageAsync(res);
+
+        if (res.IsSuccessStatusCode)
+        {
+            // Compute what we can on the client side
+            double downstreamMs  = t3.HasValue
+                ? Math.Round((t4 - t3.Value).TotalMilliseconds, 1)
+                : -1;
+
+            double fullRoundTrip = Math.Round((t4 - t1).TotalMilliseconds, 1);
+
+            DeviceLogger.Info(
+                $"{action} | SUCCESS | T1={t1:HH:mm:ss.fff} T4={t4:HH:mm:ss.fff} " +
+                $"FullRoundTrip={fullRoundTrip}ms Downstream={downstreamMs}ms | {message}");
+        }
+        else
         {
             DeviceLogger.Error(
-                $"{action} | EXCEPTION\n" +
-                $"Message={ex.Message}\n" +
-                $"StackTrace={ex.StackTrace}");
+                $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
+                $"ServerMessage={message}");
         }
     }
-
+    catch (Exception ex)
+    {
+        DeviceLogger.Error(
+            $"{action} | EXCEPTION\n" +
+            $"Message={ex.Message}\n" +
+            $"StackTrace={ex.StackTrace}");
+    }
+}
     // Auto refresh before expiry
     private async Task EnsureTokenFreshAsync()
     {

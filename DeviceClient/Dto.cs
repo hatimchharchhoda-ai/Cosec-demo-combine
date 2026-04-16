@@ -60,3 +60,4 @@ public class LoggingSection
     public bool EnableDebug { get; set; }
     public bool EnableError { get; set; }
 }
+
