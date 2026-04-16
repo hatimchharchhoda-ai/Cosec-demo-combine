@@ -1,7 +1,6 @@
 {
   "format": 1,
   "restore": {
-<<<<<<< HEAD
     "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj": {}
   },
   "projects": {
@@ -13,25 +12,12 @@
         "projectPath": "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj",
         "packagesPath": "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\",
         "outputPath": "D:\\COSEC-demo\\DeviceClient\\obj\\",
-=======
-    "D:\\Cosec-demo-combine\\DeviceClient\\DeviceClient.csproj": {}
-  },
-  "projects": {
-    "D:\\Cosec-demo-combine\\DeviceClient\\DeviceClient.csproj": {
-      "version": "1.0.0",
-      "restore": {
-        "projectUniqueName": "D:\\Cosec-demo-combine\\DeviceClient\\DeviceClient.csproj",
-        "projectName": "DeviceClient",
-        "projectPath": "D:\\Cosec-demo-combine\\DeviceClient\\DeviceClient.csproj",
-        "packagesPath": "C:\\Users\\hasti.movaliya\\.nuget\\packages\\",
-        "outputPath": "D:\\Cosec-demo-combine\\DeviceClient\\obj\\",
->>>>>>> 5fb6584629a1ad79c697ceeeaf0fd2567e8f7ba0
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\hasti.movaliya\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\hatim.chharchhoda\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -64,6 +50,22 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Microsoft.Extensions.Configuration": {
+              "target": "Package",
+              "version": "[10.0.6, )"
+            },
+            "Microsoft.Extensions.Configuration.Binder": {
+              "target": "Package",
+              "version": "[10.0.6, )"
+            },
+            "Microsoft.Extensions.Configuration.FileExtensions": {
+              "target": "Package",
+              "version": "[10.0.6, )"
+            },
+            "Microsoft.Extensions.Configuration.Json": {
+              "target": "Package",
+              "version": "[10.0.6, )"
+            },
             "System.IdentityModel.Tokens.Jwt": {
               "target": "Package",
               "version": "[8.17.0, )"

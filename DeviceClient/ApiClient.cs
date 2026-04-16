@@ -6,112 +6,170 @@ public class ApiClient
 {
     private readonly HttpClient _http;
 
-    public ApiClient()
+    public ApiClient(string baseUrl)
     {
         _http = new HttpClient();
-        _http.BaseAddress = new Uri("http://localhost:5000/api/");
-    }
-
-    // ALWAYS called before any API call
-    private async Task AddAuthAsync()
-    {
-        await EnsureTokenFreshAsync();
-
-        _http.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
+        _http.BaseAddress = new Uri(baseUrl);
     }
 
     public async Task Login(int deviceId, string mac, string ip)
     {
-        var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip };
+        DeviceLogger.Info($"LOGIN START | DeviceId={deviceId} MAC={mac} IP={ip}");
 
-        var res = await _http.PostAsync("auth/login",
-            new StringContent(JsonSerializer.Serialize(payload),
-            Encoding.UTF8, "application/json"));
+        var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip };
+        var body = JsonSerializer.Serialize(payload);
+
+        DeviceLogger.Debug($"LOGIN REQUEST → {body}");
+
+        HttpResponseMessage res;
+
+        try
+        {
+            res = await _http.PostAsync("auth/login",
+                new StringContent(body, Encoding.UTF8, "application/json"));
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Error($"LOGIN HTTP ERROR | {ex.Message}");
+            return;
+        }
+
+        DeviceLogger.Debug($"LOGIN RESPONSE STATUS ← {(int)res.StatusCode}");
 
         var message = await ReadMessageAsync(res);
+        DeviceLogger.Debug($"LOGIN RESPONSE MESSAGE ← {message}");
 
         if (!res.IsSuccessStatusCode)
         {
-            DeviceLogger.Log($"LOGIN FAILED | {message}");
+            DeviceLogger.Error($"LOGIN FAILED | {message}");
             return;
         }
 
         var json = await res.Content.ReadAsStringAsync();
-        var doc = JsonDocument.Parse(json).RootElement;
+        DeviceLogger.Debug($"LOGIN RESPONSE BODY ← {json}");
 
-        DeviceSession.Token   = doc.GetProperty("token").GetString();
-        DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
+        try
+        {
+            var doc = JsonDocument.Parse(json).RootElement;
 
-        DeviceLogger.Log($"LOGIN SUCCESS | {message} | TypeMID={DeviceSession.TypeMID}");
+            DeviceSession.Token   = doc.GetProperty("token").GetString();
+            DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
+
+            DeviceLogger.Info($"LOGIN SUCCESS");
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Error($"LOGIN PARSE ERROR | {ex.Message}");
+        }
     }
 
     public async Task Restore()
     {
-        await AddAuthAsync();
-        await _http.PostAsync("poll/restore", null);
+        var req = await CreateAuthedRequest(HttpMethod.Post, "poll/restore");
+        await _http.SendAsync(req);
     }
 
     public async Task PollAndProcess()
     {
+        var action = "POLL";
+
         try
         {
-            await AddAuthAsync();
+            DeviceLogger.Info($"{action} | Started polling");
 
-            var res  = await _http.GetAsync("poll");
+            var req = await CreateAuthedRequest(HttpMethod.Get, "poll");
+
+            var res = await HttpLogger.SendAsync(_http, req, action);
+
             var json = await res.Content.ReadAsStringAsync();
 
             if (!res.IsSuccessStatusCode)
             {
                 var msg = await ReadMessageAsync(res);
-                DeviceLogger.Log($"POLL FAILED | {msg} | TypeMID={DeviceSession.TypeMID}");
+
+                DeviceLogger.Error(
+                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
+                    $"ServerMessage={msg}");
+
                 return;
             }
+
+            DeviceLogger.Debug($"{action} | RawResponse={json}");
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            if (poll == null) return;
-
-            // ACK-FIRST case
-            if (poll.NeedAckFirst)
+            if (poll == null)
             {
-                if (DeviceMemory.LastIds.Count > 0)
-                {
-                    DeviceLogger.Log($"ACK-FIRST | TypeMID={DeviceSession.TypeMID}");
-                    await Ack(DeviceMemory.LastIds);
-                    DeviceMemory.LastIds.Clear();
-                }
+                DeviceLogger.Error($"{action} | Deserialization returned NULL");
                 return;
             }
 
-            // DATA case
+            // ---------------- ACK-FIRST ----------------
+            if (poll.NeedAckFirst)
+            {
+                DeviceLogger.Info($"{action} | ACK-FIRST requested by server");
+
+                if (DeviceMemory.LastIds.Count > 0)
+                {
+                    DeviceLogger.Info(
+                        $"{action} | Sending previous ACK | TrnIDs={string.Join(",", DeviceMemory.LastIds)}");
+
+                    await Ack(DeviceMemory.LastIds);
+
+                    DeviceMemory.LastIds.Clear();
+                }
+                else
+                {
+                    DeviceLogger.Info($"{action} | ACK-FIRST but no pending IDs");
+                }
+
+                return;
+            }
+
+            // ---------------- DATA RECEIVED ----------------
             if (poll.HasData && poll.Rows.Count > 0)
             {
                 var ids = poll.Rows.Select(x => x.TrnID).ToList();
 
-                DeviceLogger.Log($"DATA RECEIVED | TypeMID={DeviceSession.TypeMID} | {string.Join(",", ids)}");
+                DeviceLogger.Info(
+                    $"{action} | DATA RECEIVED | Count={ids.Count} | TrnIDs={string.Join(",", ids)}");
+
+                DeviceLogger.Debug(
+                    $"{action} | FullRows=\n{JsonSerializer.Serialize(poll.Rows)}");
 
                 DeviceMemory.LastIds = ids;
 
+                DeviceLogger.Debug($"{action} | Waiting 2 seconds before ACK");
                 await Task.Delay(2000);
 
                 await Ack(ids);
 
                 DeviceMemory.LastIds.Clear();
+
+                DeviceLogger.Info($"{action} | ACK completed for received data");
+            }
+            else
+            {
+                DeviceLogger.Info($"{action} | No data from server");
             }
         }
         catch (Exception ex)
         {
-            DeviceLogger.Log($"ERROR | TypeMID={DeviceSession.TypeMID} | {ex.Message}");
+            DeviceLogger.Error(
+                $"{action} | EXCEPTION\n" +
+                $"Message={ex.Message}\n" +
+                $"StackTrace={ex.StackTrace}");
         }
     }
 
     public async Task SendEventAsync(string message)
     {
+        var action = "EVENT";
+
         try
         {
-            await AddAuthAsync();
+            DeviceLogger.Info($"{action} | Preparing to send event | Message={message}");
 
             var payload = new
             {
@@ -120,96 +178,231 @@ public class ApiClient
                 EventTime = DateTime.Now
             };
 
-            DeviceLogger.Log($"EVENT SENT | {message} | TypeMID={DeviceSession.TypeMID}");
+            var jsonPayload = JsonSerializer.Serialize(payload);
 
-            var res = await _http.PostAsync("poll/event",
-                new StringContent(JsonSerializer.Serialize(payload),
-                Encoding.UTF8, "application/json"));
+            DeviceLogger.Debug(
+                $"{action} | Payload=\n{jsonPayload}");
+
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var req = await CreateAuthedRequest(HttpMethod.Post, "poll/event", content);
+
+            var start = DateTime.Now;
+
+            var res = await HttpLogger.SendAsync(_http, req, action);
+
+            var end = DateTime.Now;
 
             var ackMsg = await ReadMessageAsync(res);
 
             if (res.IsSuccessStatusCode)
-                DeviceLogger.Log($"EVENT ACK RECEIVED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+            {
+                DeviceLogger.Info(
+                    $"{action} | ACK RECEIVED | ServerMessage={ackMsg}");
+
+                DeviceLogger.Debug(
+                    $"{action} | Event sent Time: {start:HH:mm:ss.fff} | Event Timer between Start and End: {((end - start).TotalMilliseconds)} ms | Server Message: {ackMsg} | Ack Time: {end:HH:mm:ss.fff}");
+            }
             else
-                DeviceLogger.Log($"EVENT FAILED | {ackMsg} | TypeMID={DeviceSession.TypeMID}");
+            {
+                DeviceLogger.Error(
+                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
+                    $"ServerMessage={ackMsg}");
+            }
         }
         catch (Exception ex)
         {
-            DeviceLogger.Log($"EVENT ERROR | {ex.Message} | TypeMID={DeviceSession.TypeMID}");
+            DeviceLogger.Error(
+                $"{action} | EXCEPTION\n" +
+                $"Message={ex.Message}\n" +
+                $"StackTrace={ex.StackTrace}");
         }
     }
 
     private async Task Ack(List<decimal> ids)
     {
-        await AddAuthAsync();
+        var action = "ACK";
 
-        var payload = new { TrnIDs = ids };
+        try
+        {
+            DeviceLogger.Info(
+                $"{action} | Preparing ACK | TrnIDs={string.Join(",", ids)}");
 
-        var res = await _http.PostAsync("poll/ack",
-            new StringContent(JsonSerializer.Serialize(payload),
-            Encoding.UTF8, "application/json"));
+            var payload = new { TrnIDs = ids };
+            var jsonPayload = JsonSerializer.Serialize(payload);
 
-        var message = await ReadMessageAsync(res);
+            DeviceLogger.Debug(
+                $"{action} | Payload=\n{jsonPayload}");
 
-        if (res.IsSuccessStatusCode)
-            DeviceLogger.Log($"ACK SENT | {message} | TypeMID={DeviceSession.TypeMID}");
-        else
-            DeviceLogger.Log($"ACK FAILED | {message} | TypeMID={DeviceSession.TypeMID}");
+            var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
+
+            var start = DateTime.Now;
+
+            var res = await HttpLogger.SendAsync(_http, req, action);
+
+            var end = DateTime.Now;
+
+            var message = await ReadMessageAsync(res);
+
+            if (res.IsSuccessStatusCode)
+            {
+                DeviceLogger.Info(
+                    $"{action} | SUCCESS | ServerMessage={message}");
+
+                DeviceLogger.Debug(
+                    $"{action} | Start: {start:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms | Server Message: {message} | End: {end:HH:mm:ss.fff}");
+            }
+            else
+            {
+                DeviceLogger.Error(
+                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
+                    $"ServerMessage={message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Error(
+                $"{action} | EXCEPTION\n" +
+                $"Message={ex.Message}\n" +
+                $"StackTrace={ex.StackTrace}");
+        }
     }
 
     // Auto refresh before expiry
     private async Task EnsureTokenFreshAsync()
     {
-        if (string.IsNullOrEmpty(DeviceSession.Token))
-            return;
+        var action = "TOKEN-REFRESH";
 
-        var expiry = JwtHelper.GetExpiry(DeviceSession.Token!);
-
-        if ((expiry - DateTime.UtcNow).TotalSeconds < 60)
+        try
         {
-            DeviceLogger.Log($"TOKEN EXPIRING | TypeMID={DeviceSession.TypeMID}");
+            if (string.IsNullOrEmpty(DeviceSession.Token))
+            {
+                DeviceLogger.Debug($"{action} | No token present, skipping refresh check");
+                return;
+            }
 
-            var res  = await _http.PostAsync("auth/refresh", null);
+            var expiry = JwtHelper.GetExpiry(DeviceSession.Token!);
+            var secondsLeft = (expiry - DateTime.UtcNow).TotalSeconds;
+
+            DeviceLogger.Debug(
+                $"{action} | Token expiry check | SecondsLeft={secondsLeft}");
+
+            if (secondsLeft >= 60)
+                return;
+
+            DeviceLogger.Info(
+                $"{action} | Token expiring soon | SecondsLeft={secondsLeft}");
+
+
+            var req = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
+            req.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
+
+            var start = DateTime.Now;
+
+            var res = await HttpLogger.SendAsync(_http, req, action);
+
+            var end = DateTime.Now;
+
             var message = await ReadMessageAsync(res);
 
             if (!res.IsSuccessStatusCode)
             {
-                DeviceLogger.Log($"TOKEN REFRESH FAILED | {message}");
+                DeviceLogger.Error(
+                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
+                    $"ServerMessage={message}");
+
                 DeviceSession.Token = null;
                 return;
             }
 
             var json = await res.Content.ReadAsStringAsync();
 
+            DeviceLogger.Debug($"{action} | RawResponse=\n{json}");
+
             var doc = JsonDocument.Parse(json).RootElement;
 
             DeviceSession.Token   = doc.GetProperty("token").GetString();
             DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
-            DeviceLogger.Log($"TOKEN REFRESHED | {message} | TypeMID={DeviceSession.TypeMID}");
+            DeviceLogger.Info(
+                $"{action} | SUCCESS | ServerMessage={message}");
+
+            DeviceLogger.Debug(
+                $"{action} | Start: {start:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms | Server Message: {message} | End: {end:HH:mm:ss.fff}");
+        }
+        catch (Exception ex)
+        {
+            DeviceLogger.Error(
+                $"{action} | EXCEPTION\n" +
+                $"Message={ex.Message}\n" +
+                $"StackTrace={ex.StackTrace}");
         }
     }
 
     // reading the response message for log
     private async Task<string> ReadMessageAsync(HttpResponseMessage res)
     {
+        var action = "READ-MESSAGE";
+
         var body = await res.Content.ReadAsStringAsync();
 
         try
         {
+            DeviceLogger.Debug(
+                $"{action} | RawBody=\n{body}");
+
             var doc = JsonDocument.Parse(body).RootElement;
 
             if (doc.TryGetProperty("message", out var msg))
-                return msg.GetString() ?? body;
+            {
+                var text = msg.GetString() ?? body;
+
+                DeviceLogger.Debug(
+                    $"{action} | Extracted 'message' = {text}");
+
+                return text;
+            }
 
             if (doc.TryGetProperty("Message", out var msg2))
-                return msg2.GetString() ?? body;
+            {
+                var text = msg2.GetString() ?? body;
+
+                DeviceLogger.Debug(
+                    $"{action} | Extracted 'Message' = {text}");
+
+                return text;
+            }
+
+            DeviceLogger.Debug(
+                $"{action} | No message field found, returning full body");
 
             return body;
         }
-        catch
+        catch (Exception ex)
         {
+            DeviceLogger.Error(
+                $"{action} | Failed to parse JSON\n" +
+                $"Message={ex.Message}\n" +
+                $"Returning raw body");
+
             return body;
         }
+    }
+
+    private async Task<HttpRequestMessage> CreateAuthedRequest(
+        HttpMethod method, string url, HttpContent? content = null)
+    {
+        await EnsureTokenFreshAsync();
+
+        var req = new HttpRequestMessage(method, url);
+
+        req.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
+
+        if (content != null)
+            req.Content = content;
+
+        return req;
     }
 }
