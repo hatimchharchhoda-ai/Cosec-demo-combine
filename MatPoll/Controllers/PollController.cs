@@ -163,7 +163,7 @@ public class PollController : ControllerBase
     [HttpPost("event")]
     public IActionResult ReceiveEvent([FromBody] object eventData)
     {
-         var reqTime  = DateTime.Now;
+        var reqTime  = DateTime.Now;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);

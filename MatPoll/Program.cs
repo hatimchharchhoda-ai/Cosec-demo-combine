@@ -7,42 +7,75 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Events; // ✅ REQUIRED
 
+var builder = WebApplication.CreateBuilder(args);
+
+// ✅ Read TestingLog BEFORE using it
+var testingLog = builder.Configuration.GetValue<bool>("TestingLog");
+
+// ── SERILOG CONFIG ───────────────────────────────────────
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Information()
+    .MinimumLevel.Debug()
 
-    // Suppress noisy EF SQL logs
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", Serilog.Events.LogEventLevel.Warning)
-    // Suppress ASP.NET request pipeline noise
-    .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+    // Reduce noisy logs
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
 
-    // Console: just the message — ActivityLogger already stamps the timestamp
-    .WriteTo.Console(
-        outputTemplate: "{Message:lj}{NewLine}{Exception}")
+    // Console
+    .WriteTo.Console(outputTemplate: "{Message:lj}{NewLine}{Exception}")
 
-    // File: same clean message-only format
-    .WriteTo.File(
-        path: "Logs/matpoll-.log",
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 30,
-        outputTemplate: "{Message:lj}{NewLine}{Exception}")
+    // INFO LOG (only Information)
+    .WriteTo.Logger(lc => lc
+        .Filter.ByIncludingOnly(e => e.Level == LogEventLevel.Information)
+        .WriteTo.File("Logs/info-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            outputTemplate: "{Message:lj}{NewLine}")
+    )
+
+    // DEBUG LOG (everything)
+    .WriteTo.Logger(lc => lc
+        .MinimumLevel.Debug()
+        .WriteTo.File("Logs/debug-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            outputTemplate: "{Message:lj}{NewLine}")
+    )
+
+    // ERROR LOG (only errors)
+    .WriteTo.Logger(lc => lc
+        .Filter.ByIncludingOnly(e => e.Level >= LogEventLevel.Error)
+        .WriteTo.File("Logs/error-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            outputTemplate: "{Message:lj}{NewLine}{Exception}")
+    )
+
+    // TESTING LOG (only if enabled)
+    .WriteTo.Conditional(
+        _ => testingLog,
+        wt => wt.File("Logs/testing-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            outputTemplate: "{Message:lj}{NewLine}{Exception}")
+    )
 
     .CreateLogger();
 
-var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
-// ── Database ──────────────────────────────────────────────────────────────────
+// ── DATABASE ─────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── Services ──────────────────────────────────────────────────────────────────
+// ── SERVICES ─────────────────────────────────────────────
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ActivityLogger>();
 builder.Services.AddHostedService<StallRecoveryService>();
 
-// ── JWT ───────────────────────────────────────────────────────────────────────
+// ── JWT AUTH ─────────────────────────────────────────────
 var secret = builder.Configuration["Jwt:Secret"]
     ?? throw new Exception("Jwt:Secret missing");
 
@@ -55,16 +88,21 @@ builder.Services
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(secret)),
-            ValidateIssuer   = true, ValidIssuer   = "MatPoll",
-            ValidateAudience = true, ValidAudience = "MatPollClient",
-            ClockSkew        = TimeSpan.Zero
+            ValidateIssuer = true,
+            ValidIssuer = "MatPoll",
+            ValidateAudience = true,
+            ValidAudience = "MatPollClient",
+            ClockSkew = TimeSpan.Zero
         };
+
         opt.Events = new JwtBearerEvents
         {
             OnMessageReceived = ctx =>
             {
-                var c = ctx.Request.Cookies["mat_auth"];
-                if (!string.IsNullOrEmpty(c)) ctx.Token = c;
+                var cookieToken = ctx.Request.Cookies["mat_auth"];
+                if (!string.IsNullOrEmpty(cookieToken))
+                    ctx.Token = cookieToken;
+
                 return Task.CompletedTask;
             }
         };
@@ -73,37 +111,45 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// ── Swagger ───────────────────────────────────────────────────────────────────
+// ── SWAGGER ──────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title       = "MatPoll API",
-        Version     = "v1",
+        Title = "MatPoll API",
+        Version = "v1",
         Description = "Device polling server — login by DeviceID+MAC+IP, TypeMID-based dispatch"
     });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Name         = "Authorization",
-        Type         = SecuritySchemeType.Http,
-        Scheme       = "bearer",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
         BearerFormat = "JWT",
-        In           = ParameterLocation.Header
+        In = ParameterLocation.Header
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {{
-        new OpenApiSecurityScheme
+    {
         {
-            Reference = new OpenApiReference
-                { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-        },
-        Array.Empty<string>()
-    }});
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();
 
+// ── PIPELINE ─────────────────────────────────────────────
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -113,7 +159,11 @@ app.UseSwaggerUI(c =>
 
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
-Log.Information("2026-04-15 00:00:00 | SERVER STARTED   | MatPoll is running");
+// ── START LOG ────────────────────────────────────────────
+Log.Information("{Time} | SERVER STARTED | MatPoll is running",
+    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
 app.Run();

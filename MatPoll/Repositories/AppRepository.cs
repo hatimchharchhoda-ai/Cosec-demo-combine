@@ -117,4 +117,29 @@ public class AppRepository
         if (stalled.Count > 0)
             await _db.SaveChangesAsync();
     }
+
+    //excute raw SQL for testing/demo purposes
+    public Task<List<MatCommTrn>> GetAllCommTrnAsync()
+        => _db.CommTrns.FromSqlRaw("SELECT * FROM Mat_CommTrn").ToListAsync();
+
+    //exception recive ack 
+
+    public async Task<int> MarkAcknowledgedWithMessageAsync(List<decimal> trnIds, string typeMid, string? message)
+    {
+        var rows = await _db.CommTrns
+            .Where(t => trnIds.Contains(t.TrnID) &&
+                        t.TypeMID == typeMid      &&
+                        t.TrnStat == 1)
+            .ToListAsync();
+
+        foreach (var row in rows)
+        {
+            row.TrnStat = 2;
+            // Optionally log or store the message from the client
+            // e.g., row.MsgStr = message; if you want to save it in the DB
+        }
+
+        await _db.SaveChangesAsync();
+        return rows.Count;
+    }
 }
