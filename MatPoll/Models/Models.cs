@@ -61,13 +61,41 @@ public class MatCommTrn
     [Column(TypeName = "numeric(1,0)")]
     public decimal? TrnStat { get; set; }
 
-    [Timestamp]
-    //public byte[]? Time { get; set; }
+    // [Timestamp]
+    // public byte[]? Time { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
-    // NEW: TypeMID = hash of MAC+IP — identifies which device this row belongs to
-    // Generated at dispatch time. Used for filtering, restore, and logging.
+    // Which device this row was dispatched to (MD5 of MAC+IP, first 12 chars)
     [StringLength(32)]
     public string? TypeMID { get; set; }
+
+    // Exact UTC time this row was dispatched (TrnStat flipped 0→1)
+    // Used to calculate ACK delay: AckReceivedAt - DispatchedAt
+    // public DateTime? DispatchedAt { get; set; }
+}
+
+// ── Result objects returned from Repository ──────────────────────────────────
+// These carry richer data back to the controller for logging purposes.
+
+public class AckResult
+{
+    // How many rows were actually updated to TrnStat=2
+    public int UpdatedCount { get; set; }
+
+    // TrnIDs the client sent that we could NOT find/update
+    // (wrong TypeMID, already ACKed, or never existed)
+    public List<decimal> MismatchedIds { get; set; } = new();
+
+    // Per-row ACK delay in seconds (TrnID → delay)
+    public Dictionary<decimal, double> AckDelays { get; set; } = new();
+}
+
+public class StalledGroup
+{
+    public string  TypeMID    { get; set; } = string.Empty;
+    public int     RowCount   { get; set; }
+    public int     MaxRetry   { get; set; }
+    public int     ResetCount { get; set; }
+    public int     FailedCount { get; set; }
 }

@@ -1,0 +1,83 @@
+[2026-04-16 11:48:04.371 INF] [LOGIN] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor Result:SUCCESS Duration:590ms
+[2026-04-16 11:48:04.378 INF] [LOGIN] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor Result:SUCCESS Duration:590ms
+[2026-04-16 11:48:04.496 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:06:18:04.466 Duration:29ms
+[2026-04-16 11:48:04.499 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:06:18:04.466 Duration:29ms
+[2026-04-16 11:48:04.671 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:30 ReqTime:06:18:04.517 Duration:150ms
+[2026-04-16 11:48:04.674 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:30 TrnIDs:[40103] ReqTime:06:18:04.517 Duration:150ms
+[2026-04-16 11:48:04.676 INF] [POLL-ROW] TrnID:40103 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0096|DID:1 RetryCnt:1 
+[2026-04-16 11:48:06.803 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:06.749 Duration:53ms
+[2026-04-16 11:48:06.807 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40103] AvgDelay:0s MaxDelay:0s ReqTime:06:18:06.749 Duration:53ms
+[2026-04-16 11:48:14.842 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:29 ReqTime:06:18:14.826 Duration:16ms
+[2026-04-16 11:48:14.845 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:29 TrnIDs:[40104] ReqTime:06:18:14.826 Duration:16ms
+[2026-04-16 11:48:14.847 INF] [POLL-ROW] TrnID:40104 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0097|DID:1 RetryCnt:1 
+[2026-04-16 11:48:16.876 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:16.867 Duration:8ms
+[2026-04-16 11:48:16.878 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40104] AvgDelay:0s MaxDelay:0s ReqTime:06:18:16.867 Duration:8ms
+[2026-04-16 11:48:24.897 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:28 ReqTime:06:18:24.888 Duration:9ms
+[2026-04-16 11:48:24.899 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:28 TrnIDs:[40105] ReqTime:06:18:24.888 Duration:9ms
+[2026-04-16 11:48:24.901 INF] [POLL-ROW] TrnID:40105 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0098|DID:1 RetryCnt:1 
+[2026-04-16 11:48:26.913 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:26.904 Duration:8ms
+[2026-04-16 11:48:26.915 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40105] AvgDelay:0s MaxDelay:0s ReqTime:06:18:26.904 Duration:8ms
+[2026-04-16 11:48:34.935 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:27 ReqTime:06:18:34.921 Duration:14ms
+[2026-04-16 11:48:34.937 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:27 TrnIDs:[40106] ReqTime:06:18:34.921 Duration:14ms
+[2026-04-16 11:48:34.939 INF] [POLL-ROW] TrnID:40106 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0099|DID:1 RetryCnt:1 
+[2026-04-16 11:48:36.942 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:36.937 Duration:5ms
+[2026-04-16 11:48:36.944 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40106] AvgDelay:0s MaxDelay:0s ReqTime:06:18:36.937 Duration:5ms
+[2026-04-16 11:48:44.968 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:26 ReqTime:06:18:44.951 Duration:17ms
+[2026-04-16 11:48:44.970 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:26 TrnIDs:[40107] ReqTime:06:18:44.951 Duration:17ms
+[2026-04-16 11:48:44.972 INF] [POLL-ROW] TrnID:40107 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00101|DID:1 RetryCnt:1 
+[2026-04-16 11:48:46.987 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:46.971 Duration:16ms
+[2026-04-16 11:48:46.990 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40107] AvgDelay:0s MaxDelay:0s ReqTime:06:18:46.971 Duration:16ms
+[2026-04-16 11:48:55.033 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:25 ReqTime:06:18:55.001 Duration:31ms
+[2026-04-16 11:48:55.037 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:25 TrnIDs:[40108] ReqTime:06:18:55.001 Duration:31ms
+[2026-04-16 11:48:55.040 INF] [POLL-ROW] TrnID:40108 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00102|DID:1 RetryCnt:1 
+[2026-04-16 11:48:57.062 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:18:57.056 Duration:5ms
+[2026-04-16 11:48:57.064 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40108] AvgDelay:0s MaxDelay:0s ReqTime:06:18:57.056 Duration:5ms
+[2026-04-16 11:49:05.093 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:24 ReqTime:06:19:05.074 Duration:18ms
+[2026-04-16 11:49:05.097 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:24 TrnIDs:[40109] ReqTime:06:19:05.074 Duration:18ms
+[2026-04-16 11:49:05.101 INF] [POLL-ROW] TrnID:40109 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00103|DID:1 RetryCnt:1 
+[2026-04-16 11:49:07.126 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:07.121 Duration:4ms
+[2026-04-16 11:49:07.128 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40109] AvgDelay:0s MaxDelay:0s ReqTime:06:19:07.121 Duration:4ms
+[2026-04-16 11:49:15.140 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:23 ReqTime:06:19:15.124 Duration:15ms
+[2026-04-16 11:49:15.143 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:23 TrnIDs:[40110] ReqTime:06:19:15.124 Duration:15ms
+[2026-04-16 11:49:15.144 INF] [POLL-ROW] TrnID:40110 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00104|DID:1 RetryCnt:1 
+[2026-04-16 11:49:17.163 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:17.153 Duration:9ms
+[2026-04-16 11:49:17.166 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40110] AvgDelay:0s MaxDelay:0s ReqTime:06:19:17.153 Duration:9ms
+[2026-04-16 11:49:25.185 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:22 ReqTime:06:19:25.173 Duration:11ms
+[2026-04-16 11:49:25.187 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:22 TrnIDs:[40111] ReqTime:06:19:25.173 Duration:11ms
+[2026-04-16 11:49:25.189 INF] [POLL-ROW] TrnID:40111 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00105|DID:1 RetryCnt:1 
+[2026-04-16 11:49:27.212 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:27.205 Duration:6ms
+[2026-04-16 11:49:27.214 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40111] AvgDelay:0s MaxDelay:0s ReqTime:06:19:27.205 Duration:6ms
+[2026-04-16 11:49:35.233 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:21 ReqTime:06:19:35.223 Duration:9ms
+[2026-04-16 11:49:35.235 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:21 TrnIDs:[40112] ReqTime:06:19:35.223 Duration:9ms
+[2026-04-16 11:49:35.236 INF] [POLL-ROW] TrnID:40112 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00106|DID:1 RetryCnt:1 
+[2026-04-16 11:49:37.266 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:37.257 Duration:9ms
+[2026-04-16 11:49:37.270 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40112] AvgDelay:0s MaxDelay:0s ReqTime:06:19:37.257 Duration:9ms
+[2026-04-16 11:49:45.293 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:20 ReqTime:06:19:45.280 Duration:12ms
+[2026-04-16 11:49:45.294 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:20 TrnIDs:[40113] ReqTime:06:19:45.280 Duration:12ms
+[2026-04-16 11:49:45.296 INF] [POLL-ROW] TrnID:40113 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00107|DID:1 RetryCnt:1 
+[2026-04-16 11:49:47.316 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:47.307 Duration:8ms
+[2026-04-16 11:49:47.319 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40113] AvgDelay:0s MaxDelay:0s ReqTime:06:19:47.307 Duration:8ms
+[2026-04-16 11:49:47.932 INF] [STALL-CHECK] No stalled rows found
+[2026-04-16 11:49:55.350 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:19 ReqTime:06:19:55.325 Duration:24ms
+[2026-04-16 11:49:55.352 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:19 TrnIDs:[40114] ReqTime:06:19:55.325 Duration:24ms
+[2026-04-16 11:49:55.354 INF] [POLL-ROW] TrnID:40114 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00108|DID:1 RetryCnt:1 
+[2026-04-16 11:49:57.394 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:19:57.374 Duration:19ms
+[2026-04-16 11:49:57.398 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40114] AvgDelay:0s MaxDelay:0s ReqTime:06:19:57.374 Duration:19ms
+[2026-04-16 11:50:05.420 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:18 ReqTime:06:20:05.409 Duration:11ms
+[2026-04-16 11:50:05.422 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:18 TrnIDs:[40115] ReqTime:06:20:05.409 Duration:11ms
+[2026-04-16 11:50:05.424 INF] [POLL-ROW] TrnID:40115 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00109|DID:1 RetryCnt:1 
+[2026-04-16 11:50:07.435 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:20:07.425 Duration:10ms
+[2026-04-16 11:50:07.439 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40115] AvgDelay:0s MaxDelay:0s ReqTime:06:20:07.425 Duration:10ms
+[2026-04-16 11:50:15.467 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:17 ReqTime:06:20:15.449 Duration:17ms
+[2026-04-16 11:50:15.471 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:17 TrnIDs:[40116] ReqTime:06:20:15.449 Duration:17ms
+[2026-04-16 11:50:15.474 INF] [POLL-ROW] TrnID:40116 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00111|DID:1 RetryCnt:1 
+[2026-04-16 11:50:17.499 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:20:17.492 Duration:7ms
+[2026-04-16 11:50:17.503 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40116] AvgDelay:0s MaxDelay:0s ReqTime:06:20:17.492 Duration:7ms
+[2026-04-16 11:50:25.523 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:1 TotalPending:16 ReqTime:06:20:25.508 Duration:14ms
+[2026-04-16 11:50:25.525 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:1 TotalPending:16 TrnIDs:[40117] ReqTime:06:20:25.508 Duration:14ms
+[2026-04-16 11:50:25.527 INF] [POLL-ROW] TrnID:40117 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR00112|DID:1 RetryCnt:1 
+[2026-04-16 11:50:27.551 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 AvgDelay:0s MaxDelay:0s ReqTime:06:20:27.541 Duration:9ms
+[2026-04-16 11:50:27.554 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:1 Updated:1 TrnIDs:[40117] AvgDelay:0s MaxDelay:0s ReqTime:06:20:27.541 Duration:9ms
+[2026-04-16 12:20:41.764 INF] MatPoll server started — TestingLog=false
+[2026-04-16 12:20:50.128 INF] MatPoll server started — TestingLog=false
+[2026-04-16 12:22:24.329 INF] MatPoll server started — TestingLog=false

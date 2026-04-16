@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DeviceClient")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5fb6584629a1ad79c697ceeeaf0fd2567e8f7ba0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d82e27f402c69dac74c4e292225ac41041ed351b")]
 [assembly: System.Reflection.AssemblyProductAttribute("DeviceClient")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DeviceClient")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

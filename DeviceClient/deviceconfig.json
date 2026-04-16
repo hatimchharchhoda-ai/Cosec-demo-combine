@@ -1,0 +1,29 @@
+{
+  "Device": {
+    "DeviceId": 1,
+    "MacAddress": "00:1b:09:11:12:13",
+    "IpAddress": "192.168.100.1"
+  },
+  "Timing": {
+    "PollIntervalSeconds": 8,
+    "EventIntervalSeconds": 5,
+    "BulkEverySeconds": 10
+  },
+  "Event": {
+    "EventCount": 100,
+    "BulkCount": 1000,
+    "EnableBulkMode": true
+  },
+  "Server": {
+    "BaseUrl": "http://localhost:5000/api/"
+  },
+  "Logging": {
+    "InfoFile": "logs/device_info.log",
+    "DebugFile": "logs/device_debug.log",
+    "ErrorFile": "logs/device_error.log",
+
+    "EnableInfo": true,
+    "EnableDebug": true,
+    "EnableError": true
+  }
+}

@@ -1,0 +1,28 @@
+[2026-04-16 10:47:18.558 INF] [STALL-CHECK] No stalled rows found
+[2026-04-16 10:48:07.873 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:05:18:07.847 Duration:25ms
+[2026-04-16 10:48:07.876 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:05:18:07.847 Duration:25ms
+[2026-04-16 10:48:15.692 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 RowsSent:2 TotalPending:28 ReqTime:05:18:15.501 Duration:188ms
+[2026-04-16 10:48:15.694 INF] [POLL-SENT] TypeMID:1b4295cb5abd DeviceID:1 Name:R&D1 - Ground Floor RowsSent:2 TotalPending:28 TrnIDs:[40104,40105] ReqTime:05:18:15.501 Duration:188ms
+[2026-04-16 10:48:15.697 INF] [POLL-ROW] TrnID:40104 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0097|DID:1 RetryCnt:2 
+[2026-04-16 10:48:15.698 INF] [POLL-ROW] TrnID:40105 TypeMID:1b4295cb5abd MsgStr:ENROLL|UID:USR0098|DID:1 RetryCnt:2 
+[2026-04-16 10:48:19.724 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:19.720 Duration:4ms
+[2026-04-16 10:48:19.727 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:19.720 Duration:4ms
+[2026-04-16 10:48:22.720 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:22.718 Duration:1ms
+[2026-04-16 10:48:22.722 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:22.718 Duration:1ms
+[2026-04-16 10:48:23.239 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:23.238 Duration:1ms
+[2026-04-16 10:48:23.242 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:23.238 Duration:1ms
+[2026-04-16 10:48:23.823 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:23.821 Duration:1ms
+[2026-04-16 10:48:23.824 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:23.821 Duration:1ms
+[2026-04-16 10:48:25.817 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:25.815 Duration:1ms
+[2026-04-16 10:48:25.820 WRN] [POLL-BLOCKED] TypeMID:1b4295cb5abd DeviceID:1 Reason:TrnStat1RowsExist ReqTime:05:18:25.815 Duration:1ms
+[2026-04-16 10:48:44.119 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:2 Updated:0 AvgDelay:0s MaxDelay:0s ReqTime:05:18:44.076 Duration:41ms
+[2026-04-16 10:48:44.125 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:2 Updated:0 TrnIDs:[40102,40103] AvgDelay:0s MaxDelay:0s ReqTime:05:18:44.076 Duration:41ms
+[2026-04-16 10:49:18.623 WRN] [STALL] TypeMID:1b4295cb5abd StalledRows:2 Reset:2 Failed:0 MaxRetry:2
+[2026-04-16 10:49:18.629 WRN] [STALL] TypeMID:1b4295cb5abd StalledRows:2 Reset:2 Failed:0 MaxRetry:2
+[2026-04-16 10:50:00.758 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:2 Updated:0 AvgDelay:0s MaxDelay:0s ReqTime:05:20:00.755 Duration:3ms
+[2026-04-16 10:50:00.760 INF] [ACK] TypeMID:1b4295cb5abd DeviceID:1 Claimed:2 Updated:0 TrnIDs:[40102,40103] AvgDelay:0s MaxDelay:0s ReqTime:05:20:00.755 Duration:3ms
+[2026-04-16 10:51:18.663 INF] [STALL-CHECK] No stalled rows found
+[2026-04-16 10:51:56.623 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:05:21:56.618 Duration:5ms
+[2026-04-16 10:51:56.626 WRN] [RESTORE] TypeMID:1b4295cb5abd DeviceID:1 RestoredRows:0 ReqTime:05:21:56.618 Duration:5ms
+[2026-04-16 10:53:36.103 INF] MatPoll server started — TestingLog=false
+[2026-04-16 10:54:21.448 INF] MatPoll server started — TestingLog=false

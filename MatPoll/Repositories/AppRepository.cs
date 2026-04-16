@@ -23,61 +23,81 @@ public class AppRepository
 
     // ── CommTrn ───────────────────────────────────────────────────────────────
 
-    // Count how many TrnStat=0 rows are waiting (for all devices)
     public Task<int> CountPendingAsync()
         => _db.CommTrns.CountAsync(t => t.TrnStat == 0);
 
-    // Check: does this device (TypeMID) have un-ACKed rows (TrnStat=1)?
-    // THIS replaces the BatchCache — TrnStat=1 in DB IS the lock
     public Task<bool> HasDispatchedRowsAsync(string typeMid)
         => _db.CommTrns.AnyAsync(t => t.TrnStat == 1 && t.TypeMID == typeMid);
 
-    // Get dispatched rows for this device (for re-sending on reconnect)
     public Task<List<MatCommTrn>> GetDispatchedRowsAsync(string typeMid)
         => _db.CommTrns
             .Where(t => t.TrnStat == 1 && t.TypeMID == typeMid)
             .OrderBy(t => t.TrnID)
             .ToListAsync();
 
-    // Fetch next bunch of TrnStat=0 rows and mark them TrnStat=1 with TypeMID
-    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(string typeMid, int bunchSize)
+    // Fetch TrnStat=0 rows, flip to TrnStat=1, stamp TypeMID + DispatchedAt
+    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
+        string typeMid, int bunchSize)
     {
         var rows = await _db.CommTrns
-            .Where(t => t.TrnStat == 0 && t.TypeMID == typeMid) 
+            .Where(t => t.TrnStat == 0)
             .OrderBy(t => t.TrnID)
             .Take(bunchSize)
             .ToListAsync();
 
         if (rows.Count == 0) return rows;
 
+        var now = DateTime.UtcNow;
         foreach (var row in rows)
         {
-            row.TrnStat  = 1;
-            row.RetryCnt = (row.RetryCnt ?? 0) + 1;
+            row.TrnStat      = 1;
+            row.TypeMID      = typeMid;
+            row.RetryCnt     = (row.RetryCnt ?? 0) + 1;
+               // stamp dispatch time for ACK delay calc
         }
 
         await _db.SaveChangesAsync();
         return rows;
     }
 
-    // ACK: mark TrnStat=2 for rows belonging to this TypeMID
-    public async Task<int> MarkAcknowledgedAsync(List<decimal> trnIds, string typeMid)
+    // ACK: mark TrnStat=2, return rich AckResult (updated count, mismatches, delays)
+    public async Task<AckResult> MarkAcknowledgedAsync(
+        List<decimal> trnIds, string typeMid)
     {
+        var result = new AckResult();
+
+        // Load rows that match: correct TypeMID + TrnStat=1
         var rows = await _db.CommTrns
             .Where(t => trnIds.Contains(t.TrnID) &&
                         t.TypeMID == typeMid      &&
                         t.TrnStat == 1)
             .ToListAsync();
 
+        var foundIds = rows.Select(r => r.TrnID).ToHashSet();
+        var now      = DateTime.UtcNow;
+
         foreach (var row in rows)
+        {
             row.TrnStat = 2;
 
-        await _db.SaveChangesAsync();
-        return rows.Count;
+            // Calculate ACK delay if DispatchedAt was stamped
+           
+        }
+
+        // Find TrnIDs client claimed to ACK but we couldn't find/update
+        result.MismatchedIds = trnIds
+            .Where(id => !foundIds.Contains(id))
+            .ToList();
+
+        result.UpdatedCount = rows.Count;
+
+        if (rows.Count > 0)
+            await _db.SaveChangesAsync();
+
+        return result;
     }
 
-    // RESTORE: reset all TrnStat=1 rows for this TypeMID back to TrnStat=0
-    // Used when device reconnects or user clicks Restore button
+    // RESTORE: reset TrnStat=1 → 0 for this TypeMID
     public async Task<int> RestoreDispatchedAsync(string typeMid)
     {
         var rows = await _db.CommTrns
@@ -86,60 +106,54 @@ public class AppRepository
 
         foreach (var row in rows)
         {
-            row.TrnStat = 0;
-            row.TypeMID = null;   // clear so they can be picked up fresh
+            row.TrnStat      = 0;
+            row.TypeMID      = null;
+          
         }
 
         await _db.SaveChangesAsync();
         return rows.Count;
     }
 
-    // Stall recovery: rows stuck at TrnStat=1 too long → reset back to 0
-    public async Task ResetStalledRowsAsync(int timeoutMinutes)
+    // Stall recovery — returns per-TypeMID groups for detailed logging
+    public async Task<List<StalledGroup>> ResetStalledRowsAsync(int timeoutMinutes)
     {
-        var cutoff = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
-
-        var stalled = await _db.CommTrns
+        var cutoff   = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
+        var stalled  = await _db.CommTrns
             .Where(t => t.TrnStat == 1 && t.CreatedAt < cutoff)
             .ToListAsync();
 
-        foreach (var row in stalled)
-        {
-            var retry = (int)(row.RetryCnt ?? 0);
-            if (retry >= 5)
-                row.TrnStat = 9;
-            else
+        if (stalled.Count == 0) return new List<StalledGroup>();
+
+        // Group by TypeMID for logging
+        var groups = stalled
+            .GroupBy(r => r.TypeMID ?? "unknown")
+            .Select(g =>
             {
-                row.TrnStat = 0;
-            }
-        }
+                var resetRows  = g.Where(r => (int)(r.RetryCnt ?? 0) < 5).ToList();
+                var failedRows = g.Where(r => (int)(r.RetryCnt ?? 0) >= 5).ToList();
 
-        if (stalled.Count > 0)
-            await _db.SaveChangesAsync();
-    }
+                foreach (var row in resetRows)
+                {
+                    row.TrnStat      = 0;
+                    row.TypeMID      = null;
+                    
+                }
+                foreach (var row in failedRows)
+                    row.TrnStat = 9;
 
-    //excute raw SQL for testing/demo purposes
-    public Task<List<MatCommTrn>> GetAllCommTrnAsync()
-        => _db.CommTrns.FromSqlRaw("SELECT * FROM Mat_CommTrn").ToListAsync();
-
-    //exception recive ack 
-
-    public async Task<int> MarkAcknowledgedWithMessageAsync(List<decimal> trnIds, string typeMid, string? message)
-    {
-        var rows = await _db.CommTrns
-            .Where(t => trnIds.Contains(t.TrnID) &&
-                        t.TypeMID == typeMid      &&
-                        t.TrnStat == 1)
-            .ToListAsync();
-
-        foreach (var row in rows)
-        {
-            row.TrnStat = 2;
-            // Optionally log or store the message from the client
-            // e.g., row.MsgStr = message; if you want to save it in the DB
-        }
+                return new StalledGroup
+                {
+                    TypeMID     = g.Key,
+                    RowCount    = g.Count(),
+                    MaxRetry    = g.Max(r => (int)(r.RetryCnt ?? 0)),
+                    ResetCount  = resetRows.Count,
+                    FailedCount = failedRows.Count
+                };
+            })
+            .ToList();
 
         await _db.SaveChangesAsync();
-        return rows.Count;
+        return groups;
     }
 }
