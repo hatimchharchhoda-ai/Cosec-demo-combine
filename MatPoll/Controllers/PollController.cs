@@ -24,12 +24,6 @@ public class PollController : ControllerBase
     }
 
     // ── GET /api/poll ─────────────────────────────────────────────────────────
-    //
-    // TrnStat state machine:
-    //   0 = Pending      → Poll picks these up, flips to 1, sends to client
-    //   1 = Dispatched   → Already sent, waiting for ACK. Poll returns NeedAckFirst.
-    //   2 = Acknowledged → Client confirmed. Done forever. Never sent again.
-    //   9 = Failed       → Too many retries. Ignored.
     [HttpGet]
     public async Task<IActionResult> Poll()
     {
@@ -41,71 +35,76 @@ public class PollController : ControllerBase
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
-        // Step 1: Any TrnStat=1 rows for this device in DB?
-        var hasDispatched = await _repo.HasDispatchedRowsAsync(typeMid);
-
-        if (hasDispatched)
+        try
         {
-            var total = await _repo.CountPendingAsync();
+            _actLog.LogTestingStep("[POLL-START] TypeMID:{TypeMID} DeviceID:{DeviceID}", typeMid, deviceId);
 
-            _actLog.LogPoll(typeMid, deviceId,
-                hasData: false, needAckFirst: true,
-                rowsSent: 0, totalPending: total,
-                reqTime, sw.ElapsedMilliseconds);
+            // Step 1: TrnStat=1 rows exist for this device?
+            var hasDispatched = await _repo.HasDispatchedRowsAsync(typeMid);
+            if (hasDispatched)
+            {
+                _actLog.LogPollNeedAck(typeMid, deviceId, reqTime, sw.ElapsedMilliseconds);
+                return Ok(new PollResponse
+                {
+                    HasData      = false,
+                    NeedAckFirst = true,
+                    TotalPending = await _repo.CountPendingAsync(),
+                    TypeMID      = typeMid,
+                    Rows         = new List<TrnRow>()
+                });
+            }
+
+            // Step 2: Fetch fresh TrnStat=0 rows
+            var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "50");
+
+            _actLog.LogTestingStep("[POLL-FETCH] TypeMID:{TypeMID} BunchSize:{Size}", typeMid, bunchSize);
+
+            var rows    = await _repo.FetchAndMarkDispatchedAsync(typeMid, bunchSize);
+            var pending = await _repo.CountPendingAsync();
+
+            if (rows.Count == 0)
+            {
+                _actLog.LogPollNoData(typeMid, deviceId, pending, reqTime, sw.ElapsedMilliseconds);
+                return Ok(new PollResponse
+                {
+                    HasData      = false,
+                    NeedAckFirst = false,
+                    TotalPending = pending,
+                    TypeMID      = typeMid,
+                    Rows         = new List<TrnRow>()
+                });
+            }
+
+            // Need device name for debug log — load from DB (cached by EF)
+            var device = await _repo.FindDeviceByIdAsync(deviceId);
+
+            _actLog.LogPollDataSent(
+                typeMid, deviceId, device?.DeviceName ?? "?",
+                rows, pending, reqTime, sw.ElapsedMilliseconds);
 
             return Ok(new PollResponse
             {
-                HasData      = false,
-                NeedAckFirst = true,
-                TotalPending = total,
-                TypeMID      = typeMid,
-                Rows         = new List<TrnRow>()
-            });
-        }
-
-        // Step 2: No in-flight rows. Fetch fresh TrnStat=0 rows.
-        var bunchSize = int.Parse(_config["PollingSettings:BunchSize"] ?? "50");
-        var rows      = await _repo.FetchAndMarkDispatchedAsync(typeMid, bunchSize);
-        var pending   = await _repo.CountPendingAsync();
-
-        if (rows.Count == 0)
-        {
-            _actLog.LogPoll(typeMid, deviceId,
-                false, false, 0, pending, reqTime, sw.ElapsedMilliseconds);
-
-            return Ok(new PollResponse
-            {
-                HasData      = false,
+                HasData      = true,
                 NeedAckFirst = false,
                 TotalPending = pending,
                 TypeMID      = typeMid,
-                Rows         = new List<TrnRow>()
+                Rows = rows.Select(r => new TrnRow
+                {
+                    TrnID    = r.TrnID,
+                    MsgStr   = r.MsgStr,
+                    RetryCnt = r.RetryCnt ?? 0,
+                    TypeMID  = r.TypeMID
+                }).ToList()
             });
         }
-
-        // Fresh rows fetched — log with actual TrnIDs (clean format)
-        var trnIds = rows.Select(r => r.TrnID).ToList();
-        _actLog.LogPollWithIds(typeMid, deviceId, trnIds, pending, sw.ElapsedMilliseconds);
-
-        return Ok(new PollResponse
+        catch (Exception ex)
         {
-            HasData      = true,
-            NeedAckFirst = false,
-            TotalPending = pending,
-            TypeMID      = typeMid,
-            Rows = rows.Select(r => new TrnRow
-            {
-                TrnID    = r.TrnID,
-                MsgStr   = r.MsgStr,
-                RetryCnt = r.RetryCnt ?? 0,
-                TypeMID  = r.TypeMID
-            }).ToList()
-        });
+            _actLog.LogException("POLL", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "Poll failed. See error log." });
+        }
     }
 
     // ── POST /api/poll/ack ────────────────────────────────────────────────────
-    // Client processed the rows. Mark them TrnStat=2 (done forever).
-    // Now also accepts optional Message + Header from client.
     [HttpPost("ack")]
     public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
@@ -117,28 +116,40 @@ public class PollController : ControllerBase
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
-        // Only marks rows that are TrnStat=1 AND TypeMID matches this device.
-        var count = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+        if (req.TrnIDs == null || req.TrnIDs.Count == 0)
+            return BadRequest(new { error = "TrnIDs list is empty." });
 
-        // Log ACK — pass Message + Header if client sent them
-        _actLog.LogAck(typeMid, deviceId, req.TrnIDs, count,
-            true, req.Message,  reqTime, sw.ElapsedMilliseconds);
-
-        return Ok(new AckResponse
+        try
         {
-            Success      = true,
-            Message      = $"{count} rows marked as acknowledged (TrnStat=2).",
-            UpdatedCount = count
-        });
+            _actLog.LogTestingStep(
+                "[ACK-START] TypeMID:{TypeMID} DeviceID:{DeviceID} ClaimedIDs:[{IDs}]",
+                typeMid, deviceId, string.Join(",", req.TrnIDs));
+
+            var ackWarnSecs = _config.GetValue<int>("PollingSettings:AckTimeoutWarningSeconds", 30);
+            var result      = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+
+            _actLog.LogAck(typeMid, deviceId, req.TrnIDs,
+                result, reqTime, sw.ElapsedMilliseconds, ackWarnSecs);
+
+            return Ok(new AckResponse
+            {
+                Success      = true,
+                Message      = $"{result.UpdatedCount} rows acknowledged (TrnStat=2).",
+                UpdatedCount = result.UpdatedCount
+            });
+        }
+        catch (Exception ex)
+        {
+            _actLog.LogException("ACK", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "ACK failed. See error log." });
+        }
     }
 
     // ── POST /api/poll/restore ────────────────────────────────────────────────
-    // Use when: device crashed and lost its TrnStat=1 rows from memory.
-    // Resets TrnStat=1 → TrnStat=0 for this device's TypeMID.
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
     {
-        var reqTime  = DateTime.Now;
+        var reqTime  = DateTime.UtcNow;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
@@ -146,17 +157,28 @@ public class PollController : ControllerBase
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
-        var count = await _repo.RestoreDispatchedAsync(typeMid);
-
-        _actLog.LogRestore(typeMid, deviceId, count, reqTime, sw.ElapsedMilliseconds);
-
-        return Ok(new RestoreResponse
+        try
         {
-            Success       = true,
-            Message       = $"{count} rows restored to TrnStat=0. Poll again to receive them.",
-            RestoredCount = count,
-            TypeMID       = typeMid
-        });
+            _actLog.LogTestingStep(
+                "[RESTORE-START] TypeMID:{TypeMID} DeviceID:{DeviceID}", typeMid, deviceId);
+
+            var count = await _repo.RestoreDispatchedAsync(typeMid);
+
+            _actLog.LogRestore(typeMid, deviceId, count, reqTime, sw.ElapsedMilliseconds);
+
+            return Ok(new RestoreResponse
+            {
+                Success       = true,
+                Message       = $"{count} rows restored to TrnStat=0.",
+                RestoredCount = count,
+                TypeMID       = typeMid
+            });
+        }
+        catch (Exception ex)
+        {
+            _actLog.LogException("RESTORE", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "Restore failed. See error log." });
+        }
     }
 
     // for reciving events from client 
