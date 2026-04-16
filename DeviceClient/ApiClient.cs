@@ -16,7 +16,7 @@ public class ApiClient
     {
         DeviceLogger.Info($"LOGIN START | DeviceId={deviceId} MAC={mac} IP={ip}");
 
-        var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip };
+        var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip, ClientSentAt = DateTime.Now };
         var body = JsonSerializer.Serialize(payload);
 
         DeviceLogger.Debug($"LOGIN REQUEST FOR → {body}");
@@ -32,7 +32,7 @@ public class ApiClient
 
             var end = DateTime.Now;
 
-            DeviceLogger.Debug($"Login Request Sent: {start} | Response arrived: {end} | Delay: {(end - start).TotalMilliseconds} ms | LOGIN RESPONSE ← {res}");
+            DeviceLogger.Debug($"Login Request Sent: {start} | Login Response arrived: {end} | FullRoundTrip: {(end - start).TotalMilliseconds} ms | DownstreamMS: {(end - res.ServerSentAt)?.TotalMilliseconds} ms | LOGIN RESPONSE ← {res}");
         }
         catch (Exception ex)
         {
@@ -96,7 +96,7 @@ public class ApiClient
                 return;
             }
 
-            DeviceLogger.Debug($"{action} | RawResponse={json} | Start={start:HH:mm:ss.fff} | End={end:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms");
+            DeviceLogger.Debug($"{action} | RawResponse={json} | Poll Start={start:HH:mm:ss.fff} | Poll End={end:HH:mm:ss.fff} | FullRoundTrip={(end - start).TotalMilliseconds} ms | DownstreamMS={(end - res.ServerSentAt)?.TotalMilliseconds} ms");
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -135,10 +135,10 @@ public class ApiClient
                 var ids = poll.Rows.Select(x => x.TrnID).ToList();
 
                 DeviceLogger.Info(
-                    $"{action} | DATA RECEIVED | Count={ids.Count} | TrnIDs={string.Join(",", ids)}");
+                    $"{action} | DATA RECEIVED | Count: {ids.Count} | TrnIDs: {string.Join(",", ids)}");
 
                 DeviceLogger.Debug(
-                    $"{action} | FullRows=\n{JsonSerializer.Serialize(poll.Rows)}");
+                    $"{action} | FullRows: {JsonSerializer.Serialize(poll.Rows)}");
 
                 DeviceMemory.LastIds = ids;
 
@@ -159,7 +159,7 @@ public class ApiClient
         catch (Exception ex)
         {
             DeviceLogger.Error(
-                $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
+                $"{action} | EXCEPTION | Message: {ex.Message} | StackTrace: {ex.StackTrace} | Exception: {ex}");
         }
     }
 
@@ -169,7 +169,7 @@ public class ApiClient
 
         try
         {
-            DeviceLogger.Info($"{action} | Preparing to send event | Message={message}");
+            DeviceLogger.Info($"{action} | Preparing to send event | Message: {message}");
 
             var payload = new
             {
@@ -198,7 +198,7 @@ public class ApiClient
                     $"{action} | ACK RECEIVED | ServerMessage={ackMsg}");
 
                 DeviceLogger.Debug(
-                    $"{action} | Start: {start:HH:mm:ss.fff} | End: {end:HH:mm:ss.fff} | Event Time Taken: {((end - start).TotalMilliseconds)} ms | Server Message: {ackMsg}");
+                    $"{action} | Event Start: {start:HH:mm:ss.fff} | Event End: {end:HH:mm:ss.fff} | FullRoundTrip: {((end - start).TotalMilliseconds)} ms | DownstreamMS: {(end - res.ServerSentAt)?.TotalMilliseconds} ms | Server Message: {ackMsg}");
             }
             else
             {
@@ -222,7 +222,7 @@ public class ApiClient
             DeviceLogger.Info(
                 $"{action} | Preparing ACK | TrnIDs={string.Join(",", ids)}");
 
-            var payload = new { TrnIDs = ids };
+            var payload = new { TrnIDs = ids, ClientSentAt = DateTime.Now };
             var jsonPayload = JsonSerializer.Serialize(payload);
 
             DeviceLogger.Debug(
@@ -246,7 +246,7 @@ public class ApiClient
                     $"{action} | SUCCESS | ServerMessage={message}");
 
                 DeviceLogger.Debug(
-                    $"{action} | Server Message: {message} | Start: {start:HH:mm:ss.fff} | End: {end:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms");
+                    $"{action} | Server Message: {message} | Ack Start: {start:HH:mm:ss.fff} | Ack End: {end:HH:mm:ss.fff} | FullRoundTrip: {(end - start).TotalMilliseconds} ms | DownstreamMS: {(end - res.ServerSentAt)?.TotalMilliseconds} ms");
             }
             else
             {

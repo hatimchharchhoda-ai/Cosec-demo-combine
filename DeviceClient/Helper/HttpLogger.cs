@@ -19,8 +19,7 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | RESPONSE | Status={(int)res.StatusCode} | " +
-            $"Started request={start} | Response arrived={end} | DurationMs={(end-start).TotalMilliseconds} | " +
-            $"Body={body}");
+            $"Started request={start} | Response arrived={end} | FullRoundTrip={(end-start).TotalMilliseconds} ms | DownstreamMS: {(end - res.ServerSentAt)?.TotalMilliseconds} ms | Body={body}");
 
         return res;
     }

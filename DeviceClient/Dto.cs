@@ -5,6 +5,7 @@ public class PollResponse
     public int TotalPending { get; set; }
     public string? TypeMID { get; set; }
     public List<TrnRow> Rows { get; set; } = new();
+    public DateTime? ServerSentAt { get; set; }
 }
 
 public class TrnRow
