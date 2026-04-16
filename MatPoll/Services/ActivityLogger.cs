@@ -338,4 +338,25 @@ public class ActivityLogger
         if (!_testingEnabled) return;
         _testing.Debug(template, args);
     }
+
+    // ── EVENT LOGGING ──────────────────────────────────────────────────────────
+    public void LogEvent(
+    string typeMid,
+    decimal deviceId,
+    string message,
+    DateTime requestTime,
+    long durationMs)
+    {
+        _info.Information(
+            "[EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Message:{Message} ReqTime:{ReqTime} Duration:{Dur}ms",
+            typeMid, deviceId, message, requestTime, durationMs);
+
+        _debug.Information(
+            "[EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Message:{Message} ReqTime:{ReqTime} Duration:{Dur}ms",
+            typeMid, deviceId, message, requestTime, durationMs);
+
+        TestingLog(
+            "[EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Message:{Message}",
+            typeMid, deviceId, message);
+    }
 }
