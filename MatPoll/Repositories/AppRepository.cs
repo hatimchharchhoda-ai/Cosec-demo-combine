@@ -1,6 +1,7 @@
 using MatPoll.Data;
 using MatPoll.Models;
 using Microsoft.EntityFrameworkCore;
+using MatPoll.DTOs;
 
 namespace MatPoll.Repositories;
 
@@ -116,5 +117,21 @@ public class AppRepository
 
         if (stalled.Count > 0)
             await _db.SaveChangesAsync();
+    }
+
+    // NEW: Insert a new event row from device (e.g. heartbeat, error, etc.)
+    public async Task InsertDeviceEvent(DeviceEventDto dto, decimal deviceId)
+    {
+        var entity = new MatCommTrn
+        {
+            MsgStr    = dto.Message,
+            TypeMID   = dto.TypeMID,
+            CreatedAt = DateTime.Now,
+            TrnStat   = 0,
+            RetryCnt  = 0
+        };
+
+        _db.CommTrns.Add(entity);
+        await _db.SaveChangesAsync();
     }
 }

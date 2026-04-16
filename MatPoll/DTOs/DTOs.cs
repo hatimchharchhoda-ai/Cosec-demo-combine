@@ -71,3 +71,11 @@ public class RestoreResponse
     public int    RestoredCount { get; set; }
     public string? TypeMID     { get; set; }
 }
+
+// ── Event ─────────────────────────────────────────────────────────────────────
+// Client sends this to server when it wants to log an event (e.g. heartbeat, error, etc.)
+public class DeviceEventDto
+{
+    public string TypeMID { get; set; }
+    public string Message { get; set; }
+}

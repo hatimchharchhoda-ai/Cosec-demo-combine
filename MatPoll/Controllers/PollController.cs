@@ -109,7 +109,7 @@ public class PollController : ControllerBase
     [HttpPost("ack")]
     public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
-        var reqTime  = DateTime.UtcNow;
+        var reqTime  = DateTime.Now;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
@@ -161,7 +161,7 @@ public class PollController : ControllerBase
 
     // for reciving events from client 
     [HttpPost("event")]
-    public IActionResult ReceiveEvent([FromBody] object eventData)
+    public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     {
         var reqTime  = DateTime.Now;
         var sw       = Stopwatch.StartNew();
@@ -170,9 +170,11 @@ public class PollController : ControllerBase
 
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
-        _actLog.LogEvent(typeMid, deviceId, eventData.ToString() ?? "No event data", reqTime, sw.ElapsedMilliseconds);
 
-        // Respond with success
-        return Ok(new { Success = true, Message = "Event received." });
-    }   
+        await _repo.InsertDeviceEvent(dto, deviceId);
+
+        _actLog.LogEvent(typeMid, deviceId, dto.Message ?? "No event data", reqTime, sw.ElapsedMilliseconds);
+
+        return Ok(new { Success = true, Message = "Event stored." });
+    }
 }

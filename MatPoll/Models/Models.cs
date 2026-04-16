@@ -60,10 +60,7 @@ public class MatCommTrn
     // 0=Pending  1=Dispatched  2=Acknowledged  9=Failed
     [Column(TypeName = "numeric(1,0)")]
     public decimal? TrnStat { get; set; }
-
-    [Timestamp]
-    //public byte[]? Time { get; set; }
-
+    
     public DateTime? CreatedAt { get; set; }
 
     // NEW: TypeMID = hash of MAC+IP — identifies which device this row belongs to

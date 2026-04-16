@@ -1,7 +1,7 @@
 {
   "Device": {
     "DeviceId": 100,
-    "MacAddress": "00:1b:09:00:00:01",
+    "MacAddress": "00:1b:09:00:00:00",
     "IpAddress": "192.168.0.100"
   },
   "Timing": {
@@ -23,7 +23,7 @@
     "ErrorFile": "logs/device_error.log",
 
     "EnableInfo": true,
-    "EnableDebug": false,
+    "EnableDebug": true,
     "EnableError": true
   }
 }
