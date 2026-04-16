@@ -19,34 +19,35 @@ public class ApiClient
         var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip };
         var body = JsonSerializer.Serialize(payload);
 
-        DeviceLogger.Debug($"LOGIN REQUEST → {body}");
+        DeviceLogger.Debug($"LOGIN REQUEST FOR → {body}");
 
         HttpResponseMessage res;
 
         try
         {
+            var start = DateTime.Now;
+
             res = await _http.PostAsync("auth/login",
                 new StringContent(body, Encoding.UTF8, "application/json"));
+
+            var end = DateTime.Now;
+
+            DeviceLogger.Debug($"Login Request Sent: {start} | Response arrived: {end} | Delay: {(end - start).TotalMilliseconds} ms | LOGIN RESPONSE ← {res}");
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"LOGIN HTTP ERROR | {ex.Message}");
-            return;
-        }
-
-        DeviceLogger.Debug($"LOGIN RESPONSE STATUS ← {(int)res.StatusCode}");
-
-        var message = await ReadMessageAsync(res);
-        DeviceLogger.Debug($"LOGIN RESPONSE MESSAGE ← {message}");
-
-        if (!res.IsSuccessStatusCode)
-        {
-            DeviceLogger.Error($"LOGIN FAILED | {message}");
+            DeviceLogger.Error($"LOGIN HTTP ERROR | Message : {ex.Message} | Exception : {ex}");
             return;
         }
 
         var json = await res.Content.ReadAsStringAsync();
         DeviceLogger.Debug($"LOGIN RESPONSE BODY ← {json}");
+
+        if (!res.IsSuccessStatusCode)
+        {
+            DeviceLogger.Error($"LOGIN FAILED | Json-Message: {json} | Response: {res}");
+            return;
+        }
 
         try
         {
@@ -59,7 +60,7 @@ public class ApiClient
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"LOGIN PARSE ERROR | {ex.Message}");
+            DeviceLogger.Error($"LOGIN PARSE ERROR | {ex.Message} | Exception: {ex}");
         }
     }
 
@@ -77,9 +78,11 @@ public class ApiClient
         {
             DeviceLogger.Info($"{action} | Started polling");
 
+            var start = DateTime.Now;
             var req = await CreateAuthedRequest(HttpMethod.Get, "poll");
 
             var res = await HttpLogger.SendAsync(_http, req, action);
+            var end = DateTime.Now;
 
             var json = await res.Content.ReadAsStringAsync();
 
@@ -88,13 +91,12 @@ public class ApiClient
                 var msg = await ReadMessageAsync(res);
 
                 DeviceLogger.Error(
-                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
-                    $"ServerMessage={msg}");
+                    $"{action} | FAILED | ServerMessage={msg} | Response={res} | Body={json}");
 
                 return;
             }
 
-            DeviceLogger.Debug($"{action} | RawResponse={json}");
+            DeviceLogger.Debug($"{action} | RawResponse={json} | Start={start:HH:mm:ss.fff} | End={end:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms");
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -157,9 +159,7 @@ public class ApiClient
         catch (Exception ex)
         {
             DeviceLogger.Error(
-                $"{action} | EXCEPTION\n" +
-                $"Message={ex.Message}\n" +
-                $"StackTrace={ex.StackTrace}");
+                $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }
     }
 
@@ -174,22 +174,20 @@ public class ApiClient
             var payload = new
             {
                 TypeMID   = DeviceSession.TypeMID,
-                Message   = message,
-                EventTime = DateTime.Now
+                Message   = message
             };
 
             var jsonPayload = JsonSerializer.Serialize(payload);
 
             DeviceLogger.Debug(
-                $"{action} | Payload=\n{jsonPayload}");
+                $"{action} | Payload: {jsonPayload}");
 
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            
+            var start = DateTime.Now;
             var req = await CreateAuthedRequest(HttpMethod.Post, "poll/event", content);
 
-            var start = DateTime.Now;
-
             var res = await HttpLogger.SendAsync(_http, req, action);
-
             var end = DateTime.Now;
 
             var ackMsg = await ReadMessageAsync(res);
@@ -200,21 +198,18 @@ public class ApiClient
                     $"{action} | ACK RECEIVED | ServerMessage={ackMsg}");
 
                 DeviceLogger.Debug(
-                    $"{action} | Event sent Time: {start:HH:mm:ss.fff} | Event Timer between Start and End: {((end - start).TotalMilliseconds)} ms | Server Message: {ackMsg} | Ack Time: {end:HH:mm:ss.fff}");
+                    $"{action} | Start: {start:HH:mm:ss.fff} | End: {end:HH:mm:ss.fff} | Event Time Taken: {((end - start).TotalMilliseconds)} ms | Server Message: {ackMsg}");
             }
             else
             {
                 DeviceLogger.Error(
-                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
-                    $"ServerMessage={ackMsg}");
+                    $"{action} | FAILED | Status={(int)res.StatusCode} | ServerMessage={ackMsg} | Response={res} | Body={jsonPayload}");
             }
         }
         catch (Exception ex)
         {
             DeviceLogger.Error(
-                $"{action} | EXCEPTION\n" +
-                $"Message={ex.Message}\n" +
-                $"StackTrace={ex.StackTrace}");
+                $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }
     }
 
@@ -283,8 +278,7 @@ public class ApiClient
         else
         {
             DeviceLogger.Error(
-                $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
-                $"ServerMessage={message}");
+                $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }
     }
     catch (Exception ex)
@@ -320,12 +314,11 @@ public class ApiClient
             DeviceLogger.Info(
                 $"{action} | Token expiring soon | SecondsLeft={secondsLeft}");
 
+            var start = DateTime.Now;
 
             var req = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
             req.Headers.Authorization =
                 new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
-
-            var start = DateTime.Now;
 
             var res = await HttpLogger.SendAsync(_http, req, action);
 
@@ -336,8 +329,7 @@ public class ApiClient
             if (!res.IsSuccessStatusCode)
             {
                 DeviceLogger.Error(
-                    $"{action} | FAILED | Status={(int)res.StatusCode}\n" +
-                    $"ServerMessage={message}");
+                    $"{action} | FAILED | Status={(int)res.StatusCode} | ServerMessage={message} | Response={res}");
 
                 DeviceSession.Token = null;
                 return;
@@ -345,7 +337,7 @@ public class ApiClient
 
             var json = await res.Content.ReadAsStringAsync();
 
-            DeviceLogger.Debug($"{action} | RawResponse=\n{json}");
+            DeviceLogger.Debug($"{action} | RawResponse: {json} | Response: {res} | Start: {start:HH:mm:ss.fff} | End: {end:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms");
 
             var doc = JsonDocument.Parse(json).RootElement;
 
@@ -354,16 +346,11 @@ public class ApiClient
 
             DeviceLogger.Info(
                 $"{action} | SUCCESS | ServerMessage={message}");
-
-            DeviceLogger.Debug(
-                $"{action} | Start: {start:HH:mm:ss.fff} | DurationMs={(end - start).TotalMilliseconds} ms | Server Message: {message} | End: {end:HH:mm:ss.fff}");
         }
         catch (Exception ex)
         {
             DeviceLogger.Error(
-                $"{action} | EXCEPTION\n" +
-                $"Message={ex.Message}\n" +
-                $"StackTrace={ex.StackTrace}");
+                $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }
     }
 
@@ -376,17 +363,11 @@ public class ApiClient
 
         try
         {
-            DeviceLogger.Debug(
-                $"{action} | RawBody=\n{body}");
-
             var doc = JsonDocument.Parse(body).RootElement;
 
             if (doc.TryGetProperty("message", out var msg))
             {
                 var text = msg.GetString() ?? body;
-
-                DeviceLogger.Debug(
-                    $"{action} | Extracted 'message' = {text}");
 
                 return text;
             }
@@ -394,9 +375,6 @@ public class ApiClient
             if (doc.TryGetProperty("Message", out var msg2))
             {
                 var text = msg2.GetString() ?? body;
-
-                DeviceLogger.Debug(
-                    $"{action} | Extracted 'Message' = {text}");
 
                 return text;
             }
@@ -409,10 +387,7 @@ public class ApiClient
         catch (Exception ex)
         {
             DeviceLogger.Error(
-                $"{action} | Failed to parse JSON\n" +
-                $"Message={ex.Message}\n" +
-                $"Returning raw body");
-
+                $"{action} | Failed to parse JSON | Message={ex.Message} | Returning raw body: {body} | Exception={ex}");
             return body;
         }
     }

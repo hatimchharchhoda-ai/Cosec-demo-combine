@@ -8,8 +8,8 @@ public static class HttpLogger
         var start = DateTime.Now;
 
         DeviceLogger.Debug(
-            $"{action} | REQUEST | {req.Method} {req.RequestUri}\n" +
-            $"Headers={req.Headers}\n" +
+            $"{action} | REQUEST | {req.Method} {req.RequestUri} | " +
+            $"Headers={req.Headers} | Start={start} | " +
             $"Body={(req.Content == null ? "null" : await req.Content.ReadAsStringAsync())}");
 
         var res = await http.SendAsync(req);
@@ -18,8 +18,8 @@ public static class HttpLogger
         var body = await res.Content.ReadAsStringAsync();
 
         DeviceLogger.Debug(
-            $"{action} | RESPONSE | Status={(int)res.StatusCode}\n" +
-            $"DurationMs={(end-start).TotalMilliseconds}\n" +
+            $"{action} | RESPONSE | Status={(int)res.StatusCode} | " +
+            $"Started request={start} | Response arrived={end} | DurationMs={(end-start).TotalMilliseconds} | " +
             $"Body={body}");
 
         return res;

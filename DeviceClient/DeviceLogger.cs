@@ -43,7 +43,7 @@ public static class DeviceLogger
 
     private static void Enqueue(LogLevel level, string msg)
     {
-        var line = $"{DateTime.Now:HH:mm:ss.fff} | {level} | Device={DeviceSession.TypeMID} | {msg}";
+        var line = $"{DateTime.Now:MM-dd-yyyy HH:mm:ss.fff} | {level} | {msg}";
         _queue.Add((level, line));
     }
 

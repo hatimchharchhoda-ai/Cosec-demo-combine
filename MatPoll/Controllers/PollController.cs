@@ -214,4 +214,23 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
             return StatusCode(500, new { error = "Restore failed. See error log." });
         }
     }
+
+    // for reciving events from client 
+    [HttpPost("event")]
+    public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
+    {
+        var reqTime  = DateTime.Now;
+        var sw       = Stopwatch.StartNew();
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
+
+        if (string.IsNullOrEmpty(typeMid))
+            return Unauthorized();
+
+        await _repo.InsertDeviceEvent(dto, deviceId);
+
+        _actLog.LogEvent(typeMid, deviceId, dto.Message ?? "No event data", reqTime, sw.ElapsedMilliseconds);
+
+        return Ok(new { Success = true, Message = "Event stored." });
+    }
 }

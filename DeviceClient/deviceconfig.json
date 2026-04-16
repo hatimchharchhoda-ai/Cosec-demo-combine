@@ -1,8 +1,8 @@
 {
   "Device": {
-    "DeviceId": 1,
-    "MacAddress": "00:1b:09:11:12:13",
-    "IpAddress": "192.168.100.1"
+    "DeviceId": 100,
+    "MacAddress": "00:1b:09:00:00:00",
+    "IpAddress": "192.168.0.100"
   },
   "Timing": {
     "PollIntervalSeconds": 8,
