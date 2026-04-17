@@ -47,7 +47,8 @@ public class AuthController : ControllerBase
                 return Unauthorized(new LoginResponse
                 {
                     Success = false,
-                    Message = "Device not found. Check DeviceID, MAC and IP."
+                    Message = "Device not found. Check DeviceID, MAC and IP.",
+                    ServerSentAt = DateTime.Now
                 });
             }
 
@@ -58,7 +59,8 @@ public class AuthController : ControllerBase
                 return Unauthorized(new LoginResponse
                 {
                     Success = false,
-                    Message = "Device is inactive."
+                    Message = "Device is inactive.",
+                    ServerSentAt = DateTime.Now
                 });
             }
 
@@ -75,13 +77,14 @@ public class AuthController : ControllerBase
                 Message    = "Login successful.",
                 DeviceName = device.DeviceName,
                 Token      = token,
-                TypeMID    = typeMid
+                TypeMID    = typeMid,
+                ServerSentAt = DateTime.Now
             });
         }
         catch (Exception ex)
         {
             _actLog.LogException("LOGIN", typeMid, req.DeviceID, ex);
-            return StatusCode(500, new { error = "Login failed. See error log." });
+            return StatusCode(500, new { error = "Login failed. See error log.", ServerSentAt = DateTime.Now });
         }
     }
 
@@ -93,7 +96,7 @@ public class AuthController : ControllerBase
         var oldToken = TokenService.ReadCookie(Request);
 
         if (string.IsNullOrEmpty(oldToken))
-            return Unauthorized(new RefreshResponse { Success = false, Message = "No token." });
+            return Unauthorized(new RefreshResponse { Success = false, Message = "No token.", ServerSentAt = DateTime.Now });
 
         decimal deviceId = 0;
         string  typeMid  = string.Empty;
@@ -119,7 +122,7 @@ public class AuthController : ControllerBase
             if (device == null || device.IsActive != 1)
             {
                 _actLog.LogRefresh(typeMid, deviceId, false, sw.ElapsedMilliseconds);
-                return Unauthorized(new RefreshResponse { Success = false, Message = "Device inactive." });
+                return Unauthorized(new RefreshResponse { Success = false, Message = "Device inactive.", ServerSentAt = DateTime.Now });
             }
 
             var freshTypeMid = TypeMidService.Generate(device.MACAddr ?? "", device.IPAddr ?? "");
@@ -132,13 +135,14 @@ public class AuthController : ControllerBase
             return Ok(new RefreshResponse
             {
                 Success = true, Message = "Token refreshed.",
-                Token   = newToken, TypeMID = freshTypeMid
+                Token   = newToken, TypeMID = freshTypeMid,
+                ServerSentAt = DateTime.Now
             });
         }
         catch (Exception ex)
         {
             _actLog.LogException("REFRESH", typeMid, deviceId, ex);
-            return StatusCode(500, new { error = "Refresh failed. See error log." });
+            return StatusCode(500, new { error = "Refresh failed. See error log.", ServerSentAt = DateTime.Now });
         }
     }
 
@@ -147,6 +151,6 @@ public class AuthController : ControllerBase
     public IActionResult Logout()
     {
         TokenService.ClearCookie(Response);
-        return Ok(new { Success = true, Message = "Logged out." });
+        return Ok(new { Success = true, Message = "Logged out.", ServerSentAt = DateTime.Now });
     }
 }

@@ -6,6 +6,7 @@ public class LoginRequest
     public decimal DeviceID { get; set; }
     public string  MACAddr  { get; set; } = string.Empty;
     public string  IPAddr   { get; set; } = string.Empty;
+    public DateTime?  T1    { get; set; }
 }
 
 public class LoginResponse
@@ -16,6 +17,7 @@ public class LoginResponse
     public string? Token      { get; set; }
     // TypeMID sent back so client knows its own identifier
     public string? TypeMID    { get; set; }
+    public DateTime? ServerSentAt { get; set; }
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
@@ -25,6 +27,7 @@ public class RefreshResponse
     public string? Message { get; set; }
     public string? Token   { get; set; }
     public string? TypeMID { get; set; }
+    public DateTime? ServerSentAt { get; set; }
 }
 
 // ── Poll ──────────────────────────────────────────────────────────────────────
@@ -37,6 +40,7 @@ public class PollResponse
     public List<TrnRow> Rows         { get; set; } = new();
     public int          TotalPending { get; set; }
     public string?      TypeMID      { get; set; }
+    public DateTime?    ServerSentAt { get; set; }
 }
 
 public class TrnRow
@@ -50,14 +54,16 @@ public class TrnRow
 // ── ACK ───────────────────────────────────────────────────────────────────────
 public class AckRequest
 {
-    public List<decimal> TrnIDs { get; set; } = new();
+    public List<decimal> TrnIDs      { get; set; } = new();
+    public DateTime?     T1          { get; set; }  // client sent THIS request
+    public DateTime?     T4Prev      { get; set; }  // client received PREVIOUS ack response
 }
-
 public class AckResponse
 {
-    public bool   Success      { get; set; }
-    public string Message      { get; set; } = string.Empty;
-    public int    UpdatedCount { get; set; }
+    public bool      Success      { get; set; }
+    public string    Message      { get; set; } = string.Empty;
+    public int       UpdatedCount { get; set; }
+    public DateTime? ServerSentAt { get; set; }
 }
 
 // ── Restore ───────────────────────────────────────────────────────────────────
@@ -68,10 +74,13 @@ public class RestoreResponse
     public string Message      { get; set; } = string.Empty;
     public int    RestoredCount { get; set; }
     public string? TypeMID     { get; set; }
+    public DateTime? ServerSentAt { get; set; }
 }
 
-// ── Event ─────────────────────────────────────────────────────────────────────
-// Client sends this to server when it wants to log an event (e.g. heartbeat, error, etc.)
+// ── ACK ───────────────────────────────────────────────────────────────────────
+
+
+
 public class DeviceEventDto
 {
     public string TypeMID { get; set; }
