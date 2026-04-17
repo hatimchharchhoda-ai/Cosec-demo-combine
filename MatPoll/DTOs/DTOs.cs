@@ -85,4 +85,5 @@ public class DeviceEventDto
 {
     public string TypeMID { get; set; }
     public string Message { get; set; }
+    public DateTime? T1 { get; set; }
 }

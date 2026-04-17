@@ -387,4 +387,56 @@ _debug.Information(
             "[EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Message:{Message}",
             typeMid, deviceId, message);
     }
+
+    // ── TIMING CORE (used by ACK + EVENT) ─────────────────────────────────────
+
+    public void LogTiming(
+        string tag,
+        string typeMid,
+        decimal deviceId,
+        DateTime? t1,   // client send time
+        DateTime t2,    // server receive
+        DateTime t3)    // server respond
+    {
+        double upstreamMs = -1;
+        double fullMs     = -1;
+        long   serverMs   = (long)(t3 - t2).TotalMilliseconds;
+
+        if (t1.HasValue)
+        {
+            upstreamMs = Math.Round((t2 - t1.Value).TotalMilliseconds, 1);
+            fullMs     = Math.Round((t3 - t1.Value).TotalMilliseconds, 1);
+        }
+
+        _info.Information(
+            "[{Tag}-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+            "UpstreamMs:{Up} ServerMs:{Server}ms FullRoundTripMs:{Full} " +
+            "T1:{T1} T2:{T2} T3:{T3}",
+            tag, typeMid, deviceId,
+            upstreamMs >= 0 ? $"{upstreamMs}ms" : "N/A",
+            serverMs,
+            fullMs >= 0 ? $"{fullMs}ms" : "N/A",
+            t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+            t2.ToString("HH:mm:ss.fff"),
+            t3.ToString("HH:mm:ss.fff"));
+
+        _debug.Information(
+            "[{Tag}-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
+            "UpstreamMs:{Up} ServerMs:{Server}ms FullRoundTripMs:{Full} " +
+            "T1:{T1} T2:{T2} T3:{T3}",
+            tag, typeMid, deviceId,
+            upstreamMs >= 0 ? $"{upstreamMs}ms" : "N/A",
+            serverMs,
+            fullMs >= 0 ? $"{fullMs}ms" : "N/A",
+            t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+            t2.ToString("HH:mm:ss.fff"),
+            t3.ToString("HH:mm:ss.fff"));
+
+        TestingLog(
+            "[{Tag}-TIMING] Up:{Up} Server:{Server} Full:{Full}",
+            tag,
+            upstreamMs,
+            serverMs,
+            fullMs);
+    }
 }

@@ -107,81 +107,78 @@ public class PollController : ControllerBase
         }
     }
 
-[HttpPost("ack")]
-public async Task<IActionResult> Ack([FromBody] AckRequest req)
-{
-    var t2       = DateTime.Now;          // T2: server received
-    var sw       = Stopwatch.StartNew();
-    var deviceId = TokenService.GetDeviceId(User);
-    var typeMid  = TokenService.GetTypeMid(User);
-
-    if (string.IsNullOrEmpty(typeMid))
-        return Unauthorized();
-
-    if (req.TrnIDs == null || req.TrnIDs.Count == 0)
-        return BadRequest(new { error = "TrnIDs list is empty." });
-
-    try
+    [HttpPost("ack")]
+    public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
-        _actLog.LogTestingStep(
-            "[ACK-START] TypeMID:{TypeMID} DeviceID:{DeviceID} ClaimedIDs:[{IDs}]",
-            typeMid, deviceId, string.Join(",", req.TrnIDs));
+        var t2       = DateTime.Now;          // T2: server received
+        var sw       = Stopwatch.StartNew();
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
 
-        var ackWarnSecs = _config.GetValue<int>("PollingSettings:AckTimeoutWarningSeconds", 30);
-        var result      = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+        if (string.IsNullOrEmpty(typeMid))
+            return Unauthorized();
 
-        sw.Stop();
-        var t3 = DateTime.Now;           // T3: server about to respond
-        long serverMs = sw.ElapsedMilliseconds;  // T3 - T2
+        if (req.TrnIDs == null || req.TrnIDs.Count == 0)
+            return BadRequest(new { error = "TrnIDs list is empty." });
 
-        // T1 provided by client (when they sent this request)
-        double upstreamMs = req.T1.HasValue
-            ? Math.Round((t2 - req.T1.Value).TotalMilliseconds, 1)
-            : -1;                           // T2 - T1
-
-        // T4Prev = when client received the PREVIOUS ack response
-        // DownstreamMs and FullRoundTrip refer to the previous cycle
-        double downstreamMsPrev  = -1;
-        double fullRoundTripPrev = -1;
-
-        if (req.T4Prev.HasValue && req.T1.HasValue)
+        try
         {
-            // We need T3 of the previous request to compute downstream.
-            // Since we don't store it, we approximate:
-            // DownstreamPrev ≈ T4Prev - T1 - UpstreamMs - ServerMs_prev
-            // 
-            // Simpler and honest: log what we *can* derive exactly.
-            // FullRoundTrip of previous = T4Prev - T1_prev
-            // But T1_prev isn't sent. So instead:
-            // Treat T4Prev as "how long ago the last response landed"
-            // relative to T1 (client sent this request right after receiving last one)
-            fullRoundTripPrev = Math.Round((req.T1.Value - req.T4Prev.Value).TotalMilliseconds
-                + /* upstream this req */ (upstreamMs >= 0 ? upstreamMs : 0), 1);
-            // DownstreamPrev = T4Prev - (T1_prev + UpstreamMs_prev + ServerMs_prev)
-            // Best we can do without T3_prev stored: log as N/A and note limitation
-            downstreamMsPrev = -1; // requires T3 from previous cycle — not available
+            _actLog.LogTestingStep(
+                "[ACK-START] TypeMID:{TypeMID} DeviceID:{DeviceID} ClaimedIDs:[{IDs}]",
+                typeMid, deviceId, string.Join(",", req.TrnIDs));
+
+            var ackWarnSecs = _config.GetValue<int>("PollingSettings:AckTimeoutWarningSeconds", 30);
+            var result      = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+
+            sw.Stop();
+            var t3 = DateTime.Now;           // T3: server about to respond
+            long serverMs = sw.ElapsedMilliseconds;  // T3 - T2
+
+            // T1 provided by client (when they sent this request)
+            double upstreamMs = req.T1.HasValue
+                ? Math.Round((t2 - req.T1.Value).TotalMilliseconds, 1)
+                : -1;                           // T2 - T1
+
+            // T4Prev = when client received the PREVIOUS ack response
+            // DownstreamMs and FullRoundTrip refer to the previous cycle
+            double downstreamMsPrev  = -1;
+            double fullRoundTripPrev = -1;
+
+            if (req.T4Prev.HasValue && req.T1.HasValue)
+            {
+                // We need T3 of the previous request to compute downstream.
+                // Since we don't store it, we approximate:
+                // DownstreamPrev ≈ T4Prev - T1 - UpstreamMs - ServerMs_prev
+                // 
+                // Simpler and honest: log what we *can* derive exactly.
+                // FullRoundTrip of previous = T4Prev - T1_prev
+                // But T1_prev isn't sent. So instead:
+                // Treat T4Prev as "how long ago the last response landed"
+                // relative to T1 (client sent this request right after receiving last one)
+                fullRoundTripPrev = Math.Round((req.T1.Value - req.T4Prev.Value).TotalMilliseconds
+                    + /* upstream this req */ (upstreamMs >= 0 ? upstreamMs : 0), 1);
+                // DownstreamPrev = T4Prev - (T1_prev + UpstreamMs_prev + ServerMs_prev)
+                // Best we can do without T3_prev stored: log as N/A and note limitation
+                downstreamMsPrev = -1; // requires T3 from previous cycle — not available
+            }
+
+            _actLog.LogTiming("ACK", typeMid, deviceId, req.T1, t2, t3);
+
+            return Ok(new AckResponse
+            {
+                Success      = true,
+                Message      = $"{result.UpdatedCount} rows acknowledged (TrnStat=2).",
+                UpdatedCount = result.UpdatedCount,
+                ServerSentAt  = DateTime.Now
+            });
         }
-
-        _actLog.LogAck(
-            typeMid, deviceId, req.TrnIDs,
-            result, t2, serverMs,
-            upstreamMs, downstreamMsPrev, fullRoundTripPrev,
-            ackWarnSecs);
-
-        return Ok(new AckResponse
+        catch (Exception ex)
         {
-            Success      = true,
-            Message      = $"{result.UpdatedCount} rows acknowledged (TrnStat=2).",
-            UpdatedCount = result.UpdatedCount,
-            ServerSentAt  = DateTime.Now
-        });
+            _actLog.LogException("ACK", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "ACK failed. See error log." });
+        }
     }
-    catch (Exception ex)
-    {
-        _actLog.LogException("ACK", typeMid, deviceId, ex);
-        return StatusCode(500, new { error = "ACK failed. See error log." });
-    }
-}
+
     // ── POST /api/poll/restore ────────────────────────────────────────────────
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
@@ -223,6 +220,7 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
     [HttpPost("event")]
     public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     {
+        var t2       = DateTime.Now;
         var reqTime  = DateTime.Now;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
@@ -233,7 +231,10 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
 
         await _repo.InsertDeviceEvent(dto, deviceId);
 
-        _actLog.LogEvent(typeMid, deviceId, dto.Message ?? "No event data", reqTime, sw.ElapsedMilliseconds);
+        sw.Stop();
+        var t3 = DateTime.Now; 
+
+        _actLog.LogTiming("EVENT", typeMid, deviceId, dto.T1, t2, t3);
 
         return Ok(new { Success = true, Message = "Event stored.", ServerSentAt = DateTime.Now });
     }
