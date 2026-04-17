@@ -78,11 +78,9 @@ public class ApiClient
         {
             DeviceLogger.Info($"{action} | Started polling");
 
-            var start = DateTime.Now;
             var req = await CreateAuthedRequest(HttpMethod.Get, "poll");
 
             var res = await HttpLogger.SendAsync(_http, req, action);
-            var end = DateTime.Now;
 
             var json = await res.Content.ReadAsStringAsync();
 
@@ -95,8 +93,6 @@ public class ApiClient
 
                 return;
             }
-
-            DeviceLogger.Debug($"{action} | RawResponse={json} | Poll Start={start:HH:mm:ss.fff} | Poll End={end:HH:mm:ss.fff} | FullRoundTrip={(end - start).TotalMilliseconds} ms");
 
             var poll = JsonSerializer.Deserialize<PollResponse>(json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -185,11 +181,9 @@ public class ApiClient
 
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
             
-            var start = DateTime.Now;
             var req = await CreateAuthedRequest(HttpMethod.Post, "poll/event", content);
 
             var res = await HttpLogger.SendAsync(_http, req, action);
-            var end = DateTime.Now;
 
             var ackMsg = await ReadMessageAsync(res);
 
@@ -197,9 +191,6 @@ public class ApiClient
             {
                 DeviceLogger.Info(
                     $"{action} | ACK RECEIVED | ServerMessage={ackMsg}");
-
-                DeviceLogger.Debug(
-                    $"{action} | Event Start: {start:HH:mm:ss.fff} | Event End: {end:HH:mm:ss.fff} | FullRoundTrip: {((end - start).TotalMilliseconds)} ms | Server Message: {ackMsg}");
             }
             else
             {
@@ -231,13 +222,9 @@ public class ApiClient
 
             var content = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
 
-            var start = DateTime.Now;
-
             var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
 
             var res = await HttpLogger.SendAsync(_http, req, action);
-
-            var end = DateTime.Now;
 
             var message = await ReadMessageAsync(res);
 
@@ -245,9 +232,6 @@ public class ApiClient
             {
                 DeviceLogger.Info(
                     $"{action} | SUCCESS | ServerMessage={message}");
-
-                DeviceLogger.Debug(
-                    $"{action} | Server Message: {message} | Ack Start: {start:HH:mm:ss.fff} | Ack End: {end:HH:mm:ss.fff} | FullRoundTrip: {(end - start).TotalMilliseconds} ms");
             }
             else
             {
@@ -265,7 +249,7 @@ public class ApiClient
     // Auto refresh before expiry
     private async Task EnsureTokenFreshAsync()
     {
-        var action = "TOKEN-REFRESH";
+        var action = "TOKEN & AUTHENTICATION CHECK";
 
         try
         {

@@ -15,7 +15,7 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | REQUEST | {req.Method} {req.RequestUri} | " +
-            $"Headers={req.Headers} | Start={start} | Body={reqBody}");
+            $"Headers={req.Headers} | Start={start:HH:mm:ss.fff} | Body={reqBody}");
 
         var res = await http.SendAsync(req);
 
@@ -30,9 +30,9 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | RESPONSE | Status={(int)res.StatusCode} | " +
-            $"Started request={start} | Response arrived={end} | " +
+            $"Started request={start:HH:mm:ss.fff} | Response arrived={end:HH:mm:ss.fff} | " +
             $"FullRoundTrip={(end - start).TotalMilliseconds} ms | " +
-            $"DownstreamMS={downstreamMs} ms | Body={body}");
+            $"DownstreamMS={downstreamMs} ms | Body={body} | Headers={res.Headers} | ContentHeaders={res.Content.Headers} | Response={res}");
 
         // IMPORTANT: re-attach body because we consumed the stream
         res.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
