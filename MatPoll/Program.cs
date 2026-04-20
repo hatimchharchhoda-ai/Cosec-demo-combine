@@ -124,6 +124,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ActivityLogger>();
+
 builder.Services.AddHostedService<StallRecoveryService>();
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
@@ -156,6 +157,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+
 
 // ── Swagger ───────────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -195,13 +197,5 @@ app.MapControllers();
 
 Log.Information("MatPoll server started — TestingLog={Testing}",
     builder.Configuration.GetValue<bool>("TestingLog", false));
-
-// Warm up DB connection pool
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.ExecuteSqlRawAsync("SELECT 1");
-    Log.Information("DB connection pool warmed up");
-}
 
 app.Run();

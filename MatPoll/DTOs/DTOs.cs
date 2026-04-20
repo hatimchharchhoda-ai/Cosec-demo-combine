@@ -3,7 +3,7 @@ namespace MatPoll.DTOs;
 // ── Login ─────────────────────────────────────────────────────────────────────
 public class LoginRequest
 {
-    public decimal DeviceID { get; set; }
+    public decimal DeviceType { get; set; }
     public string  MACAddr  { get; set; } = string.Empty;
     public string  IPAddr   { get; set; } = string.Empty;
     public DateTime?  T1    { get; set; }
@@ -13,7 +13,8 @@ public class LoginResponse
 {
     public bool    Success    { get; set; }
     public string? Message    { get; set; }
-    public string? DeviceName { get; set; }
+  
+     public decimal? DeviceId { get; set; }
     public string? Token      { get; set; }
     // TypeMID sent back so client knows its own identifier
     public string? TypeMID    { get; set; }
@@ -86,4 +87,5 @@ public class DeviceEventDto
     public string TypeMID { get; set; }
     public string Message { get; set; }
     public DateTime? T1 { get; set; }
+    public decimal   EventSeqNo { get; set; } 
 }

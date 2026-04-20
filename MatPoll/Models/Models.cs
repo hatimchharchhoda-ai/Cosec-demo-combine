@@ -69,11 +69,37 @@ public class MatCommTrn
 
     // Exact UTC time this row was dispatched (TrnStat flipped 0→1)
     // Used to calculate ACK delay: AckReceivedAt - DispatchedAt
-    // public DateTime? DispatchedAt { get; set; }
+    public DateTime? DispatchedAt { get; set; }
 }
 
 // ── Result objects returned from Repository ──────────────────────────────────
 // These carry richer data back to the controller for logging purposes.
+
+
+//evnt table
+
+[Table("Mat_DeviceEvent")]
+public class MatDeviceEvent
+{
+    [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    [Column(TypeName = "numeric(18,0)")]
+    public decimal EventID { get; set; }
+
+    [Column(TypeName = "numeric(5,0)")]
+    public decimal DeviceID { get; set; }
+
+    [Column(TypeName = "numeric(2,0)")]
+    public decimal? DeviceType { get; set; }
+
+    public string? Message { get; set; }
+
+    [Column(TypeName = "numeric(18,0)")]
+    public decimal EventSeqNo { get; set; }
+
+    public DateTime? Timestamp { get; set; }
+}
+
 
 public class AckResult
 {

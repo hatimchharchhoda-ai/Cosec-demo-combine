@@ -35,14 +35,14 @@ public class AuthController : ControllerBase
         try
         {
             _actLog.LogTestingStep(
-                "[LOGIN-START] DeviceID:{DeviceID} MAC:{MAC} IP:{IP} TypeMID:{TypeMID}",
-                req.DeviceID, req.MACAddr, req.IPAddr, typeMid);
+                "[LOGIN-START] DeviceType:{DeviceType} MAC:{MAC} IP:{IP} TypeMID:{TypeMID}",
+                req.DeviceType, req.MACAddr, req.IPAddr, typeMid);
 
-            var device = await _repo.FindDeviceAsync(req.DeviceID, req.MACAddr, req.IPAddr);
+            var device = await _repo.FindDeviceAsync(req.DeviceType, req.MACAddr, req.IPAddr);
 
             if (device == null)
             {
-                _actLog.LogLogin(typeMid, req.DeviceID, "?", false,
+                _actLog.LogLogin(typeMid, req.DeviceType, "?", false,
                     "Device not found", sw.ElapsedMilliseconds);
                 return Unauthorized(new LoginResponse
                 {
@@ -54,7 +54,7 @@ public class AuthController : ControllerBase
 
             if (device.IsActive != 1)
             {
-                _actLog.LogLogin(typeMid, req.DeviceID, device.DeviceName ?? "?",
+                _actLog.LogLogin(typeMid, req.DeviceType, device.DeviceName ?? "?",
                     false, "Device inactive", sw.ElapsedMilliseconds);
                 return Unauthorized(new LoginResponse
                 {
@@ -75,7 +75,8 @@ public class AuthController : ControllerBase
             {
                 Success    = true,
                 Message    = "Login successful.",
-                DeviceName = device.DeviceName,
+                
+                DeviceId = device.DeviceID,
                 Token      = token,
                 TypeMID    = typeMid,
                 ServerSentAt = DateTime.Now
@@ -83,7 +84,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _actLog.LogException("LOGIN", typeMid, req.DeviceID, ex);
+            _actLog.LogException("LOGIN", typeMid, req.DeviceType, ex);
             return StatusCode(500, new { error = "Login failed. See error log.", ServerSentAt = DateTime.Now });
         }
     }

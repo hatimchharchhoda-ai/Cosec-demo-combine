@@ -193,7 +193,7 @@ _debug.Information(
 
     // debug: per-row delay
     foreach (var kv in result.AckDelays)
-        _debug.Information("[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} Delay:{Delay}s",
+        _debug.Information("[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} Delay:{Delay}ms",
             kv.Key, typeMid, kv.Value);
 
     // error: slow ACK

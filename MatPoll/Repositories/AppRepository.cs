@@ -13,9 +13,9 @@ public class AppRepository
 
     // ── Device ────────────────────────────────────────────────────────────────
 
-    public Task<MatDeviceMst?> FindDeviceAsync(decimal deviceId, string mac, string ip)
+    public Task<MatDeviceMst?> FindDeviceAsync(decimal DeviceType, string mac, string ip)
         => _db.Devices.FirstOrDefaultAsync(d =>
-            d.DeviceID == deviceId &&
+            d. DeviceType ==  DeviceType &&
             d.MACAddr  == mac      &&
             d.IPAddr   == ip);
 
@@ -41,7 +41,7 @@ public class AppRepository
         string typeMid, int bunchSize)
     {
         var rows = await _db.CommTrns
-            .Where(t => t.TrnStat == 0 && t.TypeMID == typeMid)
+            .Where(t => t.TrnStat == 0 )
             .OrderBy(t => t.TrnID)
             .Take(bunchSize)
             .ToListAsync();
@@ -54,6 +54,7 @@ public class AppRepository
             row.TrnStat      = 1;
             row.TypeMID      = typeMid;
             row.RetryCnt     = (row.RetryCnt ?? 0) + 1;
+            row.DispatchedAt = DateTime.UtcNow;
                // stamp dispatch time for ACK delay calc
         }
 
@@ -75,16 +76,18 @@ public class AppRepository
             .ToListAsync();
 
         var foundIds = rows.Select(r => r.TrnID).ToHashSet();
-        var now      = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+       foreach (var row in rows)
+      {
+        row.TrnStat = 2;
 
-        foreach (var row in rows)
-        {
-            row.TrnStat = 2;
-
-            // Calculate ACK delay if DispatchedAt was stamped
-           
-        }
-
+        if (row.DispatchedAt.HasValue)
+       {
+        var delayMs = Math.Round(
+            (now - row.DispatchedAt.Value).TotalMilliseconds, 2);
+        result.AckDelays[row.TrnID] = delayMs;
+       }
+     }
         // Find TrnIDs client claimed to ACK but we couldn't find/update
         result.MismatchedIds = trnIds
             .Where(id => !foundIds.Contains(id))
@@ -159,18 +162,23 @@ public class AppRepository
     }
 
     // NEW: Insert a new event row from device (e.g. heartbeat, error, etc.)
-    public async Task InsertDeviceEvent(DeviceEventDto dto, decimal deviceId)
-    {
-        var entity = new MatCommTrn
-        {
-            MsgStr    = dto.Message,
-            TypeMID   = dto.TypeMID,
-            CreatedAt = DateTime.Now,
-            TrnStat   = 0,
-            RetryCnt  = 0
-        };
+public async Task InsertDeviceEvent(DeviceEventDto dto, decimal deviceId)
+{
+    // Get device info to pull DeviceType
+    var device = await _db.Devices
+        .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
 
-        _db.CommTrns.Add(entity);
-        await _db.SaveChangesAsync();
-    }
+    // Insert into new dedicated event table
+    var eventEntity = new MatDeviceEvent
+    {
+        DeviceID   = deviceId,
+        DeviceType = device?.DeviceType,
+        Message    = dto.Message,
+        EventSeqNo = dto.EventSeqNo,
+        Timestamp  = DateTime.UtcNow
+    };
+
+    _db.DeviceEvents.Add(eventEntity);
+    await _db.SaveChangesAsync();
+}
 }

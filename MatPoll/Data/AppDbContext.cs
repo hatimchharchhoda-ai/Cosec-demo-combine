@@ -10,7 +10,8 @@ public class AppDbContext : DbContext
     public DbSet<MatDeviceMst> Devices  { get; set; }
     public DbSet<MatUserMst>   Users    { get; set; }
     public DbSet<MatCommTrn>   CommTrns { get; set; }
-
+    
+    public DbSet<MatDeviceEvent> DeviceEvents { get; set; }
     protected override void OnModelCreating(ModelBuilder b)
     {
         b.Entity<MatDeviceMst>()
