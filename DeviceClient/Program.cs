@@ -19,8 +19,6 @@
 
         ConnectionSupervisor.Start(api, cfg);
 
-        await api.Restore();
-
         // POLL LOOP
         _ = Task.Run(async () =>
         {

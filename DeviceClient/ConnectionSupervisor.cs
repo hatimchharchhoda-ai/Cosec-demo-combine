@@ -25,6 +25,8 @@ public static class ConnectionSupervisor
                     catch (Exception ex)
                     {
                         DeviceLogger.Error($"RECONNECT FAILED | {ex.Message}");
+                        
+                        DeviceState.SetDisconnected("Login exception");
                     }
                 }
 
