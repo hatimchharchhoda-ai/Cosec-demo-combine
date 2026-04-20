@@ -42,11 +42,16 @@
             while (true)
             {
                 DeviceLogger.Info("NORMAL EVENT BATCH START");
+
+                var tasks = new List<Task>();
+
                 for (int i = 0; i < cfg.Event.EventCount; i++)
                 {
-                    await api.SendEventAsync($"Heartbeat #{counter++}");
+                    tasks.Add(api.SendEventAsync($"Heartbeat #{counter++}"));
                 }
                 DeviceLogger.Info("NORMAL EVENT BATCH END");
+
+                await Task.WhenAll(tasks);
                 await Task.Delay(cfg.Timing.EventIntervalSeconds * 1000);
             }
         });
@@ -62,11 +67,14 @@
 
                     DeviceLogger.Info("BULK EVENT START");
 
+                    var tasks = new List<Task>();
+
                     for (int i = 0; i < cfg.Event.BulkCount; i++)
                     {
-                        await api.SendEventAsync($"Bulk Event {i + 1}");
+                        tasks.Add(api.SendEventAsync($"Bulk Event {i + 1}"));
                     }
 
+                    await Task.WhenAll(tasks);
                     DeviceLogger.Info("BULK EVENT END");
                 }
             });

@@ -2,12 +2,12 @@ using System.Text.Json;
 
 public static class HttpLogger
 {
-    public static async Task<HttpResponseMessage> SendAsync(
+    public static async Task<(HttpResponseMessage res, string body)> SendAsync(
         HttpClient http,
         HttpRequestMessage req,
         string action)
     {
-        var start = DateTime.Now;
+        
 
         var reqBody = req.Content == null
             ? "null"
@@ -15,11 +15,12 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | REQUEST | {req.Method} {req.RequestUri} | " +
-            $"Headers={req.Headers} | Start={start:HH:mm:ss.fff} | Body={reqBody}");
-
-        var res = await http.SendAsync(req);
-
+            $"Headers={req.Headers} |  | Body={reqBody}");
+        
+        var start = DateTime.Now;
+        var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
         var end  = DateTime.Now;
+
         var body = await res.Content.ReadAsStringAsync();
 
         DateTime? serverSentAt = ExtractServerSentAt(body);
@@ -29,15 +30,15 @@ public static class HttpLogger
             : -1;
 
         DeviceLogger.Debug(
-            $"{action} | RESPONSE | Status={(int)res.StatusCode} | " +
-            $"Started request={start:HH:mm:ss.fff} | Response arrived={end:HH:mm:ss.fff} | " +
-            $"FullRoundTrip={(end - start).TotalMilliseconds} ms | " +
-            $"DownstreamMS={downstreamMs} ms | Body={body} | Headers={res.Headers} | ContentHeaders={res.Content.Headers} | Response={res}");
+            $"{action} | RESPONSE | Status:{(int)res.StatusCode} | " +
+            $"Started request:{start:HH:mm:ss.fff} | Response arrived:{end:HH:mm:ss.fff} | " +
+            $"FullRoundTrip:{(end - start).TotalMilliseconds} ms | " +
+            $"DownstreamMS:{downstreamMs} ms | Body:{body} | Headers:{res.Headers} | ContentHeaders:{res.Content.Headers} | Response:{res}");
 
         // IMPORTANT: re-attach body because we consumed the stream
         res.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
 
-        return res;
+        return (res, body);
     }
 
     private static DateTime? ExtractServerSentAt(string body)

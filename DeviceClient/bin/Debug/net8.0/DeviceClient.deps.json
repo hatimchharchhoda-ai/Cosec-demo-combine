@@ -12,7 +12,8 @@
           "Microsoft.Extensions.Configuration.Binder": "10.0.6",
           "Microsoft.Extensions.Configuration.FileExtensions": "10.0.6",
           "Microsoft.Extensions.Configuration.Json": "10.0.6",
-          "System.IdentityModel.Tokens.Jwt": "8.17.0"
+          "System.IdentityModel.Tokens.Jwt": "8.17.0",
+          "System.Threading.Channels": "10.0.6"
         },
         "runtime": {
           "DeviceClient.dll": {}
@@ -231,6 +232,14 @@
             "fileVersion": "10.0.626.17701"
           }
         }
+      },
+      "System.Threading.Channels/10.0.6": {
+        "runtime": {
+          "lib/net8.0/System.Threading.Channels.dll": {
+            "assemblyVersion": "10.0.0.0",
+            "fileVersion": "10.0.626.17701"
+          }
+        }
       }
     }
   },
@@ -372,6 +381,13 @@
       "sha512": "sha512-eU/JSsGWpQPE+rkBJjFjsmtaPsu1kCLqFYeW3NS715+z/dP2/BsCl6R7BFGcjhg+rm5WHblllC3p7QS+sS3HtA==",
       "path": "system.text.json/10.0.6",
       "hashPath": "system.text.json.10.0.6.nupkg.sha512"
+    },
+    "System.Threading.Channels/10.0.6": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ZmJYpHDfHoYnnVs+FUklz+PrK1PmEA8AX4U/X/ai6+enPhPY1z+H0HC8TUR7VDrx/WO97O5aEbW6YenmYTo+GA==",
+      "path": "system.threading.channels/10.0.6",
+      "hashPath": "system.threading.channels.10.0.6.nupkg.sha512"
     }
   }
 }

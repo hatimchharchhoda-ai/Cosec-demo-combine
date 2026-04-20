@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "mutyPtRIP5U=",
+  "dgSpecHash": "dQNlo/YzB0c=",
   "success": true,
   "projectFilePath": "D:\\COSEC-demo\\DeviceClient\\DeviceClient.csproj",
   "expectedPackageFiles": [
@@ -23,10 +23,11 @@
     "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\system.io.pipelines\\10.0.6\\system.io.pipelines.10.0.6.nupkg.sha512",
     "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\system.text.encodings.web\\10.0.6\\system.text.encodings.web.10.0.6.nupkg.sha512",
     "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\system.text.json\\10.0.6\\system.text.json.10.0.6.nupkg.sha512",
-    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.22\\microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
-    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.22\\microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\system.threading.channels\\10.0.6\\system.threading.channels.10.0.6.nupkg.sha512",
     "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.22\\microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512",
-    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.22\\microsoft.netcore.app.host.win-x64.8.0.22.nupkg.sha512"
+    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.22\\microsoft.netcore.app.host.win-x64.8.0.22.nupkg.sha512",
+    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.22\\microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\hatim.chharchhoda\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.22\\microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512"
   ],
   "logs": []
 }

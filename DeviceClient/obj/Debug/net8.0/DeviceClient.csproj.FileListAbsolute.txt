@@ -35,3 +35,4 @@ D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\refint\DeviceClient.dll
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.pdb
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\DeviceClient.genruntimeconfig.cache
 D:\COSEC-demo\DeviceClient\obj\Debug\net8.0\ref\DeviceClient.dll
+D:\COSEC-demo\DeviceClient\bin\Debug\net8.0\System.Threading.Channels.dll

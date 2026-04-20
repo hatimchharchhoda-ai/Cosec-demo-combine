@@ -350,6 +350,22 @@
         "build": {
           "buildTransitive/net8.0/System.Text.Json.targets": {}
         }
+      },
+      "System.Threading.Channels/10.0.6": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0/System.Threading.Channels.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/System.Threading.Channels.dll": {
+            "related": ".xml"
+          }
+        },
+        "build": {
+          "buildTransitive/net8.0/_._": {}
+        }
       }
     }
   },
@@ -1000,6 +1016,37 @@
         "system.text.json.nuspec",
         "useSharedDesignerContext.txt"
       ]
+    },
+    "System.Threading.Channels/10.0.6": {
+      "sha512": "ZmJYpHDfHoYnnVs+FUklz+PrK1PmEA8AX4U/X/ai6+enPhPY1z+H0HC8TUR7VDrx/WO97O5aEbW6YenmYTo+GA==",
+      "type": "package",
+      "path": "system.threading.channels/10.0.6",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "PACKAGE.md",
+        "THIRD-PARTY-NOTICES.TXT",
+        "buildTransitive/net461/System.Threading.Channels.targets",
+        "buildTransitive/net462/_._",
+        "buildTransitive/net8.0/_._",
+        "buildTransitive/netcoreapp2.0/System.Threading.Channels.targets",
+        "lib/net10.0/System.Threading.Channels.dll",
+        "lib/net10.0/System.Threading.Channels.xml",
+        "lib/net462/System.Threading.Channels.dll",
+        "lib/net462/System.Threading.Channels.xml",
+        "lib/net8.0/System.Threading.Channels.dll",
+        "lib/net8.0/System.Threading.Channels.xml",
+        "lib/net9.0/System.Threading.Channels.dll",
+        "lib/net9.0/System.Threading.Channels.xml",
+        "lib/netstandard2.0/System.Threading.Channels.dll",
+        "lib/netstandard2.0/System.Threading.Channels.xml",
+        "lib/netstandard2.1/System.Threading.Channels.dll",
+        "lib/netstandard2.1/System.Threading.Channels.xml",
+        "system.threading.channels.10.0.6.nupkg.sha512",
+        "system.threading.channels.nuspec",
+        "useSharedDesignerContext.txt"
+      ]
     }
   },
   "projectFileDependencyGroups": {
@@ -1008,7 +1055,8 @@
       "Microsoft.Extensions.Configuration.Binder >= 10.0.6",
       "Microsoft.Extensions.Configuration.FileExtensions >= 10.0.6",
       "Microsoft.Extensions.Configuration.Json >= 10.0.6",
-      "System.IdentityModel.Tokens.Jwt >= 8.17.0"
+      "System.IdentityModel.Tokens.Jwt >= 8.17.0",
+      "System.Threading.Channels >= 10.0.6"
     ]
   },
   "packageFolders": {
@@ -1080,6 +1128,10 @@
           "System.IdentityModel.Tokens.Jwt": {
             "target": "Package",
             "version": "[8.17.0, )"
+          },
+          "System.Threading.Channels": {
+            "target": "Package",
+            "version": "[10.0.6, )"
           }
         },
         "imports": [

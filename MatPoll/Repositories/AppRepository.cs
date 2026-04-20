@@ -41,7 +41,7 @@ public class AppRepository
         string typeMid, int bunchSize)
     {
         var rows = await _db.CommTrns
-            .Where(t => t.TrnStat == 0)
+            .Where(t => t.TrnStat == 0 && t.TypeMID == typeMid)
             .OrderBy(t => t.TrnID)
             .Take(bunchSize)
             .ToListAsync();
