@@ -17,7 +17,7 @@ public static class DeviceLogger
     private static bool _enableDebug;
     private static bool _enableError;
 
-    private const int BATCH_SIZE = 1000;
+    private const int BATCH_SIZE = 20;
     private static readonly TimeSpan FLUSH_INTERVAL = TimeSpan.FromMilliseconds(150);
 
     public static void Configure(
@@ -92,7 +92,7 @@ public static class DeviceLogger
     //         File.AppendAllText(_walFile, line + Environment.NewLine);
     //     }
     // }
-    
+
     private static void Write(Channel<string> ch, string level, string msg)
     {
         var line = $"{DateTime.Now:dd-MM-yyyy HH:mm:ss.fff} | {level} | {msg}";

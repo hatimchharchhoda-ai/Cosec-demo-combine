@@ -38,20 +38,17 @@
         _ = Task.Run(async () =>
         {
             int counter = 1;
-
+            
             while (true)
             {
                 DeviceLogger.Info("NORMAL EVENT BATCH START");
 
-                var tasks = new List<Task>();
-
                 for (int i = 0; i < cfg.Event.EventCount; i++)
                 {
-                    tasks.Add(api.SendEventAsync($"Heartbeat #{counter++}"));
+                    await api.SendEventAsync($"Heartbeat #{counter++}");
                 }
-                DeviceLogger.Info("NORMAL EVENT BATCH END");
 
-                await Task.WhenAll(tasks);
+                DeviceLogger.Info("NORMAL EVENT BATCH END");
                 await Task.Delay(cfg.Timing.EventIntervalSeconds * 1000);
             }
         });

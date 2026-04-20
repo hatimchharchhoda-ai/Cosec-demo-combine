@@ -9,9 +9,18 @@ public class ApiClient
 
     public ApiClient(string baseUrl)
     {
-        _http = new HttpClient();
-        _http.BaseAddress = new Uri(baseUrl);
+        var handler = new SocketsHttpHandler
+        {
+            KeepAlivePingDelay    = TimeSpan.FromSeconds(15),
+            KeepAlivePingTimeout  = TimeSpan.FromSeconds(5),
+            EnableMultipleHttp2Connections = true,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(10),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+        };
 
+        _http = new HttpClient(handler);
+        _http.BaseAddress = new Uri(baseUrl);
+        
         StartBackgroundServices();
     }
 
@@ -124,7 +133,9 @@ public class ApiClient
 
                 DeviceMemory.LastIds = ids;
 
-                _ackChannel.Writer.TryWrite(ids);
+                DeviceLogger.Info($"{action} | Sending ACK immediately for received data");
+
+                await Ack(ids);
 
                 DeviceMemory.LastIds.Clear();
 
@@ -355,28 +366,5 @@ public class ApiClient
                 catch { }
             }
         });
-
-        // ACK WORKER
-        _ = Task.Run(ProcessAckQueue);
     }
-
-    private async Task ProcessAckQueue()
-    {
-        await foreach (var ids in _ackChannel.Reader.ReadAllAsync())
-        {
-            try
-            {
-                await Ack(ids);
-                
-                DeviceLogger.Info($"ACK BG | ACK completed for received data");
-            }
-            catch (Exception ex)
-            {
-                DeviceLogger.Error($"ACK WORKER ERROR | {ex}");
-            }
-        }
-    }
-
-    private readonly Channel<List<decimal>> _ackChannel =
-        Channel.CreateUnbounded<List<decimal>>();
 }

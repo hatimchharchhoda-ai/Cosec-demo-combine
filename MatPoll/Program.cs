@@ -196,4 +196,12 @@ app.MapControllers();
 Log.Information("MatPoll server started — TestingLog={Testing}",
     builder.Configuration.GetValue<bool>("TestingLog", false));
 
+// Warm up DB connection pool
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.ExecuteSqlRawAsync("SELECT 1");
+    Log.Information("DB connection pool warmed up");
+}
+
 app.Run();

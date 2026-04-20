@@ -220,9 +220,8 @@ public class PollController : ControllerBase
     [HttpPost("event")]
     public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     {
-        var t2       = DateTime.Now;
-        var reqTime  = DateTime.Now;
-        var sw       = Stopwatch.StartNew();
+        var t2 = DateTime.Now;
+        var sw = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
 
@@ -232,10 +231,10 @@ public class PollController : ControllerBase
         await _repo.InsertDeviceEvent(dto, deviceId);
 
         sw.Stop();
-        var t3 = DateTime.Now; 
+        var t3 = DateTime.Now;
 
         _actLog.LogTiming("EVENT", typeMid, deviceId, dto.T1, t2, t3);
 
-        return Ok(new { Success = true, Message = "Event stored.", ServerSentAt = DateTime.Now });
+        return Ok(new { Success = true, Message = "Event stored.", ServerSentAt = t3 });
     }
 }
