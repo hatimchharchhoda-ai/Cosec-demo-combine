@@ -17,10 +17,7 @@
 
         var api = new ApiClient(cfg.Server.BaseUrl);
 
-        await api.Login(
-            cfg.Device.DeviceId,
-            cfg.Device.MacAddress,
-            cfg.Device.IpAddress);
+        ConnectionSupervisor.Start(api, cfg);
 
         await api.Restore();
 
@@ -29,7 +26,8 @@
         {
             while (true)
             {
-                await api.PollAndProcess();
+                if (DeviceState.IsConnected)
+                    await api.PollAndProcess();
                 await Task.Delay(cfg.Timing.PollIntervalSeconds * 1000);
             }
         });
@@ -41,6 +39,12 @@
             
             while (true)
             {
+                if (!DeviceState.IsConnected)
+                {
+                    await Task.Delay(1000);
+                    continue;
+                }
+
                 DeviceLogger.Info("NORMAL EVENT BATCH START");
 
                 for (int i = 0; i < cfg.Event.EventCount; i++)
@@ -60,6 +64,12 @@
             {
                 while (true)
                 {
+                    if (!DeviceState.IsConnected)
+                    {
+                        await Task.Delay(1000);
+                        continue;
+                    }
+
                     await Task.Delay(cfg.Timing.BulkEverySeconds * 1000);
 
                     DeviceLogger.Info("BULK EVENT START");

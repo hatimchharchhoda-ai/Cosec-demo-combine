@@ -21,6 +21,11 @@ public static class HttpLogger
         var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
         var end  = DateTime.Now;
 
+        if ((int)res.StatusCode == 401 || (int)res.StatusCode == 403)
+        {
+            DeviceState.SetDisconnected("401/403 from server");
+        }
+
         var body = await res.Content.ReadAsStringAsync();
 
         DateTime? serverSentAt = ExtractServerSentAt(body);

@@ -24,11 +24,11 @@ public class ApiClient
         StartBackgroundServices();
     }
 
-    public async Task Login(int deviceId, string mac, string ip)
+    public async Task Login(int deviceType, string mac, string ip)
     {
-        DeviceLogger.Info($"LOGIN START | DeviceId={deviceId} MAC={mac} IP={ip}");
+        DeviceLogger.Info($"LOGIN START | DeviceType={deviceType} MAC={mac} IP={ip}");
 
-        var payload = new { DeviceID = deviceId, MACAddr = mac, IPAddr = ip, T1 = DateTime.Now };
+        var payload = new { DeviceType = deviceType, MACAddr = mac, IPAddr = ip, T1 = DateTime.Now };
         var jsonPayload = JsonSerializer.Serialize(payload);
 
         var req = new HttpRequestMessage(HttpMethod.Post, "auth/login")
@@ -45,6 +45,8 @@ public class ApiClient
             if (!res.IsSuccessStatusCode)
             {
                 DeviceLogger.Error($"LOGIN FAILED | Body={body}");
+
+                DeviceState.SetDisconnected("Login failed");
                 return;
             }
 
@@ -54,10 +56,14 @@ public class ApiClient
             DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
 
             DeviceLogger.Info("LOGIN SUCCESS");
+
+            DeviceState.SetConnected();
         }
         catch (Exception ex)
         {
             DeviceLogger.Error($"LOGIN ERROR | {ex}");
+
+            DeviceState.SetDisconnected("Login failed");
         }
     }
 
@@ -282,6 +288,7 @@ public class ApiClient
                     $"{action} | FAILED | Status={(int)res.StatusCode} | ServerMessage={message} | Response={res} | Body={body}");
 
                 DeviceSession.Token = null;
+                DeviceState.SetDisconnected("Token refresh failed");
                 return;
             }
 
@@ -297,6 +304,8 @@ public class ApiClient
         }
         catch (Exception ex)
         {
+            DeviceSession.Token = null;
+            DeviceState.SetDisconnected("Token refresh failed");
             DeviceLogger.Error(
                 $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }

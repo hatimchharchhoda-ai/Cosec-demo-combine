@@ -1,0 +1,1 @@
+﻿20-04-2026 16:31:44.803 | DEBUG | LOGIN | REQUEST | POST auth/login | Headers= |  | Body={"DeviceType":100,"MACAddr":"00:1b:09:00:00:00","IPAddr":"192.168.0.100","T1":"2026-04-20T16:31:44.7547781+05:30"}

@@ -27,7 +27,7 @@ public class DeviceConfig
 
 public class DeviceSection
 {
-    public int DeviceId { get; set; }
+    public int DeviceType { get; set; }
     public required string MacAddress { get; set; }
     public required string IpAddress { get; set; }
 }
