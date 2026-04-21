@@ -33,128 +33,102 @@ public class ActivityLogger
         _testingEnabled = config.GetValue<bool>("TestingLog", false);
     }
 
-    // ── LOGIN ─────────────────────────────────────────────────────────────────
-
-    public void LogLogin(string typeMid, decimal deviceId, string deviceName,
-        bool success, string detail, long durationMs)
-    {
-        if (success)
-        {
-            // info: one clean line
-            _info.Information(
-                "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} Result:SUCCESS Duration:{Dur}ms",
-                typeMid, deviceId, deviceName, durationMs);
-
-            // debug: same line (info events always appear in debug too)
-            _debug.Information(
-                "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} Result:SUCCESS Duration:{Dur}ms",
-                typeMid, deviceId, deviceName, durationMs);
-
-            TestingLog("[LOGIN] SUCCESS TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} Duration:{Dur}ms",
-                typeMid, deviceId, deviceName, durationMs);
-
-            TestingLog("[LOGIN-DETAIL] TypeMID:{TypeMID} DeviceID:{DeviceID} Detail:{Detail}",
-                typeMid, deviceId, detail);
-        }
-        else
-        {
-            // Failed login → error log
-            _info.Warning(
-                "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Result:FAILED Reason:{Reason}",
-                typeMid, deviceId, detail);
-            _debug.Warning(
-                "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Result:FAILED Reason:{Reason} Duration:{Dur}ms",
-                typeMid, deviceId, detail, durationMs);
-            _error.Warning(
-                "[LOGIN-FAIL] TypeMID:{TypeMID} DeviceID:{DeviceID} Reason:{Reason}",
-                typeMid, deviceId, detail);
-
-            TestingLog("[LOGIN] FAILED TypeMID:{TypeMID} DeviceID:{DeviceID} Reason:{Reason}",
-                typeMid, deviceId, detail);
-        }
-    }
-
-    // ── POLL DATA SENT ────────────────────────────────────────────────────────
-
-    public void LogPollDataSent(
-        string typeMid, decimal deviceId, string deviceName,
-        List<MatCommTrn> rows, int totalPending,
-        DateTime reqTime, long durationMs)
-    {
-        var ids      = string.Join(",", rows.Select(r => r.TrnID));
-        var rowCount = rows.Count;
-
-        // info: summary line only
-        _info.Information(
-            "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} RowsSent:{Rows} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, rowCount, totalPending,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        // debug: full detail — IDs, messages, retry counts
-        _debug.Information(
-            "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} " +
-            "RowsSent:{Rows} TotalPending:{Pending} " +
-            "TrnIDs:[{IDs}] ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, deviceName,
-            rowCount, totalPending,
-            ids, reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        // debug: one line per row with full MsgStr
-        foreach (var row in rows)
-        {
-            _debug.Information(
-                "[POLL-ROW] TrnID:{TrnID} TypeMID:{TypeMID} MsgStr:{MsgStr} RetryCnt:{Retry} ",
-                row.TrnID, typeMid, row.MsgStr, row.RetryCnt
-               );
-        }
-
-        TestingLog("[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} TrnIDs:[{IDs}] Pending:{Pending}",
-            typeMid, deviceId, ids, totalPending);
-    }
-
-    // ── POLL NO DATA ──────────────────────────────────────────────────────────
-
-    public void LogPollNoData(string typeMid, decimal deviceId,
-        int totalPending, DateTime reqTime, long durationMs)
+// ── LOGIN ─────────────────────────────────────────────────────────────────
+public void LogLogin(string typeMid, decimal deviceId, string deviceName,
+    decimal deviceType, bool success, string detail, long durationMs)
+{
+    if (success)
     {
         _info.Information(
-            "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, totalPending,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
+            "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} DeviceType:{DeviceType} Result:SUCCESS Duration:{Dur}ms",
+            typeMid, deviceId, deviceName, deviceType, durationMs);
 
         _debug.Information(
-            "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, totalPending,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        TestingLog("[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} Pending:{Pending}",
-            typeMid, deviceId, totalPending);
+            "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} DeviceType:{DeviceType} Result:SUCCESS Duration:{Dur}ms",
+            typeMid, deviceId, deviceName, deviceType, durationMs);
     }
-
-    // ── POLL NEED ACK FIRST ───────────────────────────────────────────────────
-
-    public void LogPollNeedAck(string typeMid, decimal deviceId,
-        DateTime reqTime, long durationMs)
+    else
     {
         _info.Warning(
-            "[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} Reason:TrnStat1RowsExist ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
+            "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Result:FAILED Reason:{Reason}",
+            typeMid, deviceId, deviceType, detail);
         _debug.Warning(
-            "[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} Reason:TrnStat1RowsExist ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        TestingLog("[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} — device has un-ACKed rows",
-            typeMid, deviceId);
+            "[LOGIN] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Result:FAILED Reason:{Reason} Duration:{Dur}ms",
+            typeMid, deviceId, deviceType, detail, durationMs);
+        _error.Warning(
+            "[LOGIN-FAIL] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Reason:{Reason}",
+            typeMid, deviceId, deviceType, detail);
     }
+}
 
-    // ── ACK RECEIVED ──────────────────────────────────────────────────────────
+// ── POLL DATA SENT ────────────────────────────────────────────────────────
+public void LogPollDataSent(
+    string typeMid, decimal deviceId, string deviceName, decimal deviceType,
+    List<MatCommTrn> rows, int totalPending,
+    DateTime reqTime, long durationMs)
+{
+    var ids      = string.Join(",", rows.Select(r => r.TrnID));
+    var rowCount = rows.Count;
 
-  // ── ACK RECEIVED ──────────────────────────────────────────────────────────────
+    _info.Information(
+        "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} RowsSent:{Rows} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, rowCount, totalPending,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
 
-public void LogAck(string typeMid, decimal deviceId,
+    _debug.Information(
+        "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} DeviceType:{DeviceType} " +
+        "RowsSent:{Rows} TotalPending:{Pending} TrnIDs:[{IDs}] ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceName, deviceType,
+        rowCount, totalPending, ids,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    foreach (var row in rows)
+        _debug.Information(
+            "[POLL-ROW] TrnID:{TrnID} TypeMID:{TypeMID} DeviceType:{DeviceType} MsgStr:{MsgStr} RetryCnt:{Retry}",
+            row.TrnID, typeMid, deviceType, row.MsgStr, row.RetryCnt);
+
+    TestingLog("[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TrnIDs:[{IDs}] Pending:{Pending}",
+        typeMid, deviceId, deviceType, ids, totalPending);
+}
+
+// ── POLL NO DATA ──────────────────────────────────────────────────────────
+public void LogPollNoData(string typeMid, decimal deviceId, decimal deviceType,
+    int totalPending, DateTime reqTime, long durationMs)
+{
+    _info.Information(
+        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, totalPending,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    _debug.Information(
+        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, totalPending,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    TestingLog("[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Pending:{Pending}",
+        typeMid, deviceId, deviceType, totalPending);
+}
+
+// ── POLL NEED ACK FIRST ───────────────────────────────────────────────────
+public void LogPollNeedAck(string typeMid, decimal deviceId, decimal deviceType,
+    DateTime reqTime, long durationMs)
+{
+    _info.Warning(
+        "[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Reason:TrnStat1RowsExist ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    _debug.Warning(
+        "[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Reason:TrnStat1RowsExist ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    TestingLog("[POLL-BLOCKED] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType}",
+        typeMid, deviceId, deviceType);
+}
+
+// ── ACK RECEIVED ──────────────────────────────────────────────────────────
+public void LogAck(string typeMid, decimal deviceId, decimal deviceType,
     List<decimal> clientIds, AckResult result,
     DateTime t2, long serverMs,
     double upstreamMs, double downstreamMsPrev, double fullRoundTripPrev,
@@ -166,117 +140,127 @@ public void LogAck(string typeMid, decimal deviceId,
     var maxDelay = result.AckDelays.Count > 0
         ? result.AckDelays.Values.Max() : 0.0;
 
-    var upLabel       = upstreamMs       >= 0 ? $"{upstreamMs}ms"       : "N/A";
-    var downLabel     = downstreamMsPrev >= 0 ? $"{downstreamMsPrev}ms" : "N/A";
-    var roundTripLabel= fullRoundTripPrev>= 0 ? $"{fullRoundTripPrev}ms": "N/A";
+    var upLabel        = upstreamMs        >= 0 ? $"{upstreamMs}ms"        : "N/A";
+    var downLabel      = downstreamMsPrev  >= 0 ? $"{downstreamMsPrev}ms"  : "N/A";
+    var roundTripLabel = fullRoundTripPrev >= 0 ? $"{fullRoundTripPrev}ms" : "N/A";
 
-    // info: summary
- // info: summary
-_info.Information(
-    "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} " +
-    "ServerMs:{Server}ms UpstreamMs:{Up} DownstreamMs:{Down} FullRoundTrip:{Full} " +
-    "T2:{T2}",
-    typeMid, deviceId,
-    clientIds.Count, result.UpdatedCount,
-    serverMs, upLabel, downLabel, roundTripLabel,
-    t2.ToString("HH:mm:ss.fff"));
+    _info.Information(
+        "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Claimed:{Claimed} Updated:{Updated} " +
+        "ServerMs:{Server}ms UpstreamMs:{Up} AvgDelay:{Avg}ms MaxDelay:{Max}ms T2:{T2}",
+        typeMid, deviceId, deviceType,
+        clientIds.Count, result.UpdatedCount,
+        serverMs, upLabel, avgDelay, maxDelay,
+        t2.ToString("HH:mm:ss.fff"));
 
-// debug: with IDs
-_debug.Information(
-    "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} Claimed:{Claimed} Updated:{Updated} " +
-    "TrnIDs:[{IDs}] ServerMs:{Server}ms UpstreamMs:{Up} DownstreamMs:{Down} FullRoundTrip:{Full} " +
-    "T2:{T2}",
-    typeMid, deviceId,
-    clientIds.Count, result.UpdatedCount,
-    ids, serverMs, upLabel, downLabel, roundTripLabel,
-    t2.ToString("HH:mm:ss.fff"));
+    _debug.Information(
+        "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Claimed:{Claimed} Updated:{Updated} " +
+        "TrnIDs:[{IDs}] ServerMs:{Server}ms UpstreamMs:{Up} DownstreamMs:{Down} FullRoundTrip:{Full} T2:{T2}",
+        typeMid, deviceId, deviceType,
+        clientIds.Count, result.UpdatedCount,
+        ids, serverMs, upLabel, downLabel, roundTripLabel,
+        t2.ToString("HH:mm:ss.fff"));
 
-    // debug: per-row delay
     foreach (var kv in result.AckDelays)
-        _debug.Information("[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} Delay:{Delay}ms",
-            kv.Key, typeMid, kv.Value);
+        _debug.Information(
+            "[ACK-DELAY] TrnID:{TrnID} TypeMID:{TypeMID} DeviceType:{DeviceType} Delay:{Delay}ms",
+            kv.Key, typeMid, deviceType, kv.Value);
 
-    // error: slow ACK
     if (maxDelay > ackWarnSeconds)
         _error.Warning(
-            "[ACK-SLOW] TypeMID:{TypeMID} DeviceID:{DeviceID} MaxDelay:{Max}s " +
-            "Threshold:{Threshold}s TrnIDs:[{IDs}]",
-            typeMid, deviceId, maxDelay, ackWarnSeconds, ids);
+            "[ACK-SLOW] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} MaxDelay:{Max}ms Threshold:{Threshold}s",
+            typeMid, deviceId, deviceType, maxDelay, ackWarnSeconds);
 
-    // error: nothing updated
     if (result.UpdatedCount == 0 && clientIds.Count > 0)
         _error.Error(
-            "[ACK-ZERO-UPDATED] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
-            "Reason:NoRowsMatchedInDB " +
-            "Possible:AlreadyAcked|WrongTypeMID|WrongTrnStat|RowsNotFound " +
-            "ClaimedIDs:[{IDs}]",
-            typeMid, deviceId, ids);
+            "[ACK-ZERO-UPDATED] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} ClaimedIDs:[{IDs}]",
+            typeMid, deviceId, deviceType, ids);
 
-    // error: mismatch
     if (result.MismatchedIds.Count > 0)
-    {
-        var missed = string.Join(",", result.MismatchedIds);
         _error.Error(
-            "[ACK-MISMATCH] TypeMID:{TypeMID} DeviceID:{DeviceID} " +
-            "ClientClaimed:{Claimed} DBUpdated:{Updated} " +
-            "MissingTrnIDs:[{Missed}] " +
-            "Reason:RowsNotFoundWithTrnStat1AndMatchingTypeMID",
-            typeMid, deviceId, clientIds.Count, result.UpdatedCount, missed);
-    }
+            "[ACK-MISMATCH] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} MissingTrnIDs:[{Missed}]",
+            typeMid, deviceId, deviceType,
+            string.Join(",", result.MismatchedIds));
 
     TestingLog(
-        "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} TrnIDs:[{IDs}] " +
-        "Updated:{Updated} AvgDelay:{Avg}s " +
-        "ServerMs:{Server}ms Up:{Up} Down:{Down} Full:{Full}",
-        typeMid, deviceId, ids, result.UpdatedCount, avgDelay,
-        serverMs, upLabel, downLabel, roundTripLabel);
+        "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Updated:{Updated} AvgDelay:{Avg}ms",
+        typeMid, deviceId, deviceType, result.UpdatedCount, avgDelay);
 }
-    // ── RESTORE ───────────────────────────────────────────────────────────────
 
-    public void LogRestore(string typeMid, decimal deviceId,
-        int restoredCount, DateTime reqTime, long durationMs)
+// ── RESTORE ───────────────────────────────────────────────────────────────
+public void LogRestore(string typeMid, decimal deviceId, decimal deviceType,
+    int restoredCount, DateTime reqTime, long durationMs)
+{
+    _info.Warning(
+        "[RESTORE] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} RestoredRows:{Count} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, restoredCount,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+
+    _debug.Warning(
+        "[RESTORE] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} RestoredRows:{Count} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, restoredCount,
+        reqTime.ToString("HH:mm:ss.fff"), durationMs);
+}
+
+// ── REFRESH ───────────────────────────────────────────────────────────────
+public void LogRefresh(string typeMid, decimal deviceId, decimal deviceType,
+    bool success, long durationMs)
+{
+    if (success)
+    {
+        _info.Information(
+            "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Result:SUCCESS Duration:{Dur}ms",
+            typeMid, deviceId, deviceType, durationMs);
+        _debug.Information(
+            "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Result:SUCCESS Duration:{Dur}ms",
+            typeMid, deviceId, deviceType, durationMs);
+    }
+    else
     {
         _info.Warning(
-            "[RESTORE] TypeMID:{TypeMID} DeviceID:{DeviceID} RestoredRows:{Count} ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, restoredCount,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        _debug.Warning(
-            "[RESTORE] TypeMID:{TypeMID} DeviceID:{DeviceID} RestoredRows:{Count} ReqTime:{ReqTime} Duration:{Dur}ms",
-            typeMid, deviceId, restoredCount,
-            reqTime.ToString("HH:mm:ss.fff"), durationMs);
-
-        TestingLog("[RESTORE] TypeMID:{TypeMID} DeviceID:{DeviceID} RestoredRows:{Count}",
-            typeMid, deviceId, restoredCount);
+            "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Result:FAILED Duration:{Dur}ms",
+            typeMid, deviceId, deviceType, durationMs);
+        _error.Warning(
+            "[REFRESH-FAIL] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Duration:{Dur}ms",
+            typeMid, deviceId, deviceType, durationMs);
     }
+}
 
-    // ── TOKEN REFRESH ─────────────────────────────────────────────────────────
+// ── TIMING (EVENT) ────────────────────────────────────────────────────────
+public void LogTiming(string tag, string typeMid, decimal deviceId,
+    decimal deviceType, DateTime? t1, DateTime t2, DateTime t3)
+{
+    double upstreamMs = -1;
+    double fullMs     = -1;
+    long   serverMs   = (long)(t3 - t2).TotalMilliseconds;
 
-    public void LogRefresh(string typeMid, decimal deviceId,
-        bool success, long durationMs)
+    if (t1.HasValue)
     {
-        if (success)
-        {
-            _info.Information(
-                "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} Result:SUCCESS Duration:{Dur}ms",
-                typeMid, deviceId, durationMs);
-            _debug.Information(
-                "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} Result:SUCCESS Duration:{Dur}ms",
-                typeMid, deviceId, durationMs);
-        }
-        else
-        {
-            _info.Warning(
-                "[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} Result:FAILED Duration:{Dur}ms",
-                typeMid, deviceId, durationMs);
-            _error.Warning(
-                "[REFRESH-FAIL] TypeMID:{TypeMID} DeviceID:{DeviceID} Duration:{Dur}ms",
-                typeMid, deviceId, durationMs);
-        }
-
-        TestingLog("[REFRESH] TypeMID:{TypeMID} DeviceID:{DeviceID} Success:{Success}",
-            typeMid, deviceId, success);
+        upstreamMs = Math.Round((t2 - t1.Value).TotalMilliseconds, 1);
+        fullMs     = Math.Round((t3 - t1.Value).TotalMilliseconds, 1);
     }
+
+    _info.Information(
+        "[{Tag}-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "UpstreamMs:{Up} ServerMs:{Server}ms FullMs:{Full} T1:{T1} T2:{T2} T3:{T3}",
+        tag, typeMid, deviceId, deviceType,
+        upstreamMs >= 0 ? $"{upstreamMs}ms" : "N/A",
+        serverMs,
+        fullMs >= 0 ? $"{fullMs}ms" : "N/A",
+        t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+        t2.ToString("HH:mm:ss.fff"),
+        t3.ToString("HH:mm:ss.fff"));
+
+    _debug.Information(
+        "[{Tag}-TIMING] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "UpstreamMs:{Up} ServerMs:{Server}ms FullMs:{Full} T1:{T1} T2:{T2} T3:{T3}",
+        tag, typeMid, deviceId, deviceType,
+        upstreamMs >= 0 ? $"{upstreamMs}ms" : "N/A",
+        serverMs,
+        fullMs >= 0 ? $"{fullMs}ms" : "N/A",
+        t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+        t2.ToString("HH:mm:ss.fff"),
+        t3.ToString("HH:mm:ss.fff"));
+}
 
     // ── STALL RECOVERY ────────────────────────────────────────────────────────
 

@@ -4,14 +4,18 @@ public static class ConnectionSupervisor
     {
         _ = Task.Run(async () =>
         {
+            bool attempting = false;
+
             while (true)
             {
-                if (!DeviceState.IsConnected)
+                if (!DeviceState.IsConnected && !attempting)
                 {
-                    DeviceLogger.Error("RECONNECT LOOP | Attempting login...");
+                    attempting = true;
 
                     try
                     {
+                        DeviceLogger.Error("RECONNECT | Login attempt");
+
                         await api.Login(
                             cfg.Device.DeviceType,
                             cfg.Device.MacAddress,
@@ -19,14 +23,17 @@ public static class ConnectionSupervisor
 
                         if (DeviceState.IsConnected)
                         {
+                            DeviceLogger.Info("RECONNECT | Restore after login");
                             await api.Restore();
                         }
                     }
                     catch (Exception ex)
                     {
-                        DeviceLogger.Error($"RECONNECT FAILED | {ex.Message}");
-                        
-                        DeviceState.SetDisconnected("Login exception");
+                        DeviceLogger.Error($"RECONNECT FAILED | {ex}");
+                    }
+                    finally
+                    {
+                        attempting = false;
                     }
                 }
 

@@ -30,10 +30,12 @@ public class PollController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> Poll()
     {
-        var reqTime  = DateTime.Now;
+        var reqTime  = DateTime.UtcNow;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
+        var deviceType = TokenService.GetDeviceType(User); 
+        var deviceName = TokenService.GetDeviceName(User);
 
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
@@ -46,7 +48,7 @@ public class PollController : ControllerBase
             var hasDispatched = await _repo.HasDispatchedRowsAsync(typeMid);
             if (hasDispatched)
             {
-                _actLog.LogPollNeedAck(typeMid, deviceId, reqTime, sw.ElapsedMilliseconds);
+              _actLog.LogPollNeedAck(typeMid, deviceId, deviceType, reqTime, sw.ElapsedMilliseconds);
                 return Ok(new PollResponse
                 {
                     HasData      = false,
@@ -54,7 +56,7 @@ public class PollController : ControllerBase
                     TotalPending = await _repo.CountPendingAsync(),
                     TypeMID      = typeMid,
                     Rows         = new List<TrnRow>(),
-                    ServerSentAt = DateTime.Now
+                    ServerSentAt =DateTime.UtcNow
                 });
             }
 
@@ -73,7 +75,7 @@ public class PollController : ControllerBase
 
             if (rows.Count == 0)
             {
-                _actLog.LogPollNoData(typeMid, deviceId, pending, reqTime, sw.ElapsedMilliseconds);
+               _actLog.LogPollNoData(typeMid, deviceId, deviceType, pending, reqTime, sw.ElapsedMilliseconds);
                 return Ok(new PollResponse
                 {
                     HasData      = false,
@@ -81,16 +83,14 @@ public class PollController : ControllerBase
                     TotalPending = pending,
                     TypeMID      = typeMid,
                     Rows         = new List<TrnRow>(),
-                    ServerSentAt = DateTime.Now
+                    ServerSentAt = DateTime.UtcNow
                 });
             }
 
             // Need device name for debug log — load from DB (cached by EF)
             var device = await _repo.FindDeviceByIdAsync(deviceId);
 
-            _actLog.LogPollDataSent(
-                typeMid, deviceId, device?.DeviceName ?? "?",
-                rows, pending, reqTime, sw.ElapsedMilliseconds);
+          _actLog.LogPollDataSent(typeMid, deviceId, deviceName, deviceType, rows, pending, reqTime, sw.ElapsedMilliseconds);
 
             return Ok(new PollResponse
             {
@@ -105,7 +105,7 @@ public class PollController : ControllerBase
                     RetryCnt = r.RetryCnt ?? 0,
                     TypeMID  = r.TypeMID
                 }).ToList(),
-                ServerSentAt = DateTime.Now
+                ServerSentAt = DateTime.UtcNow
             });
         }
         catch (Exception ex)
@@ -122,7 +122,8 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
     var sw       = Stopwatch.StartNew();
     var deviceId = TokenService.GetDeviceId(User);
     var typeMid  = TokenService.GetTypeMid(User);
-
+    var deviceType = TokenService.GetDeviceType(User); 
+    var deviceName = TokenService.GetDeviceName(User);
     if (string.IsNullOrEmpty(typeMid))
         return Unauthorized();
 
@@ -161,12 +162,7 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
                 (req.T1.Value - req.T4Prev.Value).TotalMilliseconds + upstreamMs, 1);
 
         // ── Log everything ────────────────────────────────────────────────
-        _actLog.LogAck(
-            typeMid, deviceId,
-            req.TrnIDs, result,
-            t2, serverMs,
-            upstreamMs, -1, fullRoundTripPrev,
-            ackWarnSecs);
+     _actLog.LogAck(typeMid, deviceId, deviceType, req.TrnIDs, result, t2, serverMs, upstreamMs, -1, fullRoundTripPrev, ackWarnSecs);
 
         return Ok(new AckResponse
         {
@@ -186,11 +182,12 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
     {
-        var reqTime  = DateTime.Now;
+        var reqTime  = DateTime.UtcNow;
         var sw       = Stopwatch.StartNew();
         var deviceId = TokenService.GetDeviceId(User);
         var typeMid  = TokenService.GetTypeMid(User);
-
+        var deviceType = TokenService.GetDeviceType(User); 
+         var deviceName = TokenService.GetDeviceName(User);
         if (string.IsNullOrEmpty(typeMid))
             return Unauthorized();
 
@@ -201,15 +198,14 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
 
             var count = await _repo.RestoreDispatchedAsync(typeMid);
 
-            _actLog.LogRestore(typeMid, deviceId, count, reqTime, sw.ElapsedMilliseconds);
-
+         _actLog.LogRestore(typeMid, deviceId, deviceType, count, reqTime, sw.ElapsedMilliseconds);
             return Ok(new RestoreResponse
             {
                 Success       = true,
                 Message       = $"{count} rows restored to TrnStat=0.",
                 RestoredCount = count,
                 TypeMID       = typeMid,
-                ServerSentAt  = DateTime.Now
+                ServerSentAt  = DateTime.UtcNow
             });
         }
         catch (Exception ex)
@@ -227,7 +223,8 @@ public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     var sw       = Stopwatch.StartNew();
     var deviceId = TokenService.GetDeviceId(User);
     var typeMid  = TokenService.GetTypeMid(User);
-
+    var deviceType = TokenService.GetDeviceType(User); 
+    var deviceName = TokenService.GetDeviceName(User);
     if (string.IsNullOrEmpty(typeMid))
         return Unauthorized();
 
@@ -236,7 +233,7 @@ public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     sw.Stop();
     var t3 = DateTime.UtcNow;
 
-    _actLog.LogTiming("EVENT", typeMid, deviceId, dto.T1, t2, t3);
+ _actLog.LogTiming("EVENT", typeMid, deviceId, deviceType, dto.T1, t2, t3);
 
     return Ok(new
     {
@@ -245,4 +242,5 @@ public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
         ServerSentAt = DateTime.UtcNow
     });
 }
+
 }

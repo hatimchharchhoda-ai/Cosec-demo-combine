@@ -1,6 +1,6 @@
 {
   "Device": {
-    "DeviceType": 10,
+    "DeviceType": 2,
     "MacAddress": "00:1b:09:00:00:00",
     "IpAddress": "192.168.0.100"
   },

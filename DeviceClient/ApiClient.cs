@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -20,15 +21,13 @@ public class ApiClient
 
         _http = new HttpClient(handler);
         _http.BaseAddress = new Uri(baseUrl);
-        
-        StartBackgroundServices();
     }
 
     public async Task Login(int deviceType, string mac, string ip)
     {
         DeviceLogger.Info($"LOGIN START | DeviceType={deviceType} MAC={mac} IP={ip}");
 
-        var payload = new { DeviceType = deviceType, MACAddr = mac, IPAddr = ip, T1 = DateTime.Now };
+        var payload = new { DeviceType = deviceType, MACAddr = mac, IPAddr = ip, T1 = DateTime.UtcNow };
         var jsonPayload = JsonSerializer.Serialize(payload);
 
         var req = new HttpRequestMessage(HttpMethod.Post, "auth/login")
@@ -54,10 +53,14 @@ public class ApiClient
 
             DeviceSession.Token   = doc.GetProperty("token").GetString();
             DeviceSession.TypeMID = doc.GetProperty("typeMID").GetString();
+            DeviceSession.DeviceId = doc.GetProperty("deviceId").GetInt32();
 
             DeviceLogger.Info("LOGIN SUCCESS");
 
             DeviceState.SetConnected();
+
+            await EnsureTokenFreshAsync();
+            StartBackgroundServicesOnce();  
         }
         catch (Exception ex)
         {
@@ -84,6 +87,13 @@ public class ApiClient
             var req = await CreateAuthedRequest(HttpMethod.Get, "poll");
 
             var (res, body) = await HttpLogger.SendAsync(_http, req, action);
+
+            if (res.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                DeviceLogger.Error("401 received → marking disconnected");
+                DeviceState.SetDisconnected("401 from server");
+                return;
+            }
 
             if (!res.IsSuccessStatusCode)
             {
@@ -170,7 +180,7 @@ public class ApiClient
             {
                 TypeMID   = DeviceSession.TypeMID,
                 Message   = message,
-                T1        = DateTime.Now, 
+                T1        = DateTime.UtcNow, 
             };
 
             var jsonPayload = JsonSerializer.Serialize(payload);
@@ -185,6 +195,13 @@ public class ApiClient
             var (res, body) = await HttpLogger.SendAsync(_http, req, action);
 
             var ackMsg = ReadMessage(body);
+
+            if (res.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                DeviceLogger.Error("401 received → marking disconnected");
+                DeviceState.SetDisconnected("401 from server");
+                return;
+            }
 
             if (res.IsSuccessStatusCode)
             {
@@ -213,7 +230,7 @@ public class ApiClient
             DeviceLogger.Info(
                 $"{action} | Preparing ACK | TrnIDs={string.Join(",", ids)}");
 
-            var payload = new { TrnIDs = ids, T1 = DateTime.Now };
+            var payload = new { TrnIDs = ids, T1 = DateTime.UtcNow };
             var jsonPayload = JsonSerializer.Serialize(payload);
 
             DeviceLogger.Debug(
@@ -226,6 +243,13 @@ public class ApiClient
             var (res, body) = await HttpLogger.SendAsync(_http, req, action);
 
             var message = ReadMessage(body);
+
+            if (res.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                DeviceLogger.Error("401 received → marking disconnected");
+                DeviceState.SetDisconnected("401 from server");
+                return;
+            }
 
             if (res.IsSuccessStatusCode)
             {
@@ -270,7 +294,7 @@ public class ApiClient
             DeviceLogger.Info(
                 $"{action} | Token expiring soon | SecondsLeft={secondsLeft}");
 
-            var start = DateTime.Now;
+            var start = DateTime.UtcNow;
 
             var req = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
             req.Headers.Authorization =
@@ -278,7 +302,7 @@ public class ApiClient
 
             var (res, body) = await HttpLogger.SendAsync(_http, req, action);
 
-            var end = DateTime.Now;
+            var end = DateTime.UtcNow;
 
             var message = ReadMessage(body);
 
@@ -287,8 +311,6 @@ public class ApiClient
                 DeviceLogger.Error(
                     $"{action} | FAILED | Status={(int)res.StatusCode} | ServerMessage={message} | Response={res} | Body={body}");
 
-                DeviceSession.Token = null;
-                DeviceState.SetDisconnected("Token refresh failed");
                 return;
             }
 
@@ -304,8 +326,6 @@ public class ApiClient
         }
         catch (Exception ex)
         {
-            DeviceSession.Token = null;
-            DeviceState.SetDisconnected("Token refresh failed");
             DeviceLogger.Error(
                 $"{action} | EXCEPTION | Message={ex.Message} | StackTrace={ex.StackTrace} | Exception={ex}");
         }
@@ -351,6 +371,9 @@ public class ApiClient
     {
         var req = new HttpRequestMessage(method, url);
 
+        if (string.IsNullOrEmpty(DeviceSession.Token))
+            throw new InvalidOperationException("No token for authed request");
+
         req.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", DeviceSession.Token);
 
@@ -370,10 +393,23 @@ public class ApiClient
                 try
                 {
                     await Task.Delay(TimeSpan.FromSeconds(30));
+
+                    if (!DeviceState.IsConnected)
+                        continue;
+
                     await EnsureTokenFreshAsync();
                 }
                 catch { }
             }
         });
     }
+
+    private void StartBackgroundServicesOnce()
+    {
+        if (_bgStarted) return;
+        _bgStarted = true;
+
+        StartBackgroundServices();
+    }
+    private bool _bgStarted = false;
 }

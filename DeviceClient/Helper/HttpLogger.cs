@@ -17,9 +17,9 @@ public static class HttpLogger
             $"{action} | REQUEST | {req.Method} {req.RequestUri} | " +
             $"Headers={req.Headers} |  | Body={reqBody}");
         
-        var start = DateTime.Now;
+        var start = DateTime.UtcNow;
         var res = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
-        var end  = DateTime.Now;
+        var end  = DateTime.UtcNow;
 
         if ((int)res.StatusCode == 401 || (int)res.StatusCode == 403)
         {

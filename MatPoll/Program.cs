@@ -124,7 +124,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ActivityLogger>();
-
+// builder.Services.AddSingleton<MetricsLogger>();
 builder.Services.AddHostedService<StallRecoveryService>();
 
 // ── JWT ───────────────────────────────────────────────────────────────────────

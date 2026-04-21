@@ -14,21 +14,21 @@ public class AppRepository
     // ── Device ────────────────────────────────────────────────────────────────
 
     public Task<MatDeviceMst?> FindDeviceAsync(decimal DeviceType, string mac, string ip)
-        => _db.Devices.FirstOrDefaultAsync(d =>
+        => _db.Devices.AsNoTracking().FirstOrDefaultAsync(d =>
             d. DeviceType ==  DeviceType &&
             d.MACAddr  == mac      &&
             d.IPAddr   == ip);
 
     public Task<MatDeviceMst?> FindDeviceByIdAsync(decimal deviceId)
-        => _db.Devices.FirstOrDefaultAsync(d => d.DeviceID == deviceId);
+        => _db.Devices.AsNoTracking().FirstOrDefaultAsync(d => d.DeviceID == deviceId);
 
     // ── CommTrn ───────────────────────────────────────────────────────────────
 
     public Task<int> CountPendingAsync()
-        => _db.CommTrns.CountAsync(t => t.TrnStat == 0);
+        => _db.CommTrns.AsNoTracking().CountAsync(t => t.TrnStat == 0);
 
     public Task<bool> HasDispatchedRowsAsync(string typeMid)
-        => _db.CommTrns.AnyAsync(t => t.TrnStat == 1 && t.TypeMID == typeMid);
+        => _db.CommTrns.AsNoTracking().AnyAsync(t => t.TrnStat == 1 && t.TypeMID == typeMid);
 
     public Task<List<MatCommTrn>> GetDispatchedRowsAsync(string typeMid)
         => _db.CommTrns
@@ -40,11 +40,15 @@ public class AppRepository
     public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
         string typeMid, int bunchSize)
     {
-        var rows = await _db.CommTrns
-            .Where(t => t.TrnStat == 0 )
-            .OrderBy(t => t.TrnID)
-            .Take(bunchSize)
-            .ToListAsync();
+    // AppRepository.cs — FetchAndMarkDispatchedAsync
+// Replace the .Where query with this:
+    var rows = await _db.CommTrns
+    .FromSqlRaw(@"
+        SELECT TOP ({0}) * FROM Mat_CommTrn WITH (UPDLOCK, READPAST)
+        WHERE TrnStat = 0 AND TypeMID = {1}
+        ORDER BY TrnID",
+        bunchSize, typeMid)
+     .ToListAsync();
 
         if (rows.Count == 0) return rows;
 
