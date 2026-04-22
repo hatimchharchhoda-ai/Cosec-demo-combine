@@ -119,7 +119,7 @@ public class DeviceSimulator
                 for (int i = 0; i < eventsThisRound; i++)
                 {
                     var msg = $"Heartbeat #{counter++}";
-                    await _api.SendEventAsync(msg);
+                    await _api.SendEventAsync(msg, counter - 1);
                 }
             }
             catch (Exception ex)

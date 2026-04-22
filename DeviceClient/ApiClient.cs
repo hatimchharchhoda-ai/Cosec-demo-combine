@@ -296,7 +296,7 @@ public class ApiClient
         }
     }
 
-    public async Task SendEventAsync(string message)
+    public async Task SendEventAsync(string message, int counter)
     {
         var ctx = $"{_label} EVENT";
 
@@ -311,7 +311,7 @@ public class ApiClient
             TypeMID    = _typeMid,
             Message    = message,
             T1         = DateTime.UtcNow,
-            EventSeqNo = 1
+            EventSeqNo = counter
         };
 
         var content = new StringContent(
