@@ -188,12 +188,16 @@ builder.Services.AddSwaggerGen(c =>
     }});
 });
 
+
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1"); c.RoutePrefix = string.Empty; });
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+
+
 
 Log.Information("MatPoll server started — TestingLog={Testing}",
     builder.Configuration.GetValue<bool>("TestingLog", false));

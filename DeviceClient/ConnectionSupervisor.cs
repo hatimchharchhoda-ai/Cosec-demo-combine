@@ -1,44 +1,61 @@
 public static class ConnectionSupervisor
 {
-    public static void Start(ApiClient api, DeviceConfig cfg)
+    // Back-off ladder in seconds: 5 → 10 → 20 → 30 → 60 (then stays at 60)
+    private static readonly int[] BackoffSeconds = { 5, 10, 20, 30, 60 };
+
+    public static void Start(ApiClient api, DeviceInfo device, DeviceConfig cfg)
     {
+        var label = $"[{device.MACAddr}] SUPERVISOR";
+        DeviceLogger.Info($"{label} | Starting connection supervisor");
+
         _ = Task.Run(async () =>
         {
-            bool attempting = false;
+            int consecutiveFails = 0;
 
             while (true)
             {
-                if (!DeviceState.IsConnected && !attempting)
+                try
                 {
-                    attempting = true;
-
-                    try
+                    if (!api.IsConnected)
                     {
-                        DeviceLogger.Error("RECONNECT | Login attempt");
+                        int backoff = BackoffSeconds[Math.Min(consecutiveFails, BackoffSeconds.Length - 1)];
 
-                        await api.Login(
-                            cfg.Device.DeviceType,
-                            cfg.Device.MacAddress,
-                            cfg.Device.IpAddress);
+                        DeviceLogger.Info($"{label} | Disconnected — reconnecting in {backoff}s " +
+                                          $"(ConsecutiveFails={consecutiveFails})");
 
-                        if (DeviceState.IsConnected)
+                        await Task.Delay(TimeSpan.FromSeconds(backoff));
+
+                        DeviceLogger.Info($"{label} | Attempting re-login...");
+                        await api.Login();
+
+                        if (api.IsConnected)
                         {
-                            DeviceLogger.Info("RECONNECT | Restore after login");
-                            await api.Restore();
+                            DeviceLogger.Info($"{label} | Reconnected successfully after {consecutiveFails} fail(s)");
+                            consecutiveFails = 0;
+                        }
+                        else
+                        {
+                            consecutiveFails++;
+                            DeviceLogger.Warn($"{label} | Re-login did not restore connection | ConsecutiveFails={consecutiveFails}");
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        DeviceLogger.Error($"RECONNECT FAILED | {ex}");
-                    }
-                    finally
-                    {
-                        attempting = false;
+                        consecutiveFails = 0;
+                        // Poll supervisor health check every 30s when connected
+                        await Task.Delay(TimeSpan.FromSeconds(30));
                     }
                 }
+                catch (Exception ex)
+                {
+                    consecutiveFails++;
+                    DeviceLogger.Error($"{label} | SUPERVISOR-EXCEPTION | {ex.GetType().Name}: {ex.Message} | ConsecutiveFails={consecutiveFails}");
 
-                await Task.Delay(5000);
+                    // Safety delay to prevent tight exception loop
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
             }
+            // ReSharper disable once FunctionNeverReturns
         });
     }
 }

@@ -89,3 +89,9 @@ public class DeviceEventDto
     public DateTime? T1 { get; set; }
     public decimal   EventSeqNo { get; set; } 
 }
+
+public class DeviceEventBulkRequest
+{
+    public List<DeviceEventDto> Events { get; set; } = new();
+    public DateTime?            T1     { get; set; }  // one T1 for whole batch
+}

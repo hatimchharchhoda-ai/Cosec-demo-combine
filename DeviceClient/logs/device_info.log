@@ -1,0 +1,62 @@
+﻿22-04-2026 05:30:46.193 | INFO  | [PROGRAM] Starting 1 device simulator(s) | Server=http://localhost:5000/api/
+22-04-2026 05:30:46.200 | INFO  | [PROGRAM] Launching simulator for MAC= IP= Type=2
+22-04-2026 05:30:46.209 | INFO  | [PROGRAM] All 1 device(s) started
+22-04-2026 05:30:46.299 | INFO  | [] RUN | Initial login starting
+22-04-2026 05:30:46.301 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:30:46.301 | INFO  | [] SUPERVISOR | Starting connection supervisor
+22-04-2026 05:30:46.301 | INFO  | [] RUN | Starting all loops
+22-04-2026 05:30:46.302 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 5s (ConsecutiveFails=0)
+22-04-2026 05:30:51.302 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:30:51.302 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:30:51.302 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 10s (ConsecutiveFails=1)
+22-04-2026 05:31:01.305 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:31:01.305 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:31:01.305 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 20s (ConsecutiveFails=2)
+22-04-2026 05:31:21.316 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:31:21.317 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:31:21.317 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 30s (ConsecutiveFails=3)
+22-04-2026 05:31:51.320 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:31:51.321 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:31:51.321 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 60s (ConsecutiveFails=4)
+22-04-2026 05:32:51.328 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:32:51.328 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:32:51.328 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 60s (ConsecutiveFails=5)
+22-04-2026 05:33:51.337 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:33:51.337 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:33:51.337 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 60s (ConsecutiveFails=6)
+22-04-2026 05:34:51.347 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:34:51.347 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:34:51.347 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 60s (ConsecutiveFails=7)
+22-04-2026 05:35:51.359 | INFO  | [] SUPERVISOR | Attempting re-login...
+22-04-2026 05:35:51.360 | INFO  | [] LOGIN | START | Attempt=1
+22-04-2026 05:35:51.360 | INFO  | [] SUPERVISOR | Disconnected — reconnecting in 60s (ConsecutiveFails=8)
+22-04-2026 05:36:03.691 | INFO  | [PROGRAM] Starting 1 device simulator(s) | Server=http://localhost:5000/api/
+22-04-2026 05:36:03.698 | INFO  | [PROGRAM] Launching simulator for MAC=00:1B:09:00:00:00 IP=192.168.0.100 Type=2
+22-04-2026 05:36:03.706 | INFO  | [PROGRAM] All 1 device(s) started
+22-04-2026 05:36:07.456 | INFO  | [00:1B:09:00:00:00] RUN | Initial login starting
+22-04-2026 05:36:07.457 | INFO  | [00:1B:09:00:00:00] LOGIN | START | Attempt=1
+22-04-2026 05:36:09.775 | INFO  | [00:1B:09:00:00:00] LOGIN | SUCCESS | DeviceID=100 TypeMID=210c0348e116
+22-04-2026 05:36:09.776 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Starting connection supervisor
+22-04-2026 05:36:09.776 | INFO  | [00:1B:09:00:00:00] RUN | Starting all loops
+22-04-2026 05:37:09.823 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (59s left) — refreshing
+22-04-2026 05:37:09.843 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | SUCCESS | NewExpiry=05:39:09
+22-04-2026 05:38:09.869 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (59s left) — refreshing
+22-04-2026 05:38:43.961 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (25s left) — refreshing
+22-04-2026 05:40:39.864 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Disconnected — reconnecting in 5s (ConsecutiveFails=0)
+22-04-2026 05:40:44.880 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Attempting re-login...
+22-04-2026 05:40:44.880 | INFO  | [00:1B:09:00:00:00] LOGIN | START | Attempt=1
+22-04-2026 05:40:45.402 | INFO  | [00:1B:09:00:00:00] LOGIN | SUCCESS | DeviceID=100 TypeMID=210c0348e116
+22-04-2026 05:40:45.402 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Reconnected successfully after 0 fail(s)
+22-04-2026 05:41:45.418 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (60s left) — refreshing
+22-04-2026 05:41:45.433 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | SUCCESS | NewExpiry=05:43:45
+22-04-2026 05:42:45.466 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (60s left) — refreshing
+22-04-2026 05:42:45.471 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | SUCCESS | NewExpiry=05:44:45
+22-04-2026 05:43:45.493 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (60s left) — refreshing
+22-04-2026 05:43:45.501 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | SUCCESS | NewExpiry=05:45:45
+22-04-2026 05:44:45.518 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (59s left) — refreshing
+22-04-2026 05:45:19.630 | INFO  | [00:1B:09:00:00:00] TOKEN-REFRESH | Token expiring soon (25s left) — refreshing
+22-04-2026 05:46:15.464 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Disconnected — reconnecting in 5s (ConsecutiveFails=0)
+22-04-2026 05:46:20.474 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Attempting re-login...
+22-04-2026 05:46:20.474 | INFO  | [00:1B:09:00:00:00] LOGIN | START | Attempt=1
+22-04-2026 05:46:21.070 | INFO  | [00:1B:09:00:00:00] LOGIN | SUCCESS | DeviceID=100 TypeMID=210c0348e116
+22-04-2026 05:46:21.070 | INFO  | [00:1B:09:00:00:00] SUPERVISOR | Reconnected successfully after 0 fail(s)

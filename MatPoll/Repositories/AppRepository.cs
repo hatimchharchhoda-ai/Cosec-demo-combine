@@ -48,7 +48,7 @@ public class AppRepository
         WHERE TrnStat = 0 AND TypeMID = {1}
         ORDER BY TrnID",
         bunchSize, typeMid)
-     .ToListAsync();
+    .ToListAsync();
 
         if (rows.Count == 0) return rows;
 
@@ -166,23 +166,23 @@ public class AppRepository
     }
 
     // NEW: Insert a new event row from device (e.g. heartbeat, error, etc.)
-public async Task InsertDeviceEvent(DeviceEventDto dto, decimal deviceId)
+// AppRepository.cs — new bulk insert method
+public async Task InsertDeviceEventsBulkAsync(
+    List<DeviceEventDto> dtos, decimal deviceId, decimal? deviceType)
 {
-    // Get device info to pull DeviceType
-    var device = await _db.Devices
-        .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
+    var now = DateTime.UtcNow;
 
-    // Insert into new dedicated event table
-    var eventEntity = new MatDeviceEvent
+    var entities = dtos.Select(dto => new MatDeviceEvent
     {
         DeviceID   = deviceId,
-        DeviceType = device?.DeviceType,
+        DeviceType = deviceType,
         Message    = dto.Message,
         EventSeqNo = dto.EventSeqNo,
-        Timestamp  = DateTime.UtcNow
-    };
+        Timestamp  = now
+    }).ToList();
 
-    _db.DeviceEvents.Add(eventEntity);
+    _db.DeviceEvents.AddRange(entities);   // single SaveChanges for the whole batch
     await _db.SaveChangesAsync();
 }
+
 }

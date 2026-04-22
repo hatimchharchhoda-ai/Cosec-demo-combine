@@ -3,19 +3,21 @@ using System.Text;
 
 public static class DeviceLogger
 {
-    private static Channel<string> _infoCh = null!;
+    private static Channel<string> _infoCh  = null!;
     private static Channel<string> _debugCh = null!;
     private static Channel<string> _errorCh = null!;
-    private static Channel<string> _walCh = null!;
-
-    private static string _infoFile = "";
-    private static string _debugFile = "";
-    private static string _errorFile = "";
-    private static string _walFile = "";
+    private static Channel<string> _warnCh  = null!;
 
     private static bool _enableInfo;
     private static bool _enableDebug;
     private static bool _enableError;
+    private static bool _enableWarn;
+
+    // Drop-tracking counters (thread-safe)
+    private static long _droppedInfo;
+    private static long _droppedDebug;
+    private static long _droppedError;
+    private static long _droppedWarn;
 
     private const int BATCH_SIZE = 20;
     private static readonly TimeSpan FLUSH_INTERVAL = TimeSpan.FromMilliseconds(150);
@@ -26,153 +28,197 @@ public static class DeviceLogger
         string errorFile,
         bool enableInfo,
         bool enableDebug,
-        bool enableError)
+        bool enableError,
+        bool enableWarn  = true,
+        string? warnFile = null)
     {
-        _infoFile = infoFile;
-        _debugFile = debugFile;
-        _errorFile = errorFile;
-        _walFile = Path.Combine(Path.GetDirectoryName(infoFile)!, "logger.wal");
-
-        _enableInfo = enableInfo;
+        _enableInfo  = enableInfo;
         _enableDebug = enableDebug;
         _enableError = enableError;
+        _enableWarn  = enableWarn;
 
-        Directory.CreateDirectory(Path.GetDirectoryName(infoFile)!);
+        EnsureDir(infoFile);
+        EnsureDir(debugFile);
+        EnsureDir(errorFile);
+
+        warnFile ??= Path.Combine(
+            Path.GetDirectoryName(errorFile) ?? "logs",
+            "warn.log");
+        EnsureDir(warnFile);
 
         var opt = new BoundedChannelOptions(200_000)
         {
-            FullMode = BoundedChannelFullMode.DropWrite,
+            FullMode     = BoundedChannelFullMode.DropWrite,
             SingleReader = true,
             SingleWriter = false
         };
 
-        _infoCh = Channel.CreateBounded<string>(opt);
+        _infoCh  = Channel.CreateBounded<string>(opt);
         _debugCh = Channel.CreateBounded<string>(opt);
         _errorCh = Channel.CreateBounded<string>(opt);
-        _walCh = Channel.CreateUnbounded<string>();
+        _warnCh  = Channel.CreateBounded<string>(opt);
 
-        // Start dedicated consumers
-        Task.Run(() => WriterLoop(_infoCh, _infoFile));
-        Task.Run(() => WriterLoop(_debugCh, _debugFile));
-        Task.Run(() => WriterLoop(_errorCh, _errorFile));
+        Task.Run(() => WriterLoop(_infoCh,  infoFile));
+        Task.Run(() => WriterLoop(_debugCh, debugFile));
+        Task.Run(() => WriterLoop(_errorCh, errorFile));
+        Task.Run(() => WriterLoop(_warnCh,  warnFile));
 
-        // WAL writer (never blocks callers)
-        Task.Run(WalLoop);
-
-        // Replay WAL if exists (crash recovery)
-        ReplayWal();
+        // Periodically log any drop stats to warn channel
+        Task.Run(DropStatLoop);
     }
+
+    // ── Public API ─────────────────────────────────────────────────────────────
 
     public static void Info(string msg)
     {
         if (!_enableInfo) return;
-        Write(_infoCh, "INFO", msg);
+        Write(_infoCh, "INFO ", msg, () => Interlocked.Increment(ref _droppedInfo));
     }
 
     public static void Debug(string msg)
     {
         if (!_enableDebug) return;
-        Write(_debugCh, "DEBUG", msg);
+        Write(_debugCh, "DEBUG", msg, () => Interlocked.Increment(ref _droppedDebug));
     }
 
     public static void Error(string msg)
     {
         if (!_enableError) return;
-        Write(_errorCh, "ERROR", msg);
+        Write(_errorCh, "ERROR", msg, () => Interlocked.Increment(ref _droppedError));
+
+        if (_enableWarn)
+            Write(_warnCh, "ERROR", $"[mirrored] {msg}", () => Interlocked.Increment(ref _droppedWarn));
     }
 
-    // private static void Enqueue(LogLevel level, string msg)
-    // {
-    //     var line = $"{DateTime.Now:dd-MM-yyyy HH:mm:ss.fff} | {level} | {msg}";
-    //     var item = new LogItem(level, line);
+    public static void Warn(string msg)
+    {
+        if (!_enableWarn) return;
+        Write(_warnCh, "WARN ", msg, () => Interlocked.Increment(ref _droppedWarn));
+    }
 
-    //     if (!_channel.Writer.TryWrite(item))
-    //     {
-    //         // Queue full → spill to WAL (disk)
-    //         File.AppendAllText(_walFile, line + Environment.NewLine);
-    //     }
-    // }
+    // Logs an unexpected/mismatched value with context. Emits WARN + optional ERROR.
+    public static void Mismatch(string context, string field, object? expected, object? actual, bool isError = false)
+    {
+        var msg = $"{context} | MISMATCH | Field={field} | Expected={expected ?? "null"} | Actual={actual ?? "null"}";
+        Warn(msg);
+        if (isError) Error(msg);
+    }
 
-    private static void Write(Channel<string> ch, string level, string msg)
+    // Logs a missing/null field that should have been present.
+    public static void Missing(string context, string field, string? hint = null)
+    {
+        var msg = $"{context} | MISSING | Field={field}" + (hint != null ? $" | Hint={hint}" : "");
+        Warn(msg);
+    }
+
+    // Logs an unexpected server response structure.
+    public static void UnexpectedResponse(string context, int statusCode, string body, string? reason = null)
+    {
+        var msg = $"{context} | UNEXPECTED-RESPONSE | Status={statusCode}" +
+                  (reason != null ? $" | Reason={reason}" : "") +
+                  $" | Body={Truncate(body, 500)}";
+        Error(msg);
+    }
+
+    // ── Internals ──────────────────────────────────────────────────────────────
+
+    private static void Write(Channel<string> ch, string level, string msg, Action onDrop)
     {
         var line = $"{DateTime.Now:dd-MM-yyyy HH:mm:ss.fff} | {level} | {msg}";
-
         if (!ch.Writer.TryWrite(line))
-        {
-            // spill to WAL channel (async, non-blocking)
-            _walCh.Writer.TryWrite(line);
-        }
+            onDrop();
     }
 
     private static async Task WriterLoop(Channel<string> ch, string file)
     {
-        using var fs = new FileStream(
-            file,
-            FileMode.Append,
-            FileAccess.Write,
-            FileShare.Read,
-            128 * 1024,
-            useAsync: true);
-
-        using var writer = new StreamWriter(fs, Encoding.UTF8);
-
-        var buffer = new List<string>(BATCH_SIZE);
-        var timer = new PeriodicTimer(FLUSH_INTERVAL);
-
-        while (await timer.WaitForNextTickAsync())
+        // Retry opening the file up to 5 times (handles locked/missing dir race)
+        FileStream? fs = null;
+        for (int attempt = 1; attempt <= 5; attempt++)
         {
-            while (buffer.Count < BATCH_SIZE && ch.Reader.TryRead(out var line))
-                buffer.Add(line);
+            try
+            {
+                fs = new FileStream(
+                    file,
+                    FileMode.Append,
+                    FileAccess.Write,
+                    FileShare.ReadWrite,
+                    128 * 1024,
+                    useAsync: true);
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"[DeviceLogger] Cannot open log file '{file}' (attempt {attempt}): {ex.Message}");
+                await Task.Delay(500);
+            }
+        }
 
-            if (buffer.Count == 0)
-                continue;
+        if (fs == null)
+        {
+            Console.Error.WriteLine($"[DeviceLogger] FATAL: giving up on log file '{file}'. Logs will be lost.");
+            return;
+        }
 
-            foreach (var line in buffer)
-                await writer.WriteLineAsync(line);
+        using (fs)
+        using (var writer = new StreamWriter(fs, Encoding.UTF8))
+        {
+            var buffer = new List<string>(BATCH_SIZE);
+            var timer  = new PeriodicTimer(FLUSH_INTERVAL);
 
-            await writer.FlushAsync();
-            buffer.Clear();
+            while (await timer.WaitForNextTickAsync())
+            {
+                while (buffer.Count < BATCH_SIZE && ch.Reader.TryRead(out var line))
+                    buffer.Add(line);
+
+                if (buffer.Count == 0) continue;
+
+                try
+                {
+                    foreach (var line in buffer)
+                        await writer.WriteLineAsync(line);
+
+                    await writer.FlushAsync();
+                }
+                catch (Exception ex)
+                {
+                    // Last resort: emit to stderr so the process isn't totally silent
+                    Console.Error.WriteLine($"[DeviceLogger] Write failed for '{file}': {ex.Message}");
+                }
+
+                buffer.Clear();
+            }
         }
     }
 
-    // Dedicated WAL disk writer (never from HTTP thread)
-    private static async Task WalLoop()
+    private static async Task DropStatLoop()
     {
-        using var fs = new FileStream(
-            _walFile,
-            FileMode.Append,
-            FileAccess.Write,
-            FileShare.Read,
-            64 * 1024,
-            useAsync: true);
-
-        using var writer = new StreamWriter(fs, Encoding.UTF8);
-
-        await foreach (var line in _walCh.Reader.ReadAllAsync())
+        while (true)
         {
-            await writer.WriteLineAsync(line);
-            await writer.FlushAsync();
+            await Task.Delay(TimeSpan.FromSeconds(60));
+
+            long di = Interlocked.Exchange(ref _droppedInfo,  0);
+            long dd = Interlocked.Exchange(ref _droppedDebug, 0);
+            long de = Interlocked.Exchange(ref _droppedError, 0);
+            long dw = Interlocked.Exchange(ref _droppedWarn,  0);
+
+            if (di + dd + de + dw > 0)
+            {
+                var msg = $"[DeviceLogger] DROPPED MESSAGES in last 60s | " +
+                          $"Info={di} Debug={dd} Error={de} Warn={dw}";
+                // Write directly to stderr as well so it's not also dropped
+                Console.Error.WriteLine(msg);
+                Write(_warnCh, "WARN ", msg, () => Interlocked.Increment(ref _droppedWarn));
+            }
         }
     }
 
-    // Crash safety — replay WAL
-    private static void ReplayWal()
+    private static void EnsureDir(string filePath)
     {
-        if (!File.Exists(_walFile)) return;
-
-        var lines = File.ReadAllLines(_walFile);
-        File.Delete(_walFile);
-
-        foreach (var line in lines)
-        {
-            if (line.Contains("| INFO |"))
-                _infoCh.Writer.TryWrite(line);
-            else if (line.Contains("| DEBUG |"))
-                _debugCh.Writer.TryWrite(line);
-            else if (line.Contains("| ERROR |"))
-                _errorCh.Writer.TryWrite(line);
-        }
+        var dir = Path.GetDirectoryName(filePath);
+        if (!string.IsNullOrEmpty(dir))
+            Directory.CreateDirectory(dir);
     }
 
-    private record LogItem(LogLevel Level, string Line);
+    private static string Truncate(string s, int max) =>
+        s.Length <= max ? s : s[..max] + $"…[+{s.Length - max} chars]";
 }

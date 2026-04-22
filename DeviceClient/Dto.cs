@@ -18,11 +18,12 @@ public class TrnRow
 
 public class DeviceConfig
 {
-    public required DeviceSection Device { get; set; }
-    public required TimingSection Timing { get; set; }
-    public required EventSection Event { get; set; }
-    public required ServerSection Server { get; set; }
+    public List<DeviceInfo> Devices  { get; set; } = new();  // ← add this
+    public required TimingSection  Timing  { get; set; }
+    public required EventSection   Event   { get; set; }
+    public required ServerSection  Server  { get; set; }
     public required LoggingSection Logging { get; set; }
+    // remove DeviceSection — replaced by Devices list
 }
 
 public class DeviceSection
@@ -60,4 +61,11 @@ public class LoggingSection
     public bool EnableInfo { get; set; }
     public bool EnableDebug { get; set; }
     public bool EnableError { get; set; }
+}
+
+public class DeviceInfo
+{
+    public int    DeviceType { get; set; }
+    public string MACAddr    { get; set; } = string.Empty;
+    public string IPAddr     { get; set; } = string.Empty;
 }

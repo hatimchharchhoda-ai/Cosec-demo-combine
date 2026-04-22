@@ -1,9 +1,11 @@
 {
-  "Device": {
+  "Devices": [
+    {
     "DeviceType": 2,
-    "MacAddress": "00:1b:09:00:00:00",
-    "IpAddress": "192.168.0.100"
-  },
+    "MACAddr": "00:1B:09:00:00:00",
+    "IPAddr": "192.168.0.100"
+    }
+  ],
   "Timing": {
     "PollIntervalSeconds": 8,
     "EventIntervalSeconds": 5,

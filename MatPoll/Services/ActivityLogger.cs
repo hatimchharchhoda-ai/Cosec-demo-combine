@@ -423,4 +423,46 @@ public void LogTiming(string tag, string typeMid, decimal deviceId,
             serverMs,
             fullMs);
     }
+ // ── BULK EVENT ────────────────────────────────────────────────────────────
+
+// ── BULK EVENT ────────────────────────────────────────────────────────────
+public void LogBulkEvent(
+    string typeMid, decimal deviceId, decimal? deviceType,
+    int count, DateTime reqTime, long serverMs,
+    DateTime? t1, DateTime t2, DateTime t3)
+{
+    double upstreamMs = t1.HasValue
+        ? Math.Round((t2 - t1.Value).TotalMilliseconds, 1) : -1;
+    double fullMs = t1.HasValue
+        ? Math.Round((t3 - t1.Value).TotalMilliseconds, 1) : -1;
+
+    var upLabel   = upstreamMs >= 0 ? $"{upstreamMs}ms" : "N/A";
+    var fullLabel = fullMs     >= 0 ? $"{fullMs}ms"     : "N/A";
+
+    _info.Information(
+        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "Count:{Count} ServerMs:{Server}ms UpstreamMs:{Up} FullMs:{Full} " +
+        "ReqTime:{ReqTime} T1:{T1} T2:{T2} T3:{T3}",
+        typeMid, deviceId, deviceType,
+        count, serverMs, upLabel, fullLabel,
+        reqTime.ToString("HH:mm:ss.fff"),
+        t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+        t2.ToString("HH:mm:ss.fff"),
+        t3.ToString("HH:mm:ss.fff"));
+
+    _debug.Information(
+        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "Count:{Count} ServerMs:{Server}ms UpstreamMs:{Up} FullMs:{Full} " +
+        "ReqTime:{ReqTime} T1:{T1} T2:{T2} T3:{T3}",
+        typeMid, deviceId, deviceType,
+        count, serverMs, upLabel, fullLabel,
+        reqTime.ToString("HH:mm:ss.fff"),
+        t1?.ToString("HH:mm:ss.fff") ?? "N/A",
+        t2.ToString("HH:mm:ss.fff"),
+        t3.ToString("HH:mm:ss.fff"));
+
+    TestingLog(
+        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Count:{Count} Server:{Server}ms Up:{Up} Full:{Full}",
+        typeMid, deviceId, count, serverMs, upLabel, fullLabel);
+}
 }
