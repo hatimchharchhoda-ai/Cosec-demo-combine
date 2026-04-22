@@ -1,0 +1,62 @@
+﻿22-04-2026 16:19:19.867 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41031 RetryCnt=1 — server is retrying
+22-04-2026 16:19:23.045 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41032 RetryCnt=1 — server is retrying
+22-04-2026 16:19:26.155 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41033 RetryCnt=1 — server is retrying
+22-04-2026 16:19:29.312 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41034 RetryCnt=1 — server is retrying
+22-04-2026 16:19:32.444 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41035 RetryCnt=1 — server is retrying
+22-04-2026 16:19:35.504 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41036 RetryCnt=1 — server is retrying
+22-04-2026 16:19:38.580 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41037 RetryCnt=1 — server is retrying
+22-04-2026 16:19:41.645 | WARN  | [00:1B:09:00:00:55] POLL | ROW-RETRY | TrnID=41038 RetryCnt=1 — server is retrying
+22-04-2026 16:19:47.051 | ERROR | [mirrored] [00:1B:09:00:00:53] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.051 | ERROR | [mirrored] [00:1B:09:00:00:59] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.051 | ERROR | [mirrored] [00:1B:09:00:00:53] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.051 | ERROR | [mirrored] [00:1B:09:00:00:59] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.095 | ERROR | [mirrored] [00:1B:09:00:00:45] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:47.095 | ERROR | [mirrored] [00:1B:09:00:00:45] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.095 | ERROR | [mirrored] [00:1B:09:00:00:48] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:47.095 | ERROR | [mirrored] [00:1B:09:00:00:48] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.142 | ERROR | [mirrored] [00:1B:09:00:00:51] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.142 | ERROR | [mirrored] [00:1B:09:00:00:51] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.314 | ERROR | [mirrored] [00:1B:09:00:00:54] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.314 | ERROR | [mirrored] [00:1B:09:00:00:54] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.329 | ERROR | [mirrored] [00:1B:09:00:00:48] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.329 | ERROR | [mirrored] [00:1B:09:00:00:48] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:47.360 | ERROR | [mirrored] [00:1B:09:00:00:45] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:47.360 | ERROR | [mirrored] [00:1B:09:00:00:45] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.208 | ERROR | [mirrored] [00:1B:09:00:00:60] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:48.209 | ERROR | [mirrored] [00:1B:09:00:00:60] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.381 | ERROR | [mirrored] [00:1B:09:00:00:53] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:48.381 | ERROR | [mirrored] [00:1B:09:00:00:53] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.600 | ERROR | [mirrored] [00:1B:09:00:00:59] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:48.600 | ERROR | [mirrored] [00:1B:09:00:00:59] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.724 | ERROR | [mirrored] [00:1B:09:00:00:55] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:48.724 | ERROR | [mirrored] [00:1B:09:00:00:55] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.755 | ERROR | [mirrored] [00:1B:09:00:00:57] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:48.755 | ERROR | [mirrored] [00:1B:09:00:00:57] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:48.786 | ERROR | [mirrored] [00:1B:09:00:00:47] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:48.786 | ERROR | [mirrored] [00:1B:09:00:00:47] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.022 | ERROR | [mirrored] [00:1B:09:00:00:50] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:49.022 | ERROR | [mirrored] [00:1B:09:00:00:50] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.053 | ERROR | [mirrored] [00:1B:09:00:00:58] EVENT | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll/events
+22-04-2026 16:19:49.053 | ERROR | [mirrored] [00:1B:09:00:00:58] EVENT | EXCEPTION | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.164 | ERROR | [mirrored] [00:1B:09:00:00:51] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.164 | ERROR | [mirrored] [00:1B:09:00:00:51] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.322 | ERROR | [mirrored] [00:1B:09:00:00:60] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.322 | ERROR | [mirrored] [00:1B:09:00:00:60] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.449 | ERROR | [mirrored] [00:1B:09:00:00:57] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.450 | ERROR | [mirrored] [00:1B:09:00:00:57] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.480 | ERROR | [mirrored] [00:1B:09:00:00:47] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.480 | ERROR | [mirrored] [00:1B:09:00:00:47] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.528 | ERROR | [mirrored] [00:1B:09:00:00:49] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.528 | ERROR | [mirrored] [00:1B:09:00:00:49] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.560 | ERROR | [mirrored] [00:1B:09:00:00:52] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.560 | ERROR | [mirrored] [00:1B:09:00:00:52] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.560 | ERROR | [mirrored] [00:1B:09:00:00:54] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.560 | ERROR | [mirrored] [00:1B:09:00:00:54] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.576 | ERROR | [mirrored] [00:1B:09:00:00:46] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.576 | ERROR | [mirrored] [00:1B:09:00:00:46] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.780 | ERROR | [mirrored] [00:1B:09:00:00:50] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.780 | ERROR | [mirrored] [00:1B:09:00:00:50] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.827 | ERROR | [mirrored] [00:1B:09:00:00:56] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.827 | ERROR | [mirrored] [00:1B:09:00:00:56] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)
+22-04-2026 16:19:49.922 | ERROR | [mirrored] [00:1B:09:00:00:58] POLL | SEND-FAILED | No connection could be made because the target machine actively refused it. (localhost:5000) | URI=http://localhost:5000/api/poll
+22-04-2026 16:19:49.922 | ERROR | [mirrored] [00:1B:09:00:00:58] POLL | HTTP-ERROR | No connection could be made because the target machine actively refused it. (localhost:5000)

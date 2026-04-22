@@ -34,9 +34,11 @@
             cfg.Logging.InfoFile,
             cfg.Logging.DebugFile,
             cfg.Logging.ErrorFile,
+            cfg.Logging.WarnFile,
             cfg.Logging.EnableInfo,
             cfg.Logging.EnableDebug,
-            cfg.Logging.EnableError
+            cfg.Logging.EnableError,
+            cfg.Logging.EnableWarn
         );
 
         // ── Validate config ────────────────────────────────────────────────────

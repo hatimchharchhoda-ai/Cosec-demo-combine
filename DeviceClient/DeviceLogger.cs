@@ -26,11 +26,11 @@ public static class DeviceLogger
         string infoFile,
         string debugFile,
         string errorFile,
+        string warnFile,
         bool enableInfo,
         bool enableDebug,
         bool enableError,
-        bool enableWarn  = true,
-        string? warnFile = null)
+        bool enableWarn)
     {
         _enableInfo  = enableInfo;
         _enableDebug = enableDebug;
@@ -40,12 +40,8 @@ public static class DeviceLogger
         EnsureDir(infoFile);
         EnsureDir(debugFile);
         EnsureDir(errorFile);
-
-        warnFile ??= Path.Combine(
-            Path.GetDirectoryName(errorFile) ?? "logs",
-            "warn.log");
         EnsureDir(warnFile);
-
+        
         var opt = new BoundedChannelOptions(200_000)
         {
             FullMode     = BoundedChannelFullMode.DropWrite,

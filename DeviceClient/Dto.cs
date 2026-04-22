@@ -57,10 +57,12 @@ public class LoggingSection
     public required string InfoFile { get; set; }
     public required string DebugFile { get; set; }
     public required string ErrorFile { get; set; }
+    public required string WarnFile { get; set; }
 
     public bool EnableInfo { get; set; }
     public bool EnableDebug { get; set; }
     public bool EnableError { get; set; }
+    public bool EnableWarn { get; set; }
 }
 
 public class DeviceInfo
