@@ -1,20 +1,28 @@
 {
   "Devices": [
-    {
-    "DeviceType": 2,
-    "MACAddr": "00:1B:09:00:00:00",
-    "IPAddr": "192.168.0.100"
-    }
+    { "DeviceType": 46, "IsActive": true, "MACAddr": "00:1B:09:00:00:45", "IPAddr": "192.168.0.45" },
+    { "DeviceType": 47, "IsActive": true, "MACAddr": "00:1B:09:00:00:46", "IPAddr": "192.168.0.46" },
+    { "DeviceType": 48, "IsActive": true, "MACAddr": "00:1B:09:00:00:47", "IPAddr": "192.168.0.47" },
+    { "DeviceType": 49, "IsActive": true, "MACAddr": "00:1B:09:00:00:48", "IPAddr": "192.168.0.48" },
+    { "DeviceType": 50, "IsActive": true, "MACAddr": "00:1B:09:00:00:49", "IPAddr": "192.168.0.49" },
+    { "DeviceType": 51, "IsActive": true, "MACAddr": "00:1B:09:00:00:50", "IPAddr": "192.168.0.50" },
+    { "DeviceType": 52, "IsActive": true, "MACAddr": "00:1B:09:00:00:51", "IPAddr": "192.168.0.51" },
+    { "DeviceType": 53, "IsActive": true, "MACAddr": "00:1B:09:00:00:52", "IPAddr": "192.168.0.52" },
+    { "DeviceType": 54, "IsActive": true, "MACAddr": "00:1B:09:00:00:53", "IPAddr": "192.168.0.53" },
+    { "DeviceType": 55, "IsActive": true, "MACAddr": "00:1B:09:00:00:54", "IPAddr": "192.168.0.54" },
+    { "DeviceType": 56, "IsActive": true, "MACAddr": "00:1B:09:00:00:55", "IPAddr": "192.168.0.55" },
+    { "DeviceType": 57, "IsActive": true, "MACAddr": "00:1B:09:00:00:56", "IPAddr": "192.168.0.56" },
+    { "DeviceType": 58, "IsActive": true, "MACAddr": "00:1B:09:00:00:57", "IPAddr": "192.168.0.57" },
+    { "DeviceType": 59, "IsActive": true, "MACAddr": "00:1B:09:00:00:58", "IPAddr": "192.168.0.58" },
+    { "DeviceType": 60, "IsActive": true, "MACAddr": "00:1B:09:00:00:59", "IPAddr": "192.168.0.59" },
+    { "DeviceType": 61, "IsActive": true, "MACAddr": "00:1B:09:00:00:60", "IPAddr": "192.168.0.60" }
   ],
   "Timing": {
-    "PollIntervalSeconds": 8,
-    "EventIntervalSeconds": 5,
-    "BulkEverySeconds": 10
+    "PollIntervalSeconds": 3,
+    "EventIntervalSeconds": 5
   },
   "Event": {
-    "EventCount": 100,
-    "BulkCount": 1000,
-    "EnableBulkMode": true
+    "EventCount": 100
   },
   "Server": {
     "BaseUrl": "http://localhost:5000/api/"
@@ -23,9 +31,11 @@
     "InfoFile": "logs/device_info.log",
     "DebugFile": "logs/device_debug.log",
     "ErrorFile": "logs/device_error.log",
+    "WarnFile": "logs/device_warn.log",
 
     "EnableInfo": true,
     "EnableDebug": true,
-    "EnableError": true
+    "EnableError": true,
+    "EnableWarn": true
   }
 }

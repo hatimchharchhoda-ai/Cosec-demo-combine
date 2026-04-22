@@ -440,7 +440,7 @@ public void LogBulkEvent(
     var fullLabel = fullMs     >= 0 ? $"{fullMs}ms"     : "N/A";
 
     _info.Information(
-        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "[EVENT-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
         "Count:{Count} ServerMs:{Server}ms UpstreamMs:{Up} FullMs:{Full} " +
         "ReqTime:{ReqTime} T1:{T1} T2:{T2} T3:{T3}",
         typeMid, deviceId, deviceType,
@@ -451,7 +451,7 @@ public void LogBulkEvent(
         t3.ToString("HH:mm:ss.fff"));
 
     _debug.Information(
-        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
+        "[EVENT-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} " +
         "Count:{Count} ServerMs:{Server}ms UpstreamMs:{Up} FullMs:{Full} " +
         "ReqTime:{ReqTime} T1:{T1} T2:{T2} T3:{T3}",
         typeMid, deviceId, deviceType,
@@ -462,7 +462,7 @@ public void LogBulkEvent(
         t3.ToString("HH:mm:ss.fff"));
 
     TestingLog(
-        "[BULK-EVENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Count:{Count} Server:{Server}ms Up:{Up} Full:{Full}",
+        "[EVENT-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Count:{Count} Server:{Server}ms Up:{Up} Full:{Full}",
         typeMid, deviceId, count, serverMs, upLabel, fullLabel);
 }
 }

@@ -215,78 +215,90 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
         }
     }
 
-    // for reciving events from client 
-   //[HttpPost("event")]
-// public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
-// {
-//     var t2       = DateTime.UtcNow;
-//     var sw       = Stopwatch.StartNew();
-//     var deviceId = TokenService.GetDeviceId(User);
-//     var typeMid  = TokenService.GetTypeMid(User);
-//     var deviceType = TokenService.GetDeviceType(User); 
-//     var deviceName = TokenService.GetDeviceName(User);
-//     if (string.IsNullOrEmpty(typeMid))
-//         return Unauthorized();
-
-//     await _repo.InsertDeviceEvent(dto, deviceId);
-
-//     sw.Stop();
-//     var t3 = DateTime.UtcNow;
-
-//  _actLog.LogTiming("EVENT", typeMid, deviceId, deviceType, dto.T1, t2, t3);
-
-//     return Ok(new
-//     {
-//         Success      = true,
-//         Message      = "Event stored.",
-//         ServerSentAt = DateTime.UtcNow
-//     });
-// }
-
-[HttpPost("events/bulk")]
-public async Task<IActionResult> ReceiveEventsBulk([FromBody] List<DeviceEventDto> dtos)
+    //for reciving events from client 
+[HttpPost("events")]
+public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
 {
-    var t2       = DateTime.UtcNow;           // server receive time
-    var reqTime  = DateTime.Now;
-    var sw       = Stopwatch.StartNew();
+    var t2      = DateTime.UtcNow;
+    var reqTime = DateTime.Now;
+    var sw      = Stopwatch.StartNew();
+
     var deviceId = TokenService.GetDeviceId(User);
     var typeMid  = TokenService.GetTypeMid(User);
 
-    if (string.IsNullOrEmpty(typeMid)) return Unauthorized();
-    if (dtos == null || dtos.Count == 0) return BadRequest(new { error = "Empty list." });
-    if (dtos.Count > 100) return BadRequest(new { error = "Max 100 events per bulk call." });
+    if (string.IsNullOrEmpty(typeMid))          return Unauthorized();
+    if (dto == null)                             return BadRequest(new { error = "Empty event." });
+    if (string.IsNullOrEmpty(dto.Message))       return BadRequest(new { error = "Message is required." });
 
     try
     {
         _actLog.LogTestingStep(
-            "[BULK-EVENT-START] TypeMID:{TypeMID} DeviceID:{DeviceID} Count:{Count}",
-            typeMid, deviceId, dtos.Count);
+            "[EVENT-START] TypeMID:{TypeMID} DeviceID:{DeviceID} SeqNo:{SeqNo}",
+            typeMid, deviceId, dto.EventSeqNo);
 
         var device = await _repo.FindDeviceByIdAsync(deviceId);
-        await _repo.InsertDeviceEventsBulkAsync(dtos, deviceId, device?.DeviceType);
+        await _repo.InsertDeviceEventAsync(dto, deviceId, device?.DeviceType);  // single insert
+sw.Stop();
+var t3 = DateTime.UtcNow;
+// Make sure this signature exists, not the old LogBulkEvent
+_actLog.LogBulkEvent(
+    typeMid, deviceId, device?.DeviceType,
+    count: 1,                    // ← single event = count 1
+    reqTime, sw.ElapsedMilliseconds,
+    dto.T1, t2, t3);
 
-        sw.Stop();
-        var t3 = DateTime.UtcNow;             // server done time
-
-        // T1 = earliest client send time from the batch
-        var t1 = dtos
-            .Where(d => d.T1.HasValue)
-            .Select(d => d.T1)
-            .OrderBy(d => d)
-            .FirstOrDefault();
-
-        _actLog.LogBulkEvent(
-            typeMid, deviceId, device?.DeviceType,
-            dtos.Count, reqTime,
-            sw.ElapsedMilliseconds,
-            t1, t2, t3);
-
-        return Ok(new { Success = true, Stored = dtos.Count, ServerSentAt = DateTime.UtcNow });
+return Ok(new { Success = true, ServerSentAt = DateTime.UtcNow });
     }
     catch (Exception ex)
     {
-        _actLog.LogException("BULK-EVENT", typeMid, deviceId, ex);
-        return StatusCode(500, new { error = "Bulk event failed. See error log." });
+        _actLog.LogException("EVENT", typeMid, deviceId, ex);
+        return StatusCode(500, new { error = "Event failed. See error log." });
     }
 }
+// [HttpPost("events/bulk")]
+// public async Task<IActionResult> ReceiveEventsBulk([FromBody] List<DeviceEventDto> dtos)
+// {
+//     var t2       = DateTime.UtcNow;           // server receive time
+//     var reqTime  = DateTime.Now;
+//     var sw       = Stopwatch.StartNew();
+//     var deviceId = TokenService.GetDeviceId(User);
+//     var typeMid  = TokenService.GetTypeMid(User);
+
+//     if (string.IsNullOrEmpty(typeMid)) return Unauthorized();
+//     if (dtos == null || dtos.Count == 0) return BadRequest(new { error = "Empty list." });
+//     if (dtos.Count > 100) return BadRequest(new { error = "Max 100 events per bulk call." });
+
+//     try
+//     {
+//         _actLog.LogTestingStep(
+//             "[BULK-EVENT-START] TypeMID:{TypeMID} DeviceID:{DeviceID} Count:{Count}",
+//             typeMid, deviceId, dtos.Count);
+
+//         var device = await _repo.FindDeviceByIdAsync(deviceId);
+//         await _repo.InsertDeviceEventsBulkAsync(dtos, deviceId, device?.DeviceType);
+
+//         sw.Stop();
+//         var t3 = DateTime.UtcNow;             // server done time
+
+//         // T1 = earliest client send time from the batch
+//         var t1 = dtos
+//             .Where(d => d.T1.HasValue)
+//             .Select(d => d.T1)
+//             .OrderBy(d => d)
+//             .FirstOrDefault();
+
+//         _actLog.LogBulkEvent(
+//             typeMid, deviceId, device?.DeviceType,
+//             dtos.Count, reqTime,
+//             sw.ElapsedMilliseconds,
+//             t1, t2, t3);
+
+//         return Ok(new { Success = true, Stored = dtos.Count, ServerSentAt = DateTime.UtcNow });
+//     }
+//     catch (Exception ex)
+//     {
+//         _actLog.LogException("BULK-EVENT", typeMid, deviceId, ex);
+//         return StatusCode(500, new { error = "Bulk event failed. See error log." });
+//     }
+// }
 }

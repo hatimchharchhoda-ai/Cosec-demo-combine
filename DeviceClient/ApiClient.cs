@@ -137,6 +137,8 @@ public class ApiClient
             _loginFailCount = 0;
 
             DeviceLogger.Info($"{ctx} | SUCCESS | DeviceID={_deviceId} TypeMID={_typeMid}");
+            
+            await Task.Run(Restore);
 
             _ = Task.Run(TokenRefreshLoop);
         }
@@ -294,109 +296,66 @@ public class ApiClient
         }
     }
 
-    public async Task SendBulkEventsAsync(List<string> messages)
+    public async Task SendEventAsync(string message)
     {
-        var ctx = $"{_label} BULK-EVENT";
+        var ctx = $"{_label} EVENT";
 
         if (!_isConnected)
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Not connected — {messages.Count} messages dropped");
+            DeviceLogger.Warn($"{ctx} | SKIPPED | Not connected");
             return;
         }
 
-        if (messages == null || messages.Count == 0)
+        var payload = new
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Empty message list");
+            TypeMID    = _typeMid,
+            Message    = message,
+            T1         = DateTime.UtcNow,
+            EventSeqNo = 1
+        };
+
+        var content = new StringContent(
+            JsonSerializer.Serialize(payload),
+            Encoding.UTF8,
+            "application/json");
+
+        HttpRequestMessage req;
+
+        try
+        {
+            req = await CreateAuthedRequest(HttpMethod.Post, "poll/events", content);
+        }
+        catch (InvalidOperationException ioe)
+        {
+            DeviceLogger.Error($"{ctx} | REQUEST-BUILD-FAILED | {ioe.Message}");
+            _isConnected = false;
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(_typeMid))
-            DeviceLogger.Warn($"{ctx} | TypeMID is null/empty — server may reject events");
-
-        const int batchSize = 20;
-
-        var batches = messages
-            .Select((msg, i) => new { msg, i })
-            .GroupBy(x => x.i / batchSize)
-            .Select(g => g.Select(x => x.msg).ToList())
-            .ToList();
-
-        DeviceLogger.Debug($"{ctx} | START | TotalMessages={messages.Count} Batches={batches.Count}");
-
-        int batchNum = 0;
-        foreach (var batch in batches)
+        try
         {
-            batchNum++;
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
 
-            // Warn on any blank messages in batch
-            for (int i = 0; i < batch.Count; i++)
+            if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
-                if (string.IsNullOrWhiteSpace(batch[i]))
-                    DeviceLogger.Warn($"{ctx} | Batch={batchNum} Index={i} has blank message content");
-            }
-
-            var payload = batch.Select((msg, i) => new
-            {
-                TypeMID    = _typeMid,
-                Message    = msg,
-                T1         = DateTime.UtcNow,
-                EventSeqNo = (decimal)i
-            }).ToList();
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8, "application/json");
-
-            HttpRequestMessage req;
-            try
-            {
-                req = await CreateAuthedRequest(HttpMethod.Post, "poll/events/bulk", content);
-            }
-            catch (InvalidOperationException ioe)
-            {
-                DeviceLogger.Error($"{ctx} | Batch={batchNum} | REQUEST-BUILD-FAILED | {ioe.Message} — aborting bulk send");
+                DeviceLogger.Warn($"{ctx} | UNAUTHORIZED — marking disconnected");
                 _isConnected = false;
                 return;
             }
 
-            try
+            if (!res.IsSuccessStatusCode)
             {
-                var (res, body) = await HttpLogger.SendAsync(_http, req, $"{ctx} Batch={batchNum}/{batches.Count}");
-
-                if (res.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    DeviceLogger.Warn($"{ctx} | Batch={batchNum} | UNAUTHORIZED — marking disconnected, aborting remaining batches");
-                    _isConnected = false;
-                    return;
-                }
-
-                if (!res.IsSuccessStatusCode)
-                {
-                    DeviceLogger.UnexpectedResponse($"{ctx} Batch={batchNum}", (int)res.StatusCode, body, "Bulk event batch rejected");
-                    // Continue to next batch rather than aborting everything
-                }
-                else
-                {
-                    DeviceLogger.Debug($"{ctx} | Batch={batchNum} | OK | Count={batch.Count}");
-                }
+                DeviceLogger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Event rejected");
             }
-            catch (TaskCanceledException tcex)
+            else
             {
-                DeviceLogger.Error($"{ctx} | Batch={batchNum} | TIMEOUT | {tcex.Message} — skipping to next batch");
+                DeviceLogger.Debug($"{ctx} | OK | {message}");
             }
-            catch (HttpRequestException hre)
-            {
-                DeviceLogger.Error($"{ctx} | Batch={batchNum} | HTTP-ERROR | {hre.Message}");
-            }
-            catch (Exception ex)
-            {
-                DeviceLogger.Error($"{ctx} | Batch={batchNum} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
-            }
-
-            await Task.Delay(100);
         }
-
-        DeviceLogger.Debug($"{ctx} | DONE | TotalBatches={batches.Count}");
+        catch (Exception ex)
+        {
+            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.Message}");
+        }
     }
 
     public async Task Restore()

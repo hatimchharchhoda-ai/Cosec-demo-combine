@@ -42,14 +42,12 @@ public class AppRepository
     {
     // AppRepository.cs — FetchAndMarkDispatchedAsync
 // Replace the .Where query with this:
-    var rows = await _db.CommTrns
-    .FromSqlRaw(@"
-        SELECT TOP ({0}) * FROM Mat_CommTrn WITH (UPDLOCK, READPAST)
-        WHERE TrnStat = 0 AND TypeMID = {1}
-        ORDER BY TrnID",
-        bunchSize, typeMid)
-    .ToListAsync();
-
+   // If you GUARANTEE one worker per TypeMID:
+var rows = await _db.CommTrns
+    .Where(x => x.TrnStat == 0 && x.TypeMID == typeMid)
+    .OrderBy(x => x.TrnID)
+    .Take(bunchSize)
+    .ToListAsync(); 
         if (rows.Count == 0) return rows;
 
         var now = DateTime.UtcNow;
@@ -167,21 +165,21 @@ public class AppRepository
 
     // NEW: Insert a new event row from device (e.g. heartbeat, error, etc.)
 // AppRepository.cs — new bulk insert method
-public async Task InsertDeviceEventsBulkAsync(
-    List<DeviceEventDto> dtos, decimal deviceId, decimal? deviceType)
-{
-    var now = DateTime.UtcNow;
+// 
 
-    var entities = dtos.Select(dto => new MatDeviceEvent
+public async Task InsertDeviceEventAsync(
+    DeviceEventDto dto, decimal deviceId, decimal? deviceType)
+{
+    var entity = new MatDeviceEvent
     {
         DeviceID   = deviceId,
         DeviceType = deviceType,
         Message    = dto.Message,
         EventSeqNo = dto.EventSeqNo,
-        Timestamp  = now
-    }).ToList();
+        Timestamp  = DateTime.UtcNow
+    };
 
-    _db.DeviceEvents.AddRange(entities);   // single SaveChanges for the whole batch
+    _db.DeviceEvents.Add(entity);          // single Add instead of AddRange
     await _db.SaveChangesAsync();
 }
 

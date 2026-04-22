@@ -37,8 +37,7 @@ public class DeviceSimulator
         {
             await Task.WhenAll(
                 RunPollLoop(ct),
-                RunEventLoop(ct),
-                RunBulkLoop(ct)
+                RunEventLoop(ct)
             );
         }
         catch (OperationCanceledException)
@@ -91,8 +90,10 @@ public class DeviceSimulator
 
     private async Task RunEventLoop(CancellationToken ct)
     {
-        var ctx     = $"{_label} EVENT-LOOP";
+        var ctx = $"{_label} EVENT-LOOP";
         int counter = 1;
+        int intervalCounter = 0;
+
         DeviceLogger.Debug($"{ctx} | Started | Interval={_cfg.Timing.EventIntervalSeconds}s EventCount={_cfg.Event.EventCount}");
 
         while (!ct.IsCancellationRequested)
@@ -102,19 +103,24 @@ public class DeviceSimulator
                 if (!_api.IsConnected)
                 {
                     DeviceLogger.Debug($"{ctx} | Skipped — not connected");
-                    try { await Task.Delay(1000, ct); } catch (OperationCanceledException) { break; }
+                    await Task.Delay(1000, ct);
                     continue;
                 }
 
-                var messages = Enumerable
-                    .Range(counter, _cfg.Event.EventCount)
-                    .Select(i => $"Heartbeat #{i}")
-                    .ToList();
+                intervalCounter++;
 
-                DeviceLogger.Debug($"{ctx} | Sending {messages.Count} events starting at counter={counter}");
+                // Every 5th interval → 10x load
+                int eventsThisRound = (intervalCounter % 5 == 0)
+                    ? _cfg.Event.EventCount * 10
+                    : _cfg.Event.EventCount;
 
-                counter += _cfg.Event.EventCount;
-                await _api.SendBulkEventsAsync(messages);
+                DeviceLogger.Debug($"{ctx} | Interval={intervalCounter} | Sending {eventsThisRound} events");
+
+                for (int i = 0; i < eventsThisRound; i++)
+                {
+                    var msg = $"Heartbeat #{counter++}";
+                    await _api.SendEventAsync(msg);
+                }
             }
             catch (Exception ex)
             {
@@ -129,56 +135,5 @@ public class DeviceSimulator
         }
 
         DeviceLogger.Debug($"{ctx} | Stopped | LastCounter={counter}");
-    }
-
-    private async Task RunBulkLoop(CancellationToken ct)
-    {
-        var ctx = $"{_label} BULK-LOOP";
-
-        if (!_cfg.Event.EnableBulkMode)
-        {
-            DeviceLogger.Debug($"{ctx} | Disabled in config — exiting");
-            return;
-        }
-
-        DeviceLogger.Debug($"{ctx} | Started | Every={_cfg.Timing.BulkEverySeconds}s BulkCount={_cfg.Event.BulkCount}");
-
-        while (!ct.IsCancellationRequested)
-        {
-            try
-            {
-                await Task.Delay(_cfg.Timing.BulkEverySeconds * 1000, ct);
-            }
-            catch (OperationCanceledException) { break; }
-
-            try
-            {
-                if (!_api.IsConnected)
-                {
-                    DeviceLogger.Debug($"{ctx} | Skipped — not connected");
-                    continue;
-                }
-
-                if (_cfg.Event.BulkCount <= 0)
-                {
-                    DeviceLogger.Warn($"{ctx} | BulkCount={_cfg.Event.BulkCount} is invalid — skipping");
-                    continue;
-                }
-
-                var messages = Enumerable
-                    .Range(1, _cfg.Event.BulkCount)
-                    .Select(i => $"Bulk Event {i}")
-                    .ToList();
-
-                DeviceLogger.Debug($"{ctx} | Sending {messages.Count} bulk events");
-                await _api.SendBulkEventsAsync(messages);
-            }
-            catch (Exception ex)
-            {
-                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
-            }
-        }
-
-        DeviceLogger.Debug($"{ctx} | Stopped");
     }
 }
