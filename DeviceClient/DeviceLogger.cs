@@ -19,7 +19,7 @@ public static class DeviceLogger
     private static long _droppedError;
     private static long _droppedWarn;
 
-    private const int BATCH_SIZE = 20;
+    private const int BATCH_SIZE = 500;
     private static readonly TimeSpan FLUSH_INTERVAL = TimeSpan.FromMilliseconds(150);
 
     public static void Configure(
@@ -41,7 +41,7 @@ public static class DeviceLogger
         EnsureDir(debugFile);
         EnsureDir(errorFile);
         EnsureDir(warnFile);
-        
+
         var opt = new BoundedChannelOptions(200_000)
         {
             FullMode     = BoundedChannelFullMode.DropWrite,
