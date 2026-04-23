@@ -229,21 +229,6 @@ public class ApiClient
             if (poll.TypeMID != null && _typeMid != null && poll.TypeMID != _typeMid)
                 DeviceLogger.Mismatch(ctx, "TypeMID", _typeMid, poll.TypeMID, isError: true);
 
-            if (poll.NeedAckFirst)
-            {
-                DeviceLogger.Info($"{ctx} | NEED-ACK-FIRST | PendingIds={_lastIds.Count}");
-                if (_lastIds.Count > 0)
-                {
-                    await Ack(_lastIds);
-                    _lastIds.Clear();
-                }
-                else
-                {
-                    DeviceLogger.Warn($"{ctx} | NEED-ACK-FIRST | Server says ack first but _lastIds is empty — possible state desync");
-                }
-                return;
-            }
-
             if (poll.HasData)
             {
                 if (poll.Rows == null || poll.Rows.Count == 0)
@@ -280,6 +265,21 @@ public class ApiClient
             else
             {
                 DeviceLogger.Debug($"{ctx} | NO-DATA | TotalPending={poll.TotalPending}");
+            }
+            
+            if (poll.NeedAckFirst)
+            {
+                DeviceLogger.Info($"{ctx} | NEED-ACK-FIRST | PendingIds={_lastIds.Count}");
+                if (_lastIds.Count > 0)
+                {
+                    await Ack(_lastIds);
+                    _lastIds.Clear();
+                }
+                else
+                {
+                    DeviceLogger.Warn($"{ctx} | NEED-ACK-FIRST | Server says ack first but _lastIds is empty — possible state desync");
+                }
+                return;
             }
         }
         catch (TaskCanceledException tcex)
@@ -334,7 +334,9 @@ public class ApiClient
 
         try
         {
+            var start = DateTime.UtcNow;
             var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+            var end = DateTime.UtcNow;
 
             if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
@@ -349,7 +351,7 @@ public class ApiClient
             }
             else
             {
-                DeviceLogger.Debug($"{ctx} | OK | {message}");
+                DeviceLogger.Debug($"{ctx} | OK | {message} | Latency={(end - start).TotalMilliseconds}ms");
             }
         }
         catch (Exception ex)

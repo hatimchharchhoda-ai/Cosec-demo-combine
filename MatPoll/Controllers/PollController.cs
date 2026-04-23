@@ -16,8 +16,6 @@ public class PollController : ControllerBase
     private readonly ActivityLogger _actLog;
     private readonly IConfiguration _config;
 
-
-
     public PollController(AppRepository repo, ActivityLogger actLog, IConfiguration config)
     {
         _repo   = repo;
@@ -116,68 +114,69 @@ public class PollController : ControllerBase
     }
 
     [HttpPost("ack")]
-public async Task<IActionResult> Ack([FromBody] AckRequest req)
-{
-    var t2       = DateTime.UtcNow;
-    var sw       = Stopwatch.StartNew();
-    var deviceId = TokenService.GetDeviceId(User);
-    var typeMid  = TokenService.GetTypeMid(User);
-    var deviceType = TokenService.GetDeviceType(User); 
-    var deviceName = TokenService.GetDeviceName(User);
-    if (string.IsNullOrEmpty(typeMid))
-        return Unauthorized();
-
-    if (req.TrnIDs == null || req.TrnIDs.Count == 0)
-        return BadRequest(new { error = "TrnIDs list is empty." });
-
-    try
+    public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
-        _actLog.LogTestingStep(
-            "[ACK-START] TypeMID:{TypeMID} DeviceID:{DeviceID} ClaimedIDs:[{IDs}]",
-            typeMid, deviceId, string.Join(",", req.TrnIDs));
+        var t2       = DateTime.UtcNow;
+        var sw       = Stopwatch.StartNew();
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
+        var deviceType = TokenService.GetDeviceType(User); 
+        var deviceName = TokenService.GetDeviceName(User);
+        if (string.IsNullOrEmpty(typeMid))
+            return Unauthorized();
 
-        var ackWarnSecs = _config.GetValue<int>("PollingSettings:AckTimeoutWarningSeconds", 30);
-        var result      = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+        if (req.TrnIDs == null || req.TrnIDs.Count == 0)
+            return BadRequest(new { error = "TrnIDs list is empty." });
 
-        // ── AckDelay from in-memory tracker ──────────────────────────────
-        // foreach (var id in req.TrnIDs)
-        // {
-        //     var delay = _tracker.GetDelaySeconds(id);
-        //     if (delay.HasValue)
-        //         result.AckDelays[id] = delay.Value;
-        // }
-
-        sw.Stop();
-        var t3      = DateTime.UtcNow;
-        long serverMs = sw.ElapsedMilliseconds;
-
-        // ── Timing calculations ───────────────────────────────────────────
-        double upstreamMs = req.T1.HasValue
-            ? Math.Round((t2 - req.T1.Value).TotalMilliseconds, 1)
-            : -1;
-
-        double fullRoundTripPrev = -1;
-        if (req.T4Prev.HasValue && req.T1.HasValue && upstreamMs >= 0)
-            fullRoundTripPrev = Math.Round(
-                (req.T1.Value - req.T4Prev.Value).TotalMilliseconds + upstreamMs, 1);
-
-        // ── Log everything ────────────────────────────────────────────────
-     _actLog.LogAck(typeMid, deviceId, deviceType, req.TrnIDs, result, t2, serverMs, upstreamMs, -1, fullRoundTripPrev, ackWarnSecs);
-
-        return Ok(new AckResponse
+        try
         {
-            Success      = true,
-            Message      = $"{result.UpdatedCount} rows acknowledged (TrnStat=2).",
-            UpdatedCount = result.UpdatedCount,
-            ServerSentAt = DateTime.UtcNow
-        });
+            _actLog.LogTestingStep(
+                "[ACK-START] TypeMID:{TypeMID} DeviceID:{DeviceID} ClaimedIDs:[{IDs}]",
+                typeMid, deviceId, string.Join(",", req.TrnIDs));
+
+            var ackWarnSecs = _config.GetValue<int>("PollingSettings:AckTimeoutWarningSeconds", 30);
+            var result      = await _repo.MarkAcknowledgedAsync(req.TrnIDs, typeMid);
+
+            // ── AckDelay from in-memory tracker ──────────────────────────────
+            // foreach (var id in req.TrnIDs)
+            // {
+            //     var delay = _tracker.GetDelaySeconds(id);
+            //     if (delay.HasValue)
+            //         result.AckDelays[id] = delay.Value;
+            // }
+
+            sw.Stop();
+            var t3      = DateTime.UtcNow;
+            long serverMs = sw.ElapsedMilliseconds;
+
+            // ── Timing calculations ───────────────────────────────────────────
+            double upstreamMs = req.T1.HasValue
+                ? Math.Round((t2 - req.T1.Value).TotalMilliseconds, 1)
+                : -1;
+
+            double fullRoundTripPrev = -1;
+            if (req.T4Prev.HasValue && req.T1.HasValue && upstreamMs >= 0)
+                fullRoundTripPrev = Math.Round(
+                    (req.T1.Value - req.T4Prev.Value).TotalMilliseconds + upstreamMs, 1);
+
+            // ── Log everything ────────────────────────────────────────────────
+        _actLog.LogAck(typeMid, deviceId, deviceType, req.TrnIDs, result, t2, serverMs, upstreamMs, -1, fullRoundTripPrev, ackWarnSecs);
+
+            return Ok(new AckResponse
+            {
+                Success      = true,
+                Message      = $"{result.UpdatedCount} rows acknowledged (TrnStat=2).",
+                UpdatedCount = result.UpdatedCount,
+                ServerSentAt = DateTime.UtcNow
+            });
+        }
+        catch (Exception ex)
+        {
+            _actLog.LogException("ACK", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "ACK failed. See error log." });
+        }
     }
-    catch (Exception ex)
-    {
-        _actLog.LogException("ACK", typeMid, deviceId, ex);
-        return StatusCode(500, new { error = "ACK failed. See error log." });
-    }
-}
+
     // ── POST /api/poll/restore ────────────────────────────────────────────────
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
@@ -216,45 +215,46 @@ public async Task<IActionResult> Ack([FromBody] AckRequest req)
     }
 
     //for reciving events from client 
-[HttpPost("events")]
-public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
-{
-    var t2      = DateTime.UtcNow;
-    var reqTime = DateTime.Now;
-    var sw      = Stopwatch.StartNew();
-
-    var deviceId = TokenService.GetDeviceId(User);
-    var typeMid  = TokenService.GetTypeMid(User);
-
-    if (string.IsNullOrEmpty(typeMid))          return Unauthorized();
-    if (dto == null)                             return BadRequest(new { error = "Empty event." });
-    if (string.IsNullOrEmpty(dto.Message))       return BadRequest(new { error = "Message is required." });
-
-    try
+    [HttpPost("events")]
+    public async Task<IActionResult> ReceiveEvent([FromBody] DeviceEventDto dto)
     {
-        _actLog.LogTestingStep(
-            "[EVENT-START] TypeMID:{TypeMID} DeviceID:{DeviceID} SeqNo:{SeqNo}",
-            typeMid, deviceId, dto.EventSeqNo);
+        var t2      = DateTime.UtcNow;
+        var reqTime = DateTime.Now;
+        var sw      = Stopwatch.StartNew();
 
-        var device = await _repo.FindDeviceByIdAsync(deviceId);
-        await _repo.InsertDeviceEventAsync(dto, deviceId, device?.DeviceType);  // single insert
-sw.Stop();
-var t3 = DateTime.UtcNow;
-// Make sure this signature exists, not the old LogBulkEvent
-_actLog.LogBulkEvent(
-    typeMid, deviceId, device?.DeviceType,
-    count: 1,                    // ← single event = count 1
-    reqTime, sw.ElapsedMilliseconds,
-    dto.T1, t2, t3);
+        var deviceId = TokenService.GetDeviceId(User);
+        var typeMid  = TokenService.GetTypeMid(User);
 
-return Ok(new { Success = true, ServerSentAt = DateTime.UtcNow });
+        if (string.IsNullOrEmpty(typeMid))          return Unauthorized();
+        if (dto == null)                             return BadRequest(new { error = "Empty event." });
+        if (string.IsNullOrEmpty(dto.Message))       return BadRequest(new { error = "Message is required." });
+
+        try
+        {
+            _actLog.LogTestingStep(
+                "[EVENT-START] TypeMID:{TypeMID} DeviceID:{DeviceID} SeqNo:{SeqNo}",
+                typeMid, deviceId, dto.EventSeqNo);
+
+            var device = await _repo.FindDeviceByIdAsync(deviceId);
+            await _repo.InsertDeviceEventAsync(dto, deviceId, device?.DeviceType);  // single insert
+            sw.Stop();
+            var t3 = DateTime.UtcNow;
+            // Make sure this signature exists, not the old LogBulkEvent
+            _actLog.LogBulkEvent(
+                typeMid, deviceId, device?.DeviceType,
+                count: 1,                    // ← single event = count 1
+                reqTime, sw.ElapsedMilliseconds,
+                dto.T1, t2, t3);
+
+            return Ok(new { Success = true, ServerSentAt = DateTime.UtcNow });
+        }
+        catch (Exception ex)
+        {
+            _actLog.LogException("EVENT", typeMid, deviceId, ex);
+            return StatusCode(500, new { error = "Event failed. See error log." });
+        }
     }
-    catch (Exception ex)
-    {
-        _actLog.LogException("EVENT", typeMid, deviceId, ex);
-        return StatusCode(500, new { error = "Event failed. See error log." });
-    }
-}
+
 // [HttpPost("events/bulk")]
 // public async Task<IActionResult> ReceiveEventsBulk([FromBody] List<DeviceEventDto> dtos)
 // {

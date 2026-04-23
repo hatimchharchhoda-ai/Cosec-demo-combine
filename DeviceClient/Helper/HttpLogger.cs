@@ -83,7 +83,7 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | RESPONSE | Status={statusCode} | " +
-            $"RoundTrip={roundTripMs:F0}ms | Downstream={downstreamMs:F0}ms | " +
+            $"RoundTrip={roundTripMs}ms | Downstream={downstreamMs}ms | " +
             $"Body={Truncate(body, 1000)}");
 
         // ── Detect empty/unexpected bodies on success ──────────────────────────

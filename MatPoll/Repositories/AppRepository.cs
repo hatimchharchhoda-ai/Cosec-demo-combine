@@ -40,15 +40,12 @@ public class AppRepository
     public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
         string typeMid, int bunchSize)
     {
-    // AppRepository.cs — FetchAndMarkDispatchedAsync
-// Replace the .Where query with this:
-   // If you GUARANTEE one worker per TypeMID:
-var rows = await _db.CommTrns
-    .Where(x => x.TrnStat == 0 && x.TypeMID == typeMid)
-    .OrderBy(x => x.TrnID)
-    .Take(bunchSize)
-    .ToListAsync(); 
-        if (rows.Count == 0) return rows;
+        var rows = await _db.CommTrns
+            .Where(x => x.TrnStat == 0 && x.TypeMID == typeMid)
+            .OrderBy(x => x.TrnID)
+            .Take(bunchSize)
+            .ToListAsync(); 
+                if (rows.Count == 0) return rows;
 
         var now = DateTime.UtcNow;
         foreach (var row in rows)
