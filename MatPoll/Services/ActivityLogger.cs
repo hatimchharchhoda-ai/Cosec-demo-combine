@@ -64,49 +64,49 @@ public void LogLogin(string typeMid, decimal deviceId, string deviceName,
 // ── POLL DATA SENT ────────────────────────────────────────────────────────
 public void LogPollDataSent(
     string typeMid, decimal deviceId, string deviceName, decimal deviceType,
-    List<MatCommTrn> rows, int totalPending,
+    List<MatCommTrn> rows,
     DateTime reqTime, long durationMs)
 {
     var ids      = string.Join(",", rows.Select(r => r.TrnID));
     var rowCount = rows.Count;
 
     _info.Information(
-        "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} RowsSent:{Rows} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-        typeMid, deviceId, deviceType, rowCount, totalPending,
+        "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} RowsSent:{Rows}  ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType, rowCount, 
         reqTime.ToString("HH:mm:ss.fff"), durationMs);
 
     _debug.Information(
         "[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} Name:{Name} DeviceType:{DeviceType} " +
-        "RowsSent:{Rows} TotalPending:{Pending} TrnIDs:[{IDs}] ReqTime:{ReqTime} Duration:{Dur}ms",
+        "RowsSent:{Rows} TrnIDs:[{IDs}] ReqTime:{ReqTime} Duration:{Dur}ms",
         typeMid, deviceId, deviceName, deviceType,
-        rowCount, totalPending, ids,
+        rowCount,  ids,
         reqTime.ToString("HH:mm:ss.fff"), durationMs);
 
     foreach (var row in rows)
         _debug.Information(
-            "[POLL-ROW] TrnID:{TrnID} TypeMID:{TypeMID} DeviceType:{DeviceType} MsgStr:{MsgStr} RetryCnt:{Retry}",
+            "[POLL-ROW] TrnID:{TrnID} TypeMID:{TypeMID} DeviceType:{DeviceType} MsgStr:{MsgStr} ",
             row.TrnID, typeMid, deviceType, row.MsgStr, row.RetryCnt);
 
-    TestingLog("[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TrnIDs:[{IDs}] Pending:{Pending}",
-        typeMid, deviceId, deviceType, ids, totalPending);
+    TestingLog("[POLL-SENT] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TrnIDs:[{IDs}]",
+        typeMid, deviceId, deviceType, ids);
 }
 
 // ── POLL NO DATA ──────────────────────────────────────────────────────────
 public void LogPollNoData(string typeMid, decimal deviceId, decimal deviceType,
-    int totalPending, DateTime reqTime, long durationMs)
+     DateTime reqTime, long durationMs)
 {
     _info.Information(
-        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-        typeMid, deviceId, deviceType, totalPending,
+        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType,
         reqTime.ToString("HH:mm:ss.fff"), durationMs);
 
     _debug.Information(
-        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} TotalPending:{Pending} ReqTime:{ReqTime} Duration:{Dur}ms",
-        typeMid, deviceId, deviceType, totalPending,
+        "[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType}  ReqTime:{ReqTime} Duration:{Dur}ms",
+        typeMid, deviceId, deviceType,
         reqTime.ToString("HH:mm:ss.fff"), durationMs);
 
-    TestingLog("[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Pending:{Pending}",
-        typeMid, deviceId, deviceType, totalPending);
+    TestingLog("[POLL-EMPTY] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} ",
+        typeMid, deviceId, deviceType);
 }
 
 // ── POLL NEED ACK FIRST ───────────────────────────────────────────────────
@@ -146,7 +146,7 @@ public void LogAck(string typeMid, decimal deviceId, decimal deviceType,
 
     _info.Information(
         "[ACK] TypeMID:{TypeMID} DeviceID:{DeviceID} DeviceType:{DeviceType} Claimed:{Claimed} Updated:{Updated} " +
-        "ServerMs:{Server}ms UpstreamMs:{Up} AvgDelay:{Avg}ms MaxDelay:{Max}ms T2:{T2}",
+        "ServerMs:{Server}ms UpstreamMs:{Up}",
         typeMid, deviceId, deviceType,
         clientIds.Count, result.UpdatedCount,
         serverMs, upLabel, avgDelay, maxDelay,

@@ -21,7 +21,7 @@ public static class ConnectionSupervisor
                         int backoff = BackoffSeconds[Math.Min(consecutiveFails, BackoffSeconds.Length - 1)];
 
                         DeviceLogger.Info($"{label} | Disconnected — reconnecting in {backoff}s " +
-                                          $"(ConsecutiveFails={consecutiveFails})");
+                                        $"(ConsecutiveFails={consecutiveFails})");
 
                         await Task.Delay(TimeSpan.FromSeconds(backoff));
 
@@ -42,20 +42,17 @@ public static class ConnectionSupervisor
                     else
                     {
                         consecutiveFails = 0;
-                        // Poll supervisor health check every 30s when connected
-                        await Task.Delay(TimeSpan.FromSeconds(30));
+                        // Poll every 3s when connected so we react quickly to TokenRefreshLoop marking disconnected
+                        await Task.Delay(TimeSpan.FromSeconds(3));  // was 30s — the key fix
                     }
                 }
                 catch (Exception ex)
                 {
                     consecutiveFails++;
                     DeviceLogger.Error($"{label} | SUPERVISOR-EXCEPTION | {ex.GetType().Name}: {ex.Message} | ConsecutiveFails={consecutiveFails}");
-
-                    // Safety delay to prevent tight exception loop
                     await Task.Delay(TimeSpan.FromSeconds(5));
                 }
             }
-            // ReSharper disable once FunctionNeverReturns
         });
     }
 }

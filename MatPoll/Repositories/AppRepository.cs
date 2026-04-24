@@ -24,8 +24,8 @@ public class AppRepository
 
     // ── CommTrn ───────────────────────────────────────────────────────────────
 
-    public Task<int> CountPendingAsync()
-        => _db.CommTrns.AsNoTracking().CountAsync(t => t.TrnStat == 0);
+    public Task<int> CountPendingAsync(string typeMid)
+        => _db.CommTrns.AsNoTracking().CountAsync(t => t.TrnStat == 0 && t.TypeMID == typeMid);
 
     public Task<bool> HasDispatchedRowsAsync(string typeMid)
         => _db.CommTrns.AsNoTracking().AnyAsync(t => t.TrnStat == 1 && t.TypeMID == typeMid);
@@ -37,29 +37,44 @@ public class AppRepository
             .ToListAsync();
 
     // Fetch TrnStat=0 rows, flip to TrnStat=1, stamp TypeMID + DispatchedAt
-    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
-        string typeMid, int bunchSize)
+  public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
+    string typeMid, int bunchSize)
+{
+    // Step 1 — fetch rows
+    var rows = await _db.CommTrns
+        .Where(x => x.TrnStat == 0 && x.TypeMID == typeMid)
+        .OrderBy(x => x.TrnID)
+        .Take(bunchSize)
+        .ToListAsync();
+
+    if (rows.Count == 0) return rows;
+
+    // Step 2 — single batch UPDATE for all rows
+    var ids = rows.Select(r => r.TrnID).ToList();
+
+var now = DateTime.UtcNow;  // ← capture in C# BEFORE query
+
+await _db.Database.ExecuteSqlRawAsync(@"
+    UPDATE Mat_CommTrn
+    SET TrnStat      = 1,
+        RetryCnt     = ISNULL(RetryCnt, 0) + 1,
+        DispatchedAt = {0}
+    WHERE TrnID IN (" + string.Join(",", ids) + @")
+    AND TypeMID      = {1}",
+    now,      // {0} → C# passes DateTime value
+    typeMid); // {1} → parameterized, safe
+
+    // Step 3 — update local objects to match DB
+    foreach (var row in rows)
     {
-        var rows = await _db.CommTrns
-            .Where(x => x.TrnStat == 0 && x.TypeMID == typeMid)
-            .OrderBy(x => x.TrnID)
-            .Take(bunchSize)
-            .ToListAsync(); 
-                if (rows.Count == 0) return rows;
-
-        var now = DateTime.UtcNow;
-        foreach (var row in rows)
-        {
-            row.TrnStat      = 1;
-            row.TypeMID      = typeMid;
-            row.RetryCnt     = (row.RetryCnt ?? 0) + 1;
-            row.DispatchedAt = DateTime.UtcNow;
-               // stamp dispatch time for ACK delay calc
-        }
-
-        await _db.SaveChangesAsync();
-        return rows;
+        row.TrnStat      = 1;
+        row.RetryCnt     = (row.RetryCnt ?? 0) + 1;
+        row.DispatchedAt = now;
     }
+
+    // await _db.SaveChangesAsync();
+    return rows;
+}
 
     // ACK: mark TrnStat=2, return rich AckResult (updated count, mismatches, delays)
     public async Task<AckResult> MarkAcknowledgedAsync(
@@ -134,7 +149,7 @@ public class AppRepository
             .Select(g =>
             {
                 var resetRows  = g.Where(r => (int)(r.RetryCnt ?? 0) < 5).ToList();
-                var failedRows = g.Where(r => (int)(r.RetryCnt ?? 0) >= 5).ToList();
+                var failedRows = g.Where(r => (int)(r.RetryCnt ?? 0) >= 50).ToList();
 
                 foreach (var row in resetRows)
                 {

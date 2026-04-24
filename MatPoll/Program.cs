@@ -190,6 +190,16 @@ builder.Services.AddSwaggerGen(c =>
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.ExecuteSqlRawAsync("SELECT 1");
+    // forces EF to initialize + opens first connection
+    // happens at startup, not on first request
+}
+
+
 app.UseSwagger();
 app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1"); c.RoutePrefix = string.Empty; });
 app.UseAuthentication();

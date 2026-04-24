@@ -15,6 +15,7 @@ public class ApiClient
     private string?       _typeMid;
     private int?          _deviceId;
     private List<decimal> _lastIds = new();
+    private int _refreshFailCount = 0;
 
     // Retry / back-off state
     private int _loginFailCount = 0;
@@ -32,17 +33,20 @@ public class ApiClient
 
         var handler = new SocketsHttpHandler
         {
-            KeepAlivePingDelay             = TimeSpan.FromSeconds(15),
+            KeepAlivePingDelay             = TimeSpan.FromSeconds(10),  // more aggressive keep-alive
             KeepAlivePingTimeout           = TimeSpan.FromSeconds(5),
             EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime       = TimeSpan.FromMinutes(10),
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(2),
+            PooledConnectionLifetime       = TimeSpan.FromMinutes(5),   // avoid stale connections
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(1),   // recycle idle faster
+            ConnectTimeout                 = TimeSpan.FromSeconds(5),   // fail fast on connect
         };
 
         _http = new HttpClient(handler)
         {
-            BaseAddress = new Uri(baseUrl),
-            Timeout     = TimeSpan.FromSeconds(30)
+            BaseAddress    = new Uri(baseUrl),
+            Timeout        = TimeSpan.FromSeconds(15),  // was 30 — tighter timeout = faster failure detection
+            DefaultRequestVersion = new Version(2, 0),      // explicitly request HTTP/2
+            DefaultVersionPolicy  = HttpVersionPolicy.RequestVersionOrLower,
         };
 
         DeviceLogger.Debug($"{_label} INIT | BaseUrl={baseUrl} DeviceType={device.DeviceType} IP={device.IPAddr}");
@@ -138,8 +142,7 @@ public class ApiClient
 
             DeviceLogger.Info($"{ctx} | SUCCESS | DeviceID={_deviceId} TypeMID={_typeMid}");
             
-            await Task.Run(Restore);
-
+            _ = Task.Run(Restore);
             _ = Task.Run(TokenRefreshLoop);
         }
         catch (TaskCanceledException tcex)
@@ -150,9 +153,13 @@ public class ApiClient
         }
         catch (HttpRequestException hre)
         {
-            _loginFailCount++;
-            DeviceLogger.Error($"{ctx} | HTTP-ERROR | {hre.Message} | FailCount={_loginFailCount}");
-            _isConnected = false;
+            DeviceLogger.Error($"{ctx} | HTTP-ERROR | {hre.Message}");
+            if (hre.InnerException is System.Net.Sockets.SocketException ||
+                hre.Message.Contains("refused") || hre.Message.Contains("No connection"))
+            {
+                DeviceLogger.Warn($"{ctx} | SERVER-DOWN detected — marking disconnected");
+                _isConnected = false;
+            }
         }
         catch (Exception ex)
         {
@@ -349,14 +356,17 @@ public class ApiClient
             {
                 DeviceLogger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Event rejected");
             }
-            else
-            {
-                DeviceLogger.Debug($"{ctx} | OK | {message} | Latency={(end - start).TotalMilliseconds}ms");
-            }
         }
         catch (Exception ex)
         {
             DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.Message}");
+            if (ex is HttpRequestException hre &&
+                (hre.InnerException is System.Net.Sockets.SocketException ||
+                hre.Message.Contains("refused")))
+            {
+                DeviceLogger.Warn($"{ctx} | SERVER-DOWN detected in event — marking disconnected");
+                _isConnected = false;
+            }
         }
     }
 
@@ -436,6 +446,7 @@ public class ApiClient
         }
     }
 
+    // Replace the while loop structure in TokenRefreshLoop:
     private async Task TokenRefreshLoop()
     {
         var ctx = $"{_label} TOKEN-REFRESH";
@@ -444,6 +455,8 @@ public class ApiClient
         while (_isConnected)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
+
+            if (!_isConnected) break;  // ← check again after delay; supervisor may have disconnected us
 
             try
             {
@@ -454,10 +467,7 @@ public class ApiClient
                 }
 
                 DateTime expiry;
-                try
-                {
-                    expiry = JwtHelper.GetExpiry(_token);
-                }
+                try { expiry = JwtHelper.GetExpiry(_token); }
                 catch (Exception jex)
                 {
                     DeviceLogger.Error($"{ctx} | Failed to parse token expiry | {jex.Message}");
@@ -479,14 +489,14 @@ public class ApiClient
                     DeviceLogger.Info($"{ctx} | Token expiring soon ({secondsLeft:F0}s left) — refreshing");
 
                 var req = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
-                req.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", _token);
+                req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
                 var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    DeviceLogger.Error($"{ctx} | REFRESH FAILED | Status={(int)res.StatusCode} | Body={body}");
+                    _refreshFailCount++;
+                    DeviceLogger.Error($"{ctx} | REFRESH FAILED | Status={(int)res.StatusCode} | Body={body} | Fails={_refreshFailCount}");
                     if (res.StatusCode == HttpStatusCode.Unauthorized)
                     {
                         DeviceLogger.Warn($"{ctx} | 401 on refresh — marking disconnected");
@@ -496,10 +506,7 @@ public class ApiClient
                 }
 
                 JsonElement doc;
-                try
-                {
-                    doc = JsonDocument.Parse(body).RootElement;
-                }
+                try { doc = JsonDocument.Parse(body).RootElement; }
                 catch (JsonException jex)
                 {
                     DeviceLogger.Error($"{ctx} | PARSE-ERROR on refresh response | {jex.Message}");
@@ -521,22 +528,44 @@ public class ApiClient
                 if (newTypeMid != _typeMid)
                     DeviceLogger.Mismatch(ctx, "typeMID", _typeMid, newTypeMid, isError: true);
 
-                _token   = newToken;
-                _typeMid = newTypeMid;
+                _token        = newToken;
+                _typeMid      = newTypeMid;
+                _refreshFailCount = 0;  // ← reset on success
 
                 DeviceLogger.Info($"{ctx} | SUCCESS | NewExpiry={JwtHelper.GetExpiry(_token!):HH:mm:ss}");
             }
             catch (TaskCanceledException)
             {
-                DeviceLogger.Warn($"{ctx} | Refresh request timed out");
+                _refreshFailCount++;
+                DeviceLogger.Warn($"{ctx} | Refresh request timed out | Fails={_refreshFailCount}");
+                if (_refreshFailCount >= 2)
+                {
+                    DeviceLogger.Warn($"{ctx} | Marking disconnected after timeout");
+                    _isConnected = false;
+                }
+            }
+            catch (HttpRequestException hre) when (
+                hre.InnerException is System.Net.Sockets.SocketException ||
+                hre.Message.Contains("refused") ||
+                hre.Message.Contains("No connection"))
+            {
+                DeviceLogger.Error($"{ctx} | SERVER-DOWN | {hre.Message} — marking disconnected immediately");
+                _isConnected = false;  // ← supervisor takes over from here
+                _refreshFailCount = 0;
             }
             catch (Exception ex)
             {
-                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
+                _refreshFailCount++;
+                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | Fails={_refreshFailCount}");
+                if (_refreshFailCount >= 3)
+                {
+                    DeviceLogger.Warn($"{ctx} | Marking disconnected after repeated failures");
+                    _isConnected = false;
+                }
             }
         }
 
-        DeviceLogger.Debug($"{ctx} | Loop stopped (IsConnected=false)");
+        DeviceLogger.Debug($"{ctx} | Loop stopped (IsConnected=false) — supervisor will reconnect");
     }
 
     private Task<HttpRequestMessage> CreateAuthedRequest(

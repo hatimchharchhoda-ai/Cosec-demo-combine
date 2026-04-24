@@ -27,7 +27,7 @@ public static class HttpLogger
         }
 
         DeviceLogger.Debug(
-            $"{action} | REQUEST | {req.Method} {req.RequestUri} | Body={Truncate(reqBody, 1000)}");
+            $"{action} | REQUEST | Requested for url from server: {req.Method} {req.RequestUri} | Sending Content to server={Truncate(reqBody, 1000)}");
 
         // ── Send ──────────────────────────────────────────────────────────────
         var start = DateTime.UtcNow;
@@ -83,8 +83,8 @@ public static class HttpLogger
 
         DeviceLogger.Debug(
             $"{action} | RESPONSE | Status={statusCode} | " +
-            $"RoundTrip={roundTripMs}ms | Downstream={downstreamMs}ms | " +
-            $"Body={Truncate(body, 1000)}");
+            $"Total Time={roundTripMs}ms | " +
+            $"Content get from Server={Truncate(body, 1000)}");
 
         // ── Detect empty/unexpected bodies on success ──────────────────────────
         if (res.IsSuccessStatusCode && string.IsNullOrWhiteSpace(body))
