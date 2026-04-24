@@ -2,36 +2,38 @@ public class DeviceSimulator
 {
     private readonly DeviceConfig _cfg;
     private readonly ApiClient    _api;
+    private readonly DeviceLogger _logger;
     private readonly string       _label;
 
     public DeviceSimulator(DeviceInfo device, DeviceConfig cfg)
     {
-        _cfg   = cfg;
-        _api   = new ApiClient(cfg.Server.BaseUrl, device);
-        _label = $"[{device.MACAddr}]";
+        _cfg    = cfg;
+        _logger = new DeviceLogger(device, cfg.Logging);   // ← create here
+        _api    = new ApiClient(cfg.Server.BaseUrl, device, _logger);  // ← pass in
+        _label  = $"[{device.MACAddr}]";
 
-        // Validate config fields at construction time
-        if (cfg.Timing.PollIntervalSeconds  <= 0) DeviceLogger.Warn($"{_label} INIT | PollIntervalSeconds={cfg.Timing.PollIntervalSeconds} is invalid (<=0)");
-        if (cfg.Timing.EventIntervalSeconds <= 0) DeviceLogger.Warn($"{_label} INIT | EventIntervalSeconds={cfg.Timing.EventIntervalSeconds} is invalid (<=0)");
-        if (cfg.Event.EventCount            <= 0) DeviceLogger.Warn($"{_label} INIT | EventCount={cfg.Event.EventCount} is invalid (<=0)");
+        if (cfg.Timing.PollIntervalSeconds  <= 0) _logger.Warn($"{_label} INIT | PollIntervalSeconds={cfg.Timing.PollIntervalSeconds} is invalid (<=0)");
+        if (cfg.Timing.EventIntervalSeconds <= 0) _logger.Warn($"{_label} INIT | EventIntervalSeconds={cfg.Timing.EventIntervalSeconds} is invalid (<=0)");
+        if (cfg.Event.EventCount            <= 0) _logger.Warn($"{_label} INIT | EventCount={cfg.Event.EventCount} is invalid (<=0)");
     }
 
     public async Task RunAsync(CancellationToken ct)
     {
         var jitter = Random.Shared.Next(0, 8000);
-        DeviceLogger.Debug($"{_label} RUN | Jitter delay={jitter}ms before login");
+        _logger.Debug($"{_label} RUN | Jitter delay={jitter}ms before login");
         await Task.Delay(jitter, ct);
 
-        DeviceLogger.Info($"{_label} RUN | Initial login starting");
+        _logger.Info($"{_label} RUN | Initial login starting");
         await _api.Login();
 
         if (!_api.IsConnected)
-            DeviceLogger.Warn($"{_label} RUN | Initial login failed — supervisor will retry; loops starting anyway");
+            _logger.Warn($"{_label} RUN | Initial login failed — supervisor will retry; loops starting anyway");
 
         // Start supervisor regardless — it will reconnect as needed
-        ConnectionSupervisor.Start(_api, _cfg.Devices.FirstOrDefault(d => d.MACAddr == _label.Trim('[', ']')) ?? new DeviceInfo(), _cfg);
+        var device = _cfg.Devices.FirstOrDefault(d => d.MACAddr == _label.Trim('[', ']')) ?? new DeviceInfo();
+        ConnectionSupervisor.Start(_api, device, _cfg, _logger);
 
-        DeviceLogger.Info($"{_label} RUN | Starting all loops");
+        _logger.Info($"{_label} RUN | Starting all loops");
 
         try
         {
@@ -42,15 +44,15 @@ public class DeviceSimulator
         }
         catch (OperationCanceledException)
         {
-            DeviceLogger.Info($"{_label} RUN | Cancelled gracefully");
+            _logger.Info($"{_label} RUN | Cancelled gracefully");
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"{_label} RUN | UNHANDLED EXCEPTION | {ex.GetType().Name}: {ex.Message}");
+            _logger.Error($"{_label} RUN | UNHANDLED EXCEPTION | {ex.GetType().Name}: {ex.Message}");
             throw; // let Program.cs observe it
         }
 
-        DeviceLogger.Info($"{_label} RUN | All loops exited");
+        _logger.Info($"{_label} RUN | All loops exited");
     }
 
     // ── Loops ──────────────────────────────────────────────────────────────────
@@ -58,7 +60,7 @@ public class DeviceSimulator
     private async Task RunPollLoop(CancellationToken ct)
     {
         var ctx = $"{_label} POLL-LOOP";
-        DeviceLogger.Debug($"{ctx} | Started | Interval={_cfg.Timing.PollIntervalSeconds}s");
+        _logger.Debug($"{ctx} | Started | Interval={_cfg.Timing.PollIntervalSeconds}s");
 
         while (!ct.IsCancellationRequested)
         {
@@ -70,12 +72,12 @@ public class DeviceSimulator
                 }
                 else
                 {
-                    DeviceLogger.Debug($"{ctx} | Skipped — not connected");
+                    _logger.Debug($"{ctx} | Skipped — not connected");
                 }
             }
             catch (Exception ex)
             {
-                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
+                _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
             }
 
             try
@@ -85,7 +87,7 @@ public class DeviceSimulator
             catch (OperationCanceledException) { break; }
         }
 
-        DeviceLogger.Debug($"{ctx} | Stopped");
+        _logger.Debug($"{ctx} | Stopped");
     }
 
     private async Task RunEventLoop(CancellationToken ct)
@@ -94,7 +96,7 @@ public class DeviceSimulator
         int counter = 1;
         int intervalCounter = 0;
 
-        DeviceLogger.Debug($"{ctx} | Started | Interval={_cfg.Timing.EventIntervalSeconds}s EventCount={_cfg.Event.EventCount}");
+        _logger.Debug($"{ctx} | Started | Interval={_cfg.Timing.EventIntervalSeconds}s EventCount={_cfg.Event.EventCount}");
 
         while (!ct.IsCancellationRequested)
         {
@@ -102,7 +104,7 @@ public class DeviceSimulator
             {
                 if (!_api.IsConnected)
                 {
-                    DeviceLogger.Debug($"{ctx} | Skipped — not connected");
+                    _logger.Debug($"{ctx} | Skipped — not connected");
                     await Task.Delay(1000, ct);
                     continue;
                 }
@@ -114,7 +116,7 @@ public class DeviceSimulator
                     ? _cfg.Event.EventCount * 10
                     : _cfg.Event.EventCount;
 
-                DeviceLogger.Debug($"{ctx} | Interval={intervalCounter} | Sending {eventsThisRound} events");
+                _logger.Debug($"{ctx} | Interval={intervalCounter} | Sending {eventsThisRound} events");
 
                 for (int i = 0; i < eventsThisRound; i++)
                 {
@@ -124,7 +126,7 @@ public class DeviceSimulator
             }
             catch (Exception ex)
             {
-                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
+                _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
             }
 
             try
@@ -134,6 +136,6 @@ public class DeviceSimulator
             catch (OperationCanceledException) { break; }
         }
 
-        DeviceLogger.Debug($"{ctx} | Stopped | LastCounter={counter}");
+        _logger.Debug($"{ctx} | Stopped | LastCounter={counter}");
     }
 }

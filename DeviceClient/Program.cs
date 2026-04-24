@@ -6,18 +6,19 @@
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
-            DeviceLogger.Error($"[PROGRAM] UNHANDLED-EXCEPTION | IsTerminating={e.IsTerminating} | {ex?.GetType().Name}: {ex?.Message}");
+            // DeviceLogger.Error($"[PROGRAM] UNHANDLED-EXCEPTION | IsTerminating={e.IsTerminating} | {ex?.GetType().Name}: {ex?.Message}");
             Console.Error.WriteLine($"[FATAL] {ex}");
         };
 
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
-            DeviceLogger.Error($"[PROGRAM] UNOBSERVED-TASK-EXCEPTION | {e.Exception?.GetType().Name}: {e.Exception?.Message}");
+            // DeviceLogger.Error($"[PROGRAM] UNOBSERVED-TASK-EXCEPTION | {e.Exception?.GetType().Name}: {e.Exception?.Message}");
             e.SetObserved(); // prevent process crash
         };
 
         // ── Load config ────────────────────────────────────────────────────────
         DeviceConfig cfg;
+
         try
         {
             cfg = DeviceConfigLoader.Load();
@@ -29,29 +30,22 @@
             return;
         }
 
-        // ── Init logger ────────────────────────────────────────────────────────
-        DeviceLogger.Configure(
-            cfg.Logging.InfoFile,
-            cfg.Logging.DebugFile,
-            cfg.Logging.ErrorFile,
-            cfg.Logging.WarnFile,
-            cfg.Logging.EnableInfo,
-            cfg.Logging.EnableDebug,
-            cfg.Logging.EnableError,
-            cfg.Logging.EnableWarn
+        var bootstrapLogger = new DeviceLogger(
+            new DeviceInfo { MACAddr = "PROGRAM" },
+            cfg?.Logging ?? new LoggingSection()
         );
 
         // ── Validate config ────────────────────────────────────────────────────
         if (cfg.Devices == null || cfg.Devices.Count == 0)
         {
-            DeviceLogger.Error("[PROGRAM] No devices found in config — nothing to simulate. Exiting.");
+            bootstrapLogger.Error("[PROGRAM] No devices found in config — nothing to simulate. Exiting.");
             Console.Error.WriteLine("[FATAL] No devices configured.");
             Environment.Exit(1);
             return;
         }
 
         if (string.IsNullOrWhiteSpace(cfg.Server.BaseUrl))
-            DeviceLogger.Error("[PROGRAM] Server.BaseUrl is null/empty — all devices will fail to connect");
+            bootstrapLogger.Error("[PROGRAM] Server.BaseUrl is null/empty — all devices will fail to connect");
 
         // Warn on duplicate MACs
         var duplicateMacs = cfg.Devices
@@ -61,9 +55,9 @@
             .ToList();
 
         if (duplicateMacs.Any())
-            DeviceLogger.Warn($"[PROGRAM] Duplicate MAC addresses detected: {string.Join(", ", duplicateMacs)}");
+            bootstrapLogger.Warn($"[PROGRAM] Duplicate MAC addresses detected: {string.Join(", ", duplicateMacs)}");
 
-        DeviceLogger.Info($"[PROGRAM] Starting {cfg.Devices.Count} device simulator(s) | Server={cfg.Server.BaseUrl}");
+        bootstrapLogger.Info($"[PROGRAM] Starting {cfg.Devices.Count} device simulator(s) | Server={cfg.Server.BaseUrl}");
 
         // ── Cancellation ───────────────────────────────────────────────────────
         var cts = new CancellationTokenSource();
@@ -71,7 +65,7 @@
         Console.CancelKeyPress += (_, e) =>
         {
             e.Cancel = true;
-            DeviceLogger.Info("[PROGRAM] Ctrl+C received — initiating graceful shutdown...");
+            bootstrapLogger.Info("[PROGRAM] Ctrl+C received — initiating graceful shutdown...");
             cts.Cancel();
         };
 
@@ -80,7 +74,7 @@
         {
             if (!cts.IsCancellationRequested)
             {
-                DeviceLogger.Info("[PROGRAM] ProcessExit signal — initiating graceful shutdown...");
+                bootstrapLogger.Info("[PROGRAM] ProcessExit signal — initiating graceful shutdown...");
                 cts.Cancel();
             }
         };
@@ -89,12 +83,12 @@
         var tasks = cfg.Devices
             .Select(device =>
             {
-                DeviceLogger.Info($"[PROGRAM] Launching simulator for MAC={device.MACAddr} IP={device.IPAddr} Type={device.DeviceType}");
+                bootstrapLogger.Info($"[PROGRAM] Launching simulator for MAC={device.MACAddr} IP={device.IPAddr} Type={device.DeviceType}");
                 return new DeviceSimulator(device, cfg).RunAsync(cts.Token);
             })
             .ToList();
 
-        DeviceLogger.Info($"[PROGRAM] All {tasks.Count} device(s) started");
+        bootstrapLogger.Info($"[PROGRAM] All {tasks.Count} device(s) started");
 
         // ── Await all, collect individual failures ─────────────────────────────
         try
@@ -103,11 +97,11 @@
         }
         catch (OperationCanceledException)
         {
-            DeviceLogger.Info("[PROGRAM] Shutdown complete (cancelled)");
+            bootstrapLogger.Info("[PROGRAM] Shutdown complete (cancelled)");
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"[PROGRAM] One or more simulators exited with error | {ex.GetType().Name}: {ex.Message}");
+            bootstrapLogger.Error($"[PROGRAM] One or more simulators exited with error | {ex.GetType().Name}: {ex.Message}");
         }
         finally
         {
@@ -118,15 +112,15 @@
                 if (t.IsFaulted)
                 {
                     var mac = cfg.Devices[i].MACAddr;
-                    DeviceLogger.Error($"[PROGRAM] Device [{mac}] task FAULTED | {t.Exception?.InnerException?.GetType().Name}: {t.Exception?.InnerException?.Message}");
+                    bootstrapLogger.Error($"[PROGRAM] Device [{mac}] task FAULTED | {t.Exception?.InnerException?.GetType().Name}: {t.Exception?.InnerException?.Message}");
                 }
                 else if (t.IsCanceled)
                 {
-                    DeviceLogger.Info($"[PROGRAM] Device [{cfg.Devices[i].MACAddr}] task cancelled normally");
+                    bootstrapLogger.Info($"[PROGRAM] Device [{cfg.Devices[i].MACAddr}] task cancelled normally");
                 }
             }
 
-            DeviceLogger.Info("[PROGRAM] Exiting.");
+            bootstrapLogger.Info("[PROGRAM] Exiting.");
         }
     }
 }

@@ -3,10 +3,10 @@ public static class ConnectionSupervisor
     // Back-off ladder in seconds: 5 → 10 → 20 → 30 → 60 (then stays at 60)
     private static readonly int[] BackoffSeconds = { 5, 10, 20, 30, 60 };
 
-    public static void Start(ApiClient api, DeviceInfo device, DeviceConfig cfg)
+    public static void Start(ApiClient api, DeviceInfo device, DeviceConfig cfg, DeviceLogger logger)
     {
         var label = $"[{device.MACAddr}] SUPERVISOR";
-        DeviceLogger.Info($"{label} | Starting connection supervisor");
+        logger.Info($"{label} | Starting connection supervisor");
 
         _ = Task.Run(async () =>
         {
@@ -20,36 +20,36 @@ public static class ConnectionSupervisor
                     {
                         int backoff = BackoffSeconds[Math.Min(consecutiveFails, BackoffSeconds.Length - 1)];
 
-                        DeviceLogger.Info($"{label} | Disconnected — reconnecting in {backoff}s " +
-                                        $"(ConsecutiveFails={consecutiveFails})");
+                        logger.Info($"{label} | Disconnected — reconnecting in {backoff}s " +
+                                    $"(ConsecutiveFails={consecutiveFails})");
 
                         await Task.Delay(TimeSpan.FromSeconds(backoff));
 
-                        DeviceLogger.Info($"{label} | Attempting re-login...");
+                        logger.Info($"{label} | Attempting re-login...");
                         await api.Login();
 
                         if (api.IsConnected)
                         {
-                            DeviceLogger.Info($"{label} | Reconnected successfully after {consecutiveFails} fail(s)");
+                            logger.Info($"{label} | Reconnected successfully after {consecutiveFails} fail(s)");
                             consecutiveFails = 0;
                         }
                         else
                         {
                             consecutiveFails++;
-                            DeviceLogger.Warn($"{label} | Re-login did not restore connection | ConsecutiveFails={consecutiveFails}");
+                            logger.Warn($"{label} | Re-login did not restore connection | ConsecutiveFails={consecutiveFails}");
                         }
                     }
                     else
                     {
                         consecutiveFails = 0;
-                        // Poll every 3s when connected so we react quickly to TokenRefreshLoop marking disconnected
-                        await Task.Delay(TimeSpan.FromSeconds(3));  // was 30s — the key fix
+                        // Check every 3 s so we react quickly when TokenRefreshLoop marks disconnected
+                        await Task.Delay(TimeSpan.FromSeconds(3));
                     }
                 }
                 catch (Exception ex)
                 {
                     consecutiveFails++;
-                    DeviceLogger.Error($"{label} | SUPERVISOR-EXCEPTION | {ex.GetType().Name}: {ex.Message} | ConsecutiveFails={consecutiveFails}");
+                    logger.Error($"{label} | SUPERVISOR-EXCEPTION | {ex.GetType().Name}: {ex.Message} | ConsecutiveFails={consecutiveFails}");
                     await Task.Delay(TimeSpan.FromSeconds(5));
                 }
             }

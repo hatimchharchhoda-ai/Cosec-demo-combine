@@ -7,49 +7,49 @@ public class ApiClient
 {
     private readonly HttpClient  _http;
     private readonly DeviceInfo  _device;
+    private readonly DeviceLogger _logger;      // ← per-device, injected
     private readonly string      _label;
 
-    // Per-instance state — each device owns its own
+    // Per-instance state
     private bool          _isConnected = false;
     private string?       _token;
     private string?       _typeMid;
     private int?          _deviceId;
     private List<decimal> _lastIds = new();
-    private int _refreshFailCount = 0;
+    private int           _refreshFailCount = 0;
 
     // Retry / back-off state
     private int _loginFailCount = 0;
     private static readonly int[] LoginBackoffSeconds = { 5, 10, 20, 30, 60 };
 
-    public ApiClient(string baseUrl, DeviceInfo device)
+    public ApiClient(string baseUrl, DeviceInfo device, DeviceLogger logger)
     {
         _device = device;
+        _logger = logger;
         _label  = $"[{device.MACAddr}]";
 
         if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            DeviceLogger.Error($"{_label} INIT | BaseUrl is null or empty — HttpClient will not work correctly");
-        }
+            _logger.Error($"{_label} INIT | BaseUrl is null or empty — HttpClient will not work correctly");
 
         var handler = new SocketsHttpHandler
         {
-            KeepAlivePingDelay             = TimeSpan.FromSeconds(10),  // more aggressive keep-alive
+            KeepAlivePingDelay             = TimeSpan.FromSeconds(10),
             KeepAlivePingTimeout           = TimeSpan.FromSeconds(5),
             EnableMultipleHttp2Connections = true,
-            PooledConnectionLifetime       = TimeSpan.FromMinutes(5),   // avoid stale connections
-            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(1),   // recycle idle faster
-            ConnectTimeout                 = TimeSpan.FromSeconds(5),   // fail fast on connect
+            PooledConnectionLifetime       = TimeSpan.FromMinutes(5),
+            PooledConnectionIdleTimeout    = TimeSpan.FromMinutes(1),
+            ConnectTimeout                 = TimeSpan.FromSeconds(5),
         };
 
         _http = new HttpClient(handler)
         {
-            BaseAddress    = new Uri(baseUrl),
-            Timeout        = TimeSpan.FromSeconds(15),  // was 30 — tighter timeout = faster failure detection
-            DefaultRequestVersion = new Version(2, 0),      // explicitly request HTTP/2
+            BaseAddress           = new Uri(baseUrl),
+            Timeout               = TimeSpan.FromSeconds(15),
+            DefaultRequestVersion = new Version(2, 0),
             DefaultVersionPolicy  = HttpVersionPolicy.RequestVersionOrLower,
         };
 
-        DeviceLogger.Debug($"{_label} INIT | BaseUrl={baseUrl} DeviceType={device.DeviceType} IP={device.IPAddr}");
+        _logger.Debug($"{_label} INIT | BaseUrl={baseUrl} DeviceType={device.DeviceType} IP={device.IPAddr}");
     }
 
     // ── Public surface ─────────────────────────────────────────────────────────
@@ -59,17 +59,16 @@ public class ApiClient
     public async Task Login()
     {
         var ctx = $"{_label} LOGIN";
-        DeviceLogger.Info($"{ctx} | START | Attempt={_loginFailCount + 1}");
+        _logger.Info($"{ctx} | START | Attempt={_loginFailCount + 1}");
 
-        // Validate device fields before even hitting the network
         if (string.IsNullOrWhiteSpace(_device.MACAddr))
         {
-            DeviceLogger.Missing(ctx, "MACAddr", "Device config is missing MAC address — login aborted");
+            _logger.Missing(ctx, "MACAddr", "Device config is missing MAC address — login aborted");
             _isConnected = false;
             return;
         }
         if (string.IsNullOrWhiteSpace(_device.IPAddr))
-            DeviceLogger.Warn($"{ctx} | IPAddr is blank — proceeding but server may reject");
+            _logger.Warn($"{ctx} | IPAddr is blank — proceeding but server may reject");
 
         var payload = new
         {
@@ -81,57 +80,47 @@ public class ApiClient
 
         var req = new HttpRequestMessage(HttpMethod.Post, "auth/login")
         {
-            Content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8, "application/json")
+            Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
         };
 
         try
         {
-            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (!res.IsSuccessStatusCode)
             {
                 _loginFailCount++;
-                DeviceLogger.Error($"{ctx} | FAILED | Status={(int)res.StatusCode} | Body={body} | FailCount={_loginFailCount}");
+                _logger.Error($"{ctx} | FAILED | Status={(int)res.StatusCode} | Body={body} | FailCount={_loginFailCount}");
                 _isConnected = false;
                 return;
             }
 
-            // Parse and validate token payload
             JsonElement doc;
-            try
-            {
-                doc = JsonDocument.Parse(body).RootElement;
-            }
+            try { doc = JsonDocument.Parse(body).RootElement; }
             catch (JsonException jex)
             {
-                DeviceLogger.Error($"{ctx} | PARSE-ERROR | Could not parse login response as JSON | {jex.Message} | Body={body}");
+                _logger.Error($"{ctx} | PARSE-ERROR | {jex.Message} | Body={body}");
                 _isConnected = false;
                 return;
             }
 
             if (!doc.TryGetProperty("token", out var tokenEl) || string.IsNullOrWhiteSpace(tokenEl.GetString()))
             {
-                DeviceLogger.Missing(ctx, "token", "Login response missing 'token' field");
+                _logger.Missing(ctx, "token", "Login response missing 'token' field");
                 _isConnected = false;
                 return;
             }
 
-            if (!doc.TryGetProperty("typeMID", out var typeMidEl))
-                DeviceLogger.Missing(ctx, "typeMID", "Login response missing 'typeMID' — events may fail");
-
-            if (!doc.TryGetProperty("deviceId", out var deviceIdEl))
-                DeviceLogger.Missing(ctx, "deviceId", "Login response missing 'deviceId'");
+            if (!doc.TryGetProperty("typeMID",   out var typeMidEl))  _logger.Missing(ctx, "typeMID",  "Login response missing 'typeMID'");
+            if (!doc.TryGetProperty("deviceId",  out var deviceIdEl)) _logger.Missing(ctx, "deviceId", "Login response missing 'deviceId'");
 
             var newToken    = tokenEl.GetString();
-            var newTypeMid  = typeMidEl.ValueKind != JsonValueKind.Undefined ? typeMidEl.GetString() : null;
+            var newTypeMid  = typeMidEl.ValueKind  != JsonValueKind.Undefined ? typeMidEl.GetString()   : null;
             var newDeviceId = deviceIdEl.ValueKind != JsonValueKind.Undefined ? (int?)deviceIdEl.GetInt32() : null;
 
-            // Warn if values changed mid-session (indicates server-side state reset)
-            if (_token    != null && _token    != newToken)    DeviceLogger.Warn($"{ctx} | TOKEN CHANGED mid-session");
-            if (_typeMid  != null && _typeMid  != newTypeMid)  DeviceLogger.Mismatch(ctx, "typeMID",  _typeMid,  newTypeMid);
-            if (_deviceId != null && _deviceId != newDeviceId) DeviceLogger.Mismatch(ctx, "deviceId", _deviceId, newDeviceId, isError: true);
+            if (_token    != null && _token    != newToken)    _logger.Warn($"{ctx} | TOKEN CHANGED mid-session");
+            if (_typeMid  != null && _typeMid  != newTypeMid)  _logger.Mismatch(ctx, "typeMID",  _typeMid,  newTypeMid);
+            if (_deviceId != null && _deviceId != newDeviceId) _logger.Mismatch(ctx, "deviceId", _deviceId, newDeviceId, isError: true);
 
             _token    = newToken;
             _typeMid  = newTypeMid;
@@ -140,31 +129,31 @@ public class ApiClient
             _isConnected    = true;
             _loginFailCount = 0;
 
-            DeviceLogger.Info($"{ctx} | SUCCESS | DeviceID={_deviceId} TypeMID={_typeMid}");
-            
+            _logger.Info($"{ctx} | SUCCESS | DeviceID={_deviceId} TypeMID={_typeMid}");
+
             _ = Task.Run(Restore);
             _ = Task.Run(TokenRefreshLoop);
         }
         catch (TaskCanceledException tcex)
         {
             _loginFailCount++;
-            DeviceLogger.Error($"{ctx} | TIMEOUT | {tcex.Message} | FailCount={_loginFailCount}");
+            _logger.Error($"{ctx} | TIMEOUT | {tcex.Message} | FailCount={_loginFailCount}");
             _isConnected = false;
         }
         catch (HttpRequestException hre)
         {
-            DeviceLogger.Error($"{ctx} | HTTP-ERROR | {hre.Message}");
+            _logger.Error($"{ctx} | HTTP-ERROR | {hre.Message}");
             if (hre.InnerException is System.Net.Sockets.SocketException ||
                 hre.Message.Contains("refused") || hre.Message.Contains("No connection"))
             {
-                DeviceLogger.Warn($"{ctx} | SERVER-DOWN detected — marking disconnected");
+                _logger.Warn($"{ctx} | SERVER-DOWN detected — marking disconnected");
                 _isConnected = false;
             }
         }
         catch (Exception ex)
         {
             _loginFailCount++;
-            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | FailCount={_loginFailCount}");
+            _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | FailCount={_loginFailCount}");
             _isConnected = false;
         }
     }
@@ -175,42 +164,39 @@ public class ApiClient
 
         if (!_isConnected)
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Not connected");
+            _logger.Debug($"{ctx} | Skipped — not connected");
             return;
         }
 
         try
         {
             HttpRequestMessage req;
-            try
-            {
-                req = await CreateAuthedRequest(HttpMethod.Get, "poll");
-            }
+            try { req = await CreateAuthedRequest(HttpMethod.Get, "poll"); }
             catch (InvalidOperationException ioe)
             {
-                DeviceLogger.Error($"{ctx} | REQUEST-BUILD-FAILED | {ioe.Message} — marking disconnected");
+                _logger.Error($"{ctx} | REQUEST-BUILD-FAILED | {ioe.Message} — marking disconnected");
                 _isConnected = false;
                 return;
             }
 
-            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
-                DeviceLogger.Warn($"{ctx} | UNAUTHORIZED | Marking disconnected for reconnect");
+                _logger.Warn($"{ctx} | UNAUTHORIZED | Marking disconnected for reconnect");
                 _isConnected = false;
                 return;
             }
 
             if (!res.IsSuccessStatusCode)
             {
-                DeviceLogger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Non-success from poll endpoint");
+                _logger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Non-success from poll endpoint");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(body))
             {
-                DeviceLogger.Warn($"{ctx} | EMPTY-BODY | Server returned success with no body");
+                _logger.Warn($"{ctx} | EMPTY-BODY | Server returned success with no body");
                 return;
             }
 
@@ -222,61 +208,22 @@ public class ApiClient
             }
             catch (JsonException jex)
             {
-                DeviceLogger.Error($"{ctx} | PARSE-ERROR | {jex.Message} | Body={body}");
+                _logger.Error($"{ctx} | PARSE-ERROR | {jex.Message} | Body={body}");
                 return;
             }
 
             if (poll == null)
             {
-                DeviceLogger.Warn($"{ctx} | NULL-POLL | Deserialization returned null — Body={body}");
+                _logger.Warn($"{ctx} | NULL-POLL | Deserialization returned null — Body={body}");
                 return;
             }
 
-            // Validate poll fields
             if (poll.TypeMID != null && _typeMid != null && poll.TypeMID != _typeMid)
-                DeviceLogger.Mismatch(ctx, "TypeMID", _typeMid, poll.TypeMID, isError: true);
+                _logger.Mismatch(ctx, "TypeMID", _typeMid, poll.TypeMID, isError: true);
 
-            if (poll.HasData)
-            {
-                if (poll.Rows == null || poll.Rows.Count == 0)
-                {
-                    DeviceLogger.Warn($"{ctx} | HAS-DATA=true but Rows is empty or null — Body={body}");
-                    return;
-                }
-
-                // Validate each row
-                var ids = new List<decimal>();
-                foreach (var row in poll.Rows)
-                {
-                    if (row.TrnID == 0)
-                        DeviceLogger.Warn($"{ctx} | ROW-WARN | TrnID=0 (may be invalid) | MsgStr={row.MsgStr}");
-
-                    if (string.IsNullOrWhiteSpace(row.MsgStr))
-                        DeviceLogger.Warn($"{ctx} | ROW-WARN | TrnID={row.TrnID} has empty MsgStr");
-
-                    if (row.RetryCnt > 0)
-                        DeviceLogger.Warn($"{ctx} | ROW-RETRY | TrnID={row.TrnID} RetryCnt={row.RetryCnt} — server is retrying");
-
-                    if (row.TypeMID != null && _typeMid != null && row.TypeMID != _typeMid)
-                        DeviceLogger.Mismatch(ctx, $"Row.TypeMID [TrnID={row.TrnID}]", _typeMid, row.TypeMID);
-
-                    ids.Add(row.TrnID);
-                }
-
-                _lastIds = ids;
-                DeviceLogger.Info($"{ctx} | DATA | Count={ids.Count} TotalPending={poll.TotalPending} IDs={string.Join(",", ids)}");
-
-                await Ack(ids);
-                _lastIds.Clear();
-            }
-            else
-            {
-                DeviceLogger.Debug($"{ctx} | NO-DATA | TotalPending={poll.TotalPending}");
-            }
-            
             if (poll.NeedAckFirst)
             {
-                DeviceLogger.Info($"{ctx} | NEED-ACK-FIRST | PendingIds={_lastIds.Count}");
+                _logger.Info($"{ctx} | NEED-ACK-FIRST | PendingIds={_lastIds.Count}");
                 if (_lastIds.Count > 0)
                 {
                     await Ack(_lastIds);
@@ -284,23 +231,47 @@ public class ApiClient
                 }
                 else
                 {
-                    DeviceLogger.Warn($"{ctx} | NEED-ACK-FIRST | Server says ack first but _lastIds is empty — possible state desync");
+                    _logger.Warn($"{ctx} | NEED-ACK-FIRST | _lastIds is empty — possible state desync");
                 }
                 return;
             }
+
+            if (poll.HasData)
+            {
+                if (poll.Rows == null || poll.Rows.Count == 0)
+                {
+                    _logger.Warn($"{ctx} | HAS-DATA=true but Rows is empty or null — Body={body}");
+                    return;
+                }
+
+                var ids = new List<decimal>();
+                foreach (var row in poll.Rows)
+                {
+                    if (row.TrnID == 0)
+                        _logger.Warn($"{ctx} | ROW-WARN | TrnID=0 (may be invalid) | MsgStr={row.MsgStr}");
+                    if (string.IsNullOrWhiteSpace(row.MsgStr))
+                        _logger.Warn($"{ctx} | ROW-WARN | TrnID={row.TrnID} has empty MsgStr");
+                    if (row.RetryCnt > 0)
+                        _logger.Warn($"{ctx} | ROW-RETRY | TrnID={row.TrnID} RetryCnt={row.RetryCnt}");
+                    if (row.TypeMID != null && _typeMid != null && row.TypeMID != _typeMid)
+                        _logger.Mismatch(ctx, $"Row.TypeMID [TrnID={row.TrnID}]", _typeMid, row.TypeMID);
+                    ids.Add(row.TrnID);
+                }
+
+                _lastIds = ids;
+                _logger.Info($"{ctx} | DATA | Count={ids.Count} TotalPending={poll.TotalPending} IDs={string.Join(",", ids)}");
+
+                await Ack(ids);
+                _lastIds.Clear();
+            }
+            else
+            {
+                _logger.Debug($"{ctx} | NO-DATA | TotalPending={poll.TotalPending}");
+            }
         }
-        catch (TaskCanceledException tcex)
-        {
-            DeviceLogger.Error($"{ctx} | TIMEOUT | {tcex.Message}");
-        }
-        catch (HttpRequestException hre)
-        {
-            DeviceLogger.Error($"{ctx} | HTTP-ERROR | {hre.Message}");
-        }
-        catch (Exception ex)
-        {
-            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
-        }
+        catch (TaskCanceledException tcex) { _logger.Error($"{ctx} | TIMEOUT | {tcex.Message}"); }
+        catch (HttpRequestException hre)   { _logger.Error($"{ctx} | HTTP-ERROR | {hre.Message}"); }
+        catch (Exception ex)               { _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}"); }
     }
 
     public async Task SendEventAsync(string message, int counter)
@@ -309,7 +280,7 @@ public class ApiClient
 
         if (!_isConnected)
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Not connected");
+            _logger.Warn($"{ctx} | SKIPPED | Not connected");
             return;
         }
 
@@ -321,50 +292,38 @@ public class ApiClient
             EventSeqNo = counter
         };
 
-        var content = new StringContent(
-            JsonSerializer.Serialize(payload),
-            Encoding.UTF8,
-            "application/json");
+        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
         HttpRequestMessage req;
-
-        try
-        {
-            req = await CreateAuthedRequest(HttpMethod.Post, "poll/events", content);
-        }
+        try { req = await CreateAuthedRequest(HttpMethod.Post, "poll/events", content); }
         catch (InvalidOperationException ioe)
         {
-            DeviceLogger.Error($"{ctx} | REQUEST-BUILD-FAILED | {ioe.Message}");
+            _logger.Error($"{ctx} | REQUEST-BUILD-FAILED | {ioe.Message}");
             _isConnected = false;
             return;
         }
 
         try
         {
-            var start = DateTime.UtcNow;
-            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
-            var end = DateTime.UtcNow;
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
-                DeviceLogger.Warn($"{ctx} | UNAUTHORIZED — marking disconnected");
+                _logger.Warn($"{ctx} | UNAUTHORIZED — marking disconnected");
                 _isConnected = false;
                 return;
             }
 
             if (!res.IsSuccessStatusCode)
-            {
-                DeviceLogger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Event rejected");
-            }
+                _logger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Event rejected");
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.Message}");
+            _logger.Error($"{ctx} | EXCEPTION | {ex.Message}");
             if (ex is HttpRequestException hre &&
-                (hre.InnerException is System.Net.Sockets.SocketException ||
-                hre.Message.Contains("refused")))
+                (hre.InnerException is System.Net.Sockets.SocketException || hre.Message.Contains("refused")))
             {
-                DeviceLogger.Warn($"{ctx} | SERVER-DOWN detected in event — marking disconnected");
+                _logger.Warn($"{ctx} | SERVER-DOWN detected in event — marking disconnected");
                 _isConnected = false;
             }
         }
@@ -373,27 +332,27 @@ public class ApiClient
     public async Task Restore()
     {
         var ctx = $"{_label} RESTORE";
-        DeviceLogger.Info($"{ctx} | START");
+        _logger.Info($"{ctx} | START");
 
         if (!_isConnected)
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Not connected");
+            _logger.Warn($"{ctx} | SKIPPED | Not connected");
             return;
         }
 
         try
         {
             var req = await CreateAuthedRequest(HttpMethod.Post, "poll/restore");
-            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (!res.IsSuccessStatusCode)
-                DeviceLogger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Restore failed");
+                _logger.UnexpectedResponse(ctx, (int)res.StatusCode, body, "Restore failed");
             else
-                DeviceLogger.Info($"{ctx} | SUCCESS");
+                _logger.Info($"{ctx} | SUCCESS");
         }
         catch (Exception ex)
         {
-            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
+            _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message}");
         }
     }
 
@@ -402,67 +361,53 @@ public class ApiClient
     private async Task Ack(List<decimal> ids)
     {
         var ctx = $"{_label} ACK";
-        DeviceLogger.Debug($"{ctx} | START | IDs={string.Join(",", ids)}");
+        _logger.Debug($"{ctx} | START | IDs={string.Join(",", ids)}");
 
         if (ids == null || ids.Count == 0)
         {
-            DeviceLogger.Warn($"{ctx} | SKIPPED | Empty IDs list");
+            _logger.Warn($"{ctx} | SKIPPED | Empty IDs list");
             return;
         }
 
         try
         {
             var payload = new { TrnIDs = ids, T1 = DateTime.UtcNow };
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8, "application/json");
-
-            var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
-            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var req     = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
+            var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
-                DeviceLogger.Warn($"{ctx} | UNAUTHORIZED | Marking disconnected");
+                _logger.Warn($"{ctx} | UNAUTHORIZED | Marking disconnected");
                 _isConnected = false;
                 return;
             }
 
             if (res.IsSuccessStatusCode)
-                DeviceLogger.Info($"{ctx} | SUCCESS | IDs={string.Join(",", ids)}");
+                _logger.Info($"{ctx} | SUCCESS | IDs={string.Join(",", ids)}");
             else
-                DeviceLogger.Error($"{ctx} | FAILED | Status={(int)res.StatusCode} | IDs={string.Join(",", ids)} | Body={body}");
+                _logger.Error($"{ctx} | FAILED | Status={(int)res.StatusCode} | IDs={string.Join(",", ids)} | Body={body}");
         }
-        catch (TaskCanceledException tcex)
-        {
-            DeviceLogger.Error($"{ctx} | TIMEOUT | {tcex.Message} | IDs={string.Join(",", ids)}");
-        }
-        catch (HttpRequestException hre)
-        {
-            DeviceLogger.Error($"{ctx} | HTTP-ERROR | {hre.Message} | IDs={string.Join(",", ids)}");
-        }
-        catch (Exception ex)
-        {
-            DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | IDs={string.Join(",", ids)}");
-        }
+        catch (TaskCanceledException tcex) { _logger.Error($"{ctx} | TIMEOUT | {tcex.Message} | IDs={string.Join(",", ids)}"); }
+        catch (HttpRequestException hre)   { _logger.Error($"{ctx} | HTTP-ERROR | {hre.Message} | IDs={string.Join(",", ids)}"); }
+        catch (Exception ex)               { _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | IDs={string.Join(",", ids)}"); }
     }
 
-    // Replace the while loop structure in TokenRefreshLoop:
     private async Task TokenRefreshLoop()
     {
         var ctx = $"{_label} TOKEN-REFRESH";
-        DeviceLogger.Debug($"{ctx} | Loop started");
+        _logger.Debug($"{ctx} | Loop started");
 
         while (_isConnected)
         {
             await Task.Delay(TimeSpan.FromSeconds(30));
-
-            if (!_isConnected) break;  // ← check again after delay; supervisor may have disconnected us
+            if (!_isConnected) break;
 
             try
             {
                 if (string.IsNullOrEmpty(_token))
                 {
-                    DeviceLogger.Warn($"{ctx} | Token is null/empty — cannot refresh, skipping");
+                    _logger.Warn($"{ctx} | Token is null/empty — cannot refresh, skipping");
                     continue;
                 }
 
@@ -470,36 +415,36 @@ public class ApiClient
                 try { expiry = JwtHelper.GetExpiry(_token); }
                 catch (Exception jex)
                 {
-                    DeviceLogger.Error($"{ctx} | Failed to parse token expiry | {jex.Message}");
+                    _logger.Error($"{ctx} | Failed to parse token expiry | {jex.Message}");
                     continue;
                 }
 
                 var secondsLeft = (expiry - DateTime.UtcNow).TotalSeconds;
-                DeviceLogger.Debug($"{ctx} | TokenExpiresAt={expiry:HH:mm:ss} SecondsLeft={secondsLeft:F0}");
+                _logger.Debug($"{ctx} | TokenExpiresAt={expiry:HH:mm:ss} SecondsLeft={secondsLeft:F0}");
 
                 if (secondsLeft >= 60)
                 {
-                    DeviceLogger.Debug($"{ctx} | Token still valid — skip refresh");
+                    _logger.Debug($"{ctx} | Token still valid — skip refresh");
                     continue;
                 }
 
                 if (secondsLeft <= 0)
-                    DeviceLogger.Warn($"{ctx} | Token already EXPIRED ({Math.Abs(secondsLeft):F0}s ago) — refreshing urgently");
+                    _logger.Warn($"{ctx} | Token already EXPIRED ({Math.Abs(secondsLeft):F0}s ago) — refreshing urgently");
                 else
-                    DeviceLogger.Info($"{ctx} | Token expiring soon ({secondsLeft:F0}s left) — refreshing");
+                    _logger.Info($"{ctx} | Token expiring soon ({secondsLeft:F0}s left) — refreshing");
 
                 var req = new HttpRequestMessage(HttpMethod.Post, "auth/refresh");
                 req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
 
-                var (res, body) = await HttpLogger.SendAsync(_http, req, ctx);
+                var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
                 if (!res.IsSuccessStatusCode)
                 {
                     _refreshFailCount++;
-                    DeviceLogger.Error($"{ctx} | REFRESH FAILED | Status={(int)res.StatusCode} | Body={body} | Fails={_refreshFailCount}");
+                    _logger.Error($"{ctx} | REFRESH FAILED | Status={(int)res.StatusCode} | Body={body} | Fails={_refreshFailCount}");
                     if (res.StatusCode == HttpStatusCode.Unauthorized)
                     {
-                        DeviceLogger.Warn($"{ctx} | 401 on refresh — marking disconnected");
+                        _logger.Warn($"{ctx} | 401 on refresh — marking disconnected");
                         _isConnected = false;
                     }
                     continue;
@@ -509,38 +454,38 @@ public class ApiClient
                 try { doc = JsonDocument.Parse(body).RootElement; }
                 catch (JsonException jex)
                 {
-                    DeviceLogger.Error($"{ctx} | PARSE-ERROR on refresh response | {jex.Message}");
+                    _logger.Error($"{ctx} | PARSE-ERROR on refresh response | {jex.Message}");
                     continue;
                 }
 
                 if (!doc.TryGetProperty("token", out var newTokenEl) || string.IsNullOrWhiteSpace(newTokenEl.GetString()))
                 {
-                    DeviceLogger.Missing(ctx, "token", "Refresh response missing token");
+                    _logger.Missing(ctx, "token", "Refresh response missing token");
                     continue;
                 }
 
                 if (!doc.TryGetProperty("typeMID", out var newTypeMidEl))
-                    DeviceLogger.Warn($"{ctx} | Refresh response missing typeMID");
+                    _logger.Warn($"{ctx} | Refresh response missing typeMID");
 
                 var newToken   = newTokenEl.GetString();
                 var newTypeMid = newTypeMidEl.ValueKind != JsonValueKind.Undefined ? newTypeMidEl.GetString() : _typeMid;
 
                 if (newTypeMid != _typeMid)
-                    DeviceLogger.Mismatch(ctx, "typeMID", _typeMid, newTypeMid, isError: true);
+                    _logger.Mismatch(ctx, "typeMID", _typeMid, newTypeMid, isError: true);
 
-                _token        = newToken;
-                _typeMid      = newTypeMid;
-                _refreshFailCount = 0;  // ← reset on success
+                _token            = newToken;
+                _typeMid          = newTypeMid;
+                _refreshFailCount = 0;
 
-                DeviceLogger.Info($"{ctx} | SUCCESS | NewExpiry={JwtHelper.GetExpiry(_token!):HH:mm:ss}");
+                _logger.Info($"{ctx} | SUCCESS | NewExpiry={JwtHelper.GetExpiry(_token!):HH:mm:ss}");
             }
             catch (TaskCanceledException)
             {
                 _refreshFailCount++;
-                DeviceLogger.Warn($"{ctx} | Refresh request timed out | Fails={_refreshFailCount}");
+                _logger.Warn($"{ctx} | Refresh request timed out | Fails={_refreshFailCount}");
                 if (_refreshFailCount >= 2)
                 {
-                    DeviceLogger.Warn($"{ctx} | Marking disconnected after timeout");
+                    _logger.Warn($"{ctx} | Marking disconnected after timeout");
                     _isConnected = false;
                 }
             }
@@ -549,23 +494,23 @@ public class ApiClient
                 hre.Message.Contains("refused") ||
                 hre.Message.Contains("No connection"))
             {
-                DeviceLogger.Error($"{ctx} | SERVER-DOWN | {hre.Message} — marking disconnected immediately");
-                _isConnected = false;  // ← supervisor takes over from here
+                _logger.Error($"{ctx} | SERVER-DOWN | {hre.Message} — marking disconnected immediately");
+                _isConnected      = false;
                 _refreshFailCount = 0;
             }
             catch (Exception ex)
             {
                 _refreshFailCount++;
-                DeviceLogger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | Fails={_refreshFailCount}");
+                _logger.Error($"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | Fails={_refreshFailCount}");
                 if (_refreshFailCount >= 3)
                 {
-                    DeviceLogger.Warn($"{ctx} | Marking disconnected after repeated failures");
+                    _logger.Warn($"{ctx} | Marking disconnected after repeated failures");
                     _isConnected = false;
                 }
             }
         }
 
-        DeviceLogger.Debug($"{ctx} | Loop stopped (IsConnected=false) — supervisor will reconnect");
+        _logger.Debug($"{ctx} | Loop stopped (IsConnected=false) — supervisor will reconnect");
     }
 
     private Task<HttpRequestMessage> CreateAuthedRequest(
@@ -575,12 +520,8 @@ public class ApiClient
             throw new InvalidOperationException($"No auth token available for {_label} — call Login() first");
 
         var req = new HttpRequestMessage(method, url);
-        req.Headers.Authorization =
-            new AuthenticationHeaderValue("Bearer", _token);
-
-        if (content != null)
-            req.Content = content;
-
+        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+        if (content != null) req.Content = content;
         return Task.FromResult(req);
     }
 }

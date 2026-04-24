@@ -37,14 +37,11 @@ public class TimingSection
 {
     public int PollIntervalSeconds { get; set; }
     public int EventIntervalSeconds { get; set; }
-    public int BulkEverySeconds { get; set; }
 }
 
 public class EventSection
 {
     public int EventCount { get; set; }
-    public int BulkCount { get; set; }
-    public bool EnableBulkMode { get; set; }
 }
 
 public class ServerSection
@@ -54,10 +51,7 @@ public class ServerSection
 
 public class LoggingSection
 {
-    public required string InfoFile { get; set; }
-    public required string DebugFile { get; set; }
-    public required string ErrorFile { get; set; }
-    public required string WarnFile { get; set; }
+    public string LogBaseDir { get; set; } = "logs";
 
     public bool EnableInfo { get; set; }
     public bool EnableDebug { get; set; }

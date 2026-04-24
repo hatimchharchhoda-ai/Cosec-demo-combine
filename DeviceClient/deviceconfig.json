@@ -1,6 +1,7 @@
 {
   "Devices": [
-    { "DeviceType": 20, "IsActive": true, "MACAddr": "00:1B:09:22:11:23", "IPAddr": "192.168.100.2" }
+    // { "DeviceType": 3, "MACAddr": "00:1B:09:00:00:01", "IPAddr": "192.168.0.101" }
+    { "DeviceType": 2, "MACAddr": "00:1B:09:00:00:00", "IPAddr": "192.168.0.100" }
   ],
   "Timing": {
     "PollIntervalSeconds": 8,
@@ -10,7 +11,7 @@
     "EventCount": 5
   },
   "Server": {
-    "BaseUrl": "http://192.168.28.79:5000/api/"
+    "BaseUrl": "http://192.168.28.56:5000/api/"
   },
   "Logging": {
     "InfoFile": "logs/device_info.log",
