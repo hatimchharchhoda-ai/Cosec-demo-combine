@@ -1,19 +1,6 @@
 using System.Threading.Channels;
 using System.Text;
 
-/// <summary>
-/// Per-device logger. Each DeviceSimulator creates its own instance so that
-/// log files are never shared between devices and interleaving is impossible.
-///
-/// Log folder layout:
-///   logs/{SafeMAC}/info.log
-///   logs/{SafeMAC}/debug.log
-///   logs/{SafeMAC}/error.log
-///   logs/{SafeMAC}/warn.log
-///
-/// where {SafeMAC} is the MAC address with colons replaced by dashes,
-/// e.g.  00-1B-09-00-00-01
-/// </summary>
 public class DeviceLogger
 {
     // ── Channels ───────────────────────────────────────────────────────────────
@@ -44,10 +31,9 @@ public class DeviceLogger
 
     // ── Constructor ────────────────────────────────────────────────────────────
 
-    /// <summary>
     /// Creates a DeviceLogger whose files land in
-    ///   logs/{macAddr with ':' → '-'}/
-    /// </summary>
+    ///   logs/{macAddr with ':' → '-'}
+
     public DeviceLogger(DeviceInfo device, LoggingSection cfg)
     {
         _label = $"[{device.MACAddr}]";
@@ -119,7 +105,7 @@ public class DeviceLogger
         Write(_warnCh, "WARN ", msg, () => Interlocked.Increment(ref _droppedWarn));
     }
 
-    /// <summary>Logs an unexpected/mismatched value with context.</summary>
+    //Logs an unexpected/mismatched value with context.
     public void Mismatch(string context, string field, object? expected, object? actual, bool isError = false)
     {
         var msg = $"{context} | MISMATCH | Field={field} | Expected={expected ?? "null"} | Actual={actual ?? "null"}";
@@ -127,14 +113,14 @@ public class DeviceLogger
         if (isError) Error(msg);
     }
 
-    /// <summary>Logs a missing/null field that should have been present.</summary>
+    //Logs a missing/null field that should have been present.
     public void Missing(string context, string field, string? hint = null)
     {
         var msg = $"{context} | MISSING | Field={field}" + (hint != null ? $" | Hint={hint}" : "");
         Warn(msg);
     }
 
-    /// <summary>Logs an unexpected server response structure.</summary>
+    //Logs an unexpected server response structure.
     public void UnexpectedResponse(string context, int statusCode, string body, string? reason = null)
     {
         var msg = $"{context} | UNEXPECTED-RESPONSE | Status={statusCode}" +

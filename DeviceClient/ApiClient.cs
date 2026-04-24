@@ -7,7 +7,7 @@ public class ApiClient
 {
     private readonly HttpClient  _http;
     private readonly DeviceInfo  _device;
-    private readonly DeviceLogger _logger;      // ← per-device, injected
+    private readonly DeviceLogger _logger;      // per-device, injected
     private readonly string      _label;
 
     // Per-instance state

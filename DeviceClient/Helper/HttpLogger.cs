@@ -6,7 +6,7 @@ public static class HttpLogger
         HttpClient http,
         HttpRequestMessage req,
         string action,
-        DeviceLogger logger)           // ← per-device logger injected here
+        DeviceLogger logger)           // per-device logger injected here
     {
         // ── Read request body before sending (stream is single-use) ───────────
         string reqBody = "(no content)";

@@ -6,13 +6,11 @@
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             var ex = e.ExceptionObject as Exception;
-            // DeviceLogger.Error($"[PROGRAM] UNHANDLED-EXCEPTION | IsTerminating={e.IsTerminating} | {ex?.GetType().Name}: {ex?.Message}");
             Console.Error.WriteLine($"[FATAL] {ex}");
         };
 
         TaskScheduler.UnobservedTaskException += (_, e) =>
         {
-            // DeviceLogger.Error($"[PROGRAM] UNOBSERVED-TASK-EXCEPTION | {e.Exception?.GetType().Name}: {e.Exception?.Message}");
             e.SetObserved(); // prevent process crash
         };
 
