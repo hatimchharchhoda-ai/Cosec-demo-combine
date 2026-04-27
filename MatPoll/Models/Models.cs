@@ -65,8 +65,13 @@ public class MatCommTrn
 
     // Which device this row was dispatched to (MD5 of MAC+IP, first 12 chars)
     [StringLength(32)]
-    public string? TypeMID { get; set; }
+    // public string? TypeMID { get; set; }
 
+    [Column(TypeName = "numeric(5,0)")]
+    public decimal DeviceID { get; set; }
+
+      [Column(TypeName = "numeric(2,0)")]
+    public decimal? DeviceType { get; set; }
     // Exact UTC time this row was dispatched (TrnStat flipped 0→1)
     // Used to calculate ACK delay: AckReceivedAt - DispatchedAt
     public DateTime? DispatchedAt { get; set; }
@@ -116,7 +121,7 @@ public class AckResult
 
 public class StalledGroup
 {
-    public string  TypeMID    { get; set; } = string.Empty;
+    public decimal DeviceID { get; set; }
     public int     RowCount   { get; set; }
     public int     MaxRetry   { get; set; }
     public int     ResetCount { get; set; }

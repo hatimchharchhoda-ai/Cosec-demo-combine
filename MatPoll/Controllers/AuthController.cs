@@ -31,24 +31,25 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest req)
     {
+        var reqTime = DateTime.UtcNow;          
         var sw      = Stopwatch.StartNew();
-        var typeMid = TypeMidService.Generate(req.MACAddr, req.IPAddr);
+        // var typeMid = TypeMidService.Generate(req.MACAddr, req.IPAddr);
 
         try
         {
             _actLog.LogTestingStep(
-                "[LOGIN-START] DeviceType:{DeviceType} MAC:{MAC} IP:{IP} ",
-                req.DeviceType, req.MACAddr, req.IPAddr, typeMid);
+                "[LOGIN-START] {ReqTime}  DeviceType:{DeviceType}  MAC:{MAC}  IP:{IP}",
+                reqTime.ToString("HH:mm:ss.fff"), req.DeviceType, req.MACAddr, req.IPAddr);
 
             var device = await _repo.FindDeviceAsync(req.DeviceType, req.MACAddr, req.IPAddr);
 
             if (device == null)
             {
                 _actLog.LogLogin(
-                    typeMid, req.DeviceType, "?", 0,
+                    req.DeviceType, "?", 0,
                     false, "Device not found", sw.ElapsedMilliseconds,
-                    req.MACAddr, req.IPAddr);   
-
+                    req.MACAddr, req.IPAddr,
+                    reqTime);                   
                 return Unauthorized(new LoginResponse
                 {
                     Success      = false,
@@ -60,10 +61,10 @@ public class AuthController : ControllerBase
             if (device.IsActive != 1)
             {
                 _actLog.LogLogin(
-                    typeMid, req.DeviceType, device.DeviceName ?? "?",
-                    device.DeviceType ?? 0,
+                    req.DeviceType, device.DeviceName ?? "?", device.DeviceType ?? 0,
                     false, "Device inactive", sw.ElapsedMilliseconds,
-                    req.MACAddr, req.IPAddr);   // ← pass mac+ip
+                    req.MACAddr, req.IPAddr,
+                    reqTime);                   
 
                 return Unauthorized(new LoginResponse
                 {
@@ -76,17 +77,16 @@ public class AuthController : ControllerBase
             var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
             var token   = _tokenService.CreateToken(
                 device.DeviceID,
-                typeMid,
-                device.DeviceName ?? "?",
                 device.DeviceType);
 
             TokenService.SetCookie(Response, token, expMins);
 
             _actLog.LogLogin(
-                typeMid, device.DeviceID, device.DeviceName ?? "?",
+                 device.DeviceID, device.DeviceName ?? "?",
                 device.DeviceType ?? 0,
                 true, "", sw.ElapsedMilliseconds,
-                req.MACAddr, req.IPAddr);       // ← pass mac+ip
+                req.MACAddr, req.IPAddr,
+                reqTime);                       
 
             return Ok(new LoginResponse
             {
@@ -94,13 +94,13 @@ public class AuthController : ControllerBase
                 Message      = "Login successful.",
                 DeviceId     = device.DeviceID,
                 Token        = token,
-                TypeMID      = typeMid,
+               
                 ServerSentAt = DateTime.UtcNow
             });
         }
         catch (Exception ex)
         {
-            _actLog.LogException("LOGIN", typeMid, req.DeviceType, ex);
+            _actLog.LogException("LOGIN",  req.DeviceType, ex);
             return StatusCode(500, new { error = "Login failed.", ServerSentAt = DateTime.UtcNow });
         }
     }
@@ -109,6 +109,7 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Refresh()
     {
+        var reqTime  = DateTime.UtcNow;         
         var sw       = Stopwatch.StartNew();
         var oldToken = TokenService.ReadCookie(Request);
 
@@ -117,7 +118,7 @@ public class AuthController : ControllerBase
                 { Success = false, Message = "No token.", ServerSentAt = DateTime.UtcNow });
 
         decimal deviceId   = 0;
-        string  typeMid    = string.Empty;
+        // string  typeMid    = string.Empty;
         decimal deviceType = 0;
 
         try
@@ -135,40 +136,42 @@ public class AuthController : ControllerBase
                     }, out _);
 
             deviceId   = TokenService.GetDeviceId(principal);
-            typeMid    = TokenService.GetTypeMid(principal);
-            deviceType = TokenService.GetDeviceType(principal);
+            // typeMid    = TokenService.GetTypeMid(principal);
+            // deviceType = TokenService.GetDeviceType(principal);
 
             var device = await _repo.FindDeviceByIdAsync(deviceId);
             if (device == null || device.IsActive != 1)
             {
-                _actLog.LogRefresh(typeMid, deviceId, deviceType, false, sw.ElapsedMilliseconds);
+                _actLog.LogRefresh( deviceId, deviceType,
+                    false, sw.ElapsedMilliseconds, reqTime); 
                 return Unauthorized(new RefreshResponse
                     { Success = false, Message = "Device inactive.", ServerSentAt = DateTime.UtcNow });
             }
 
-            var freshTypeMid = TypeMidService.Generate(device.MACAddr ?? "", device.IPAddr ?? "");
+        
             var expMins      = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
             var newToken     = _tokenService.CreateToken(
-                deviceId, freshTypeMid,
-                device.DeviceName ?? "?",
+             
+                device.DeviceID,
                 device.DeviceType);
 
             TokenService.SetCookie(Response, newToken, expMins);
 
-            _actLog.LogRefresh(freshTypeMid, deviceId, device.DeviceType ?? 0, true, sw.ElapsedMilliseconds);
+            _actLog.LogRefresh( deviceId, device.DeviceType ?? 0,
+                true, sw.ElapsedMilliseconds, reqTime);      
 
             return Ok(new RefreshResponse
             {
                 Success      = true,
                 Message      = "Token refreshed.",
                 Token        = newToken,
-                TypeMID      = freshTypeMid,
+                
                 ServerSentAt = DateTime.UtcNow
             });
         }
         catch (Exception ex)
         {
-            _actLog.LogException("REFRESH", typeMid, deviceId, ex);
+            _actLog.LogException("REFRESH",  deviceId, ex);
             return StatusCode(500, new { error = "Refresh failed.", ServerSentAt = DateTime.UtcNow });
         }
     }

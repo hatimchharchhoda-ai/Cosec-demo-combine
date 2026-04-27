@@ -17,7 +17,7 @@ public class LoginResponse
      public decimal? DeviceId { get; set; }
     public string? Token      { get; set; }
     // TypeMID sent back so client knows its own identifier
-    public string? TypeMID    { get; set; }
+    // public string? TypeMID    { get; set; }
     public DateTime? ServerSentAt { get; set; }
 }
 
@@ -27,7 +27,7 @@ public class RefreshResponse
     public bool    Success { get; set; }
     public string? Message { get; set; }
     public string? Token   { get; set; }
-    public string? TypeMID { get; set; }
+    // public string? TypeMID { get; set; }
     public DateTime? ServerSentAt { get; set; }
 }
 
@@ -40,7 +40,7 @@ public class PollResponse
     public bool         NeedAckFirst { get; set; }
     public List<TrnRow> Rows         { get; set; } = new();
     public int          TotalPending { get; set; }
-    public string?      TypeMID      { get; set; }
+    // public string?      TypeMID      { get; set; }
     public DateTime?    ServerSentAt { get; set; }
 }
 
@@ -74,7 +74,7 @@ public class RestoreResponse
     public bool   Success      { get; set; }
     public string Message      { get; set; } = string.Empty;
     public int    RestoredCount { get; set; }
-    public string? TypeMID     { get; set; }
+    // public string? TypeMID     { get; set; }
     public DateTime? ServerSentAt { get; set; }
 }
 
@@ -84,7 +84,7 @@ public class RestoreResponse
 
 public class DeviceEventDto
 {
-    public string TypeMID { get; set; }
+    // public string TypeMID { get; set; }
     public string Message { get; set; }
     public DateTime? T1 { get; set; }
     public decimal   EventSeqNo { get; set; } 

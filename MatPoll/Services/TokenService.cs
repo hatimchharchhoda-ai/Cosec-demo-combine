@@ -18,20 +18,28 @@ public class TokenService
    // CURRENT — missing parameters in signature
 
 // FIX — add deviceName and deviceType as parameters
-public string CreateToken(decimal deviceId, string typeMid, 
-    string deviceName, decimal? deviceType)
+public string CreateToken(decimal deviceId, 
+     decimal? deviceType)
 {
     var secret  = _config["Jwt:Secret"]!;
-    var expMins = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
 
-    var key   = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+    //creating scret key using variable secret
+
+    var part1  = _config["Jwt:KeyPart1"]!;        // from appsettings
+    var part2  = _config["Jwt:KeyPart2"]!;        // from appsettings  
+    var part3  = Environment.MachineName;          // from the machine itself
+
+  
+
+    var combined = $"{part1}:{part2}:{part3}";     // mix them
+     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(combined));
     var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+    var expSeconds = int.Parse(_config["Jwt:ExpirySeconds"] ?? "3600");
 
+    
     var claims = new[]
     {
         new Claim("deviceId",   deviceId.ToString()),
-        new Claim("typeMid",    typeMid),
-        new Claim("deviceName", deviceName),
         new Claim("deviceType", deviceType?.ToString() ?? "0")
     };
 
@@ -39,7 +47,7 @@ public string CreateToken(decimal deviceId, string typeMid,
         issuer:             "MatPoll",
         audience:           "MatPollClient",
         claims:             claims,
-        expires:            DateTime.UtcNow.AddMinutes(expMins),
+        expires:            DateTime.UtcNow.AddSeconds(expSeconds),
         signingCredentials: creds);
 
     return new JwtSecurityTokenHandler().WriteToken(token);
@@ -61,8 +69,8 @@ public static string GetDeviceName(ClaimsPrincipal user)
 }
 
     // Read TypeMID directly from token — no DB call needed
-    public static string GetTypeMid(ClaimsPrincipal user)
-        => user.FindFirstValue("typeMid") ?? string.Empty;
+    // public static string GetTypeMid(ClaimsPrincipal user)
+    //     => user.FindFirstValue("typeMid") ?? string.Empty;
 
     public static void SetCookie(HttpResponse response, string token, int expiryMinutes)
     {

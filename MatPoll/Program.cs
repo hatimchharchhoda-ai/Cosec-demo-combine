@@ -18,6 +18,8 @@ using Serilog.Filters;
 //   Logs/error-YYYYMMDD.log   → Exceptions, DB failures, ACK mismatches, stalls
 //   Logs/testing-YYYYMMDD.log → All internal steps (only when TestingLog=true)
 //
+// Console → shows only Debug level logs (no duplicates)
+//
 // Each sink filters by the "Sink" context property set in ActivityLogger.
 // Framework noise (EF SQL, ASP.NET pipeline) is silenced globally.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,65 +32,75 @@ const string consoleTemplate =
 
 Log.Logger = new LoggerConfiguration()
 
-    // ── Global minimum: silence all framework namespaces ────────────────────
+    // ── Global minimum: accept Debug and above ───────────────────────────────
     .MinimumLevel.Debug()
+
+    // ── Silence all framework namespaces ────────────────────────────────────
     .MinimumLevel.Override("Microsoft",                         LogEventLevel.Fatal)
     .MinimumLevel.Override("Microsoft.EntityFrameworkCore",     LogEventLevel.Fatal)
     .MinimumLevel.Override("Microsoft.AspNetCore",              LogEventLevel.Fatal)
     .MinimumLevel.Override("Microsoft.Hosting",                 LogEventLevel.Fatal)
     .MinimumLevel.Override("System",                            LogEventLevel.Fatal)
 
-    // ── Console: show only MatPoll events ───────────────────────────────────
-    .WriteTo.Console(
-        restrictedToMinimumLevel: LogEventLevel.Information,
-        outputTemplate: consoleTemplate)
+    // ── Console: show ONLY Debug level from your code ────────────────────────
+    // No Info/Warn/Error on console → no duplicate lines
+    // Only _debug.Debug(...) and _testing.Debug(...) appear here
+    .WriteTo.Logger(lc => lc
+        .Filter.ByIncludingOnly(e =>
+            e.Level == LogEventLevel.Debug &&
+            HasSink(e, "debug", "testing"))
+        .WriteTo.Console(outputTemplate: consoleTemplate))
 
     // ── info.log: INFO + WARN only, Sink=info or Sink=debug ─────────────────
+    // Summary logs: LOGIN, POLL, ACK, RESTORE, REFRESH, EVENT
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Information &&
             e.Level <= LogEventLevel.Warning &&
             HasSink(e, "info", "debug"))
         .WriteTo.File(
-            path:            "Logs/info-.log",
-            rollingInterval: RollingInterval.Day,
+            path:                   "Logs/info-.log",
+            rollingInterval:        RollingInterval.Day,
             retainedFileCountLimit: 30,
-            outputTemplate:  outputTemplate))
+            outputTemplate:         outputTemplate))
 
     // ── debug.log: DEBUG + INFO + WARN, Sink=debug only ─────────────────────
+    // Detailed logs: timings, ReqTime, T1/T2/T3
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Debug &&
             e.Level <= LogEventLevel.Warning &&
             HasSink(e, "debug"))
         .WriteTo.File(
-            path:            "Logs/debug-.log",
-            rollingInterval: RollingInterval.Day,
+            path:                   "Logs/debug-.log",
+            rollingInterval:        RollingInterval.Day,
             retainedFileCountLimit: 30,
-            outputTemplate:  outputTemplate))
+            outputTemplate:         outputTemplate))
 
     // ── error.log: ERROR + FATAL, Sink=error only ───────────────────────────
+    // Exceptions, DB failures, ACK mismatches, stalls
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Error &&
             HasSink(e, "error"))
         .WriteTo.File(
-            path:            "Logs/error-.log",
-            rollingInterval: RollingInterval.Day,
+            path:                   "Logs/error-.log",
+            rollingInterval:        RollingInterval.Day,
             retainedFileCountLimit: 30,
-            outputTemplate:  outputTemplate))
+            outputTemplate:         outputTemplate))
 
     // ── testing.log: all levels, Sink=testing ───────────────────────────────
-    // Controlled by TestingLog flag in appsettings.json
+    // Internal steps — only written when TestingLog=true in appsettings.json
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e => HasSink(e, "testing"))
         .WriteTo.File(
-            path:            "Logs/testing-.log",
-            rollingInterval: RollingInterval.Day,
+            path:                   "Logs/testing-.log",
+            rollingInterval:        RollingInterval.Day,
             retainedFileCountLimit: 7,
-            outputTemplate:  outputTemplate))
+            outputTemplate:         outputTemplate))
 
-    // ── Startup/shutdown to info sink ────────────────────────────────────────
+    // ── Startup/shutdown → info.log only (no Sink property on these) ─────────
+    // Catches Log.Information("MatPoll server started...") and similar
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Information &&
@@ -96,14 +108,14 @@ Log.Logger = new LoggerConfiguration()
         .MinimumLevel.Override("Microsoft", LogEventLevel.Fatal)
         .MinimumLevel.Override("System",    LogEventLevel.Fatal)
         .WriteTo.File(
-            path:            "Logs/info-.log",
-            rollingInterval: RollingInterval.Day,
+            path:                   "Logs/info-.log",
+            rollingInterval:        RollingInterval.Day,
             retainedFileCountLimit: 30,
-            outputTemplate:  outputTemplate))
+            outputTemplate:         outputTemplate))
 
     .CreateLogger();
 
-// Helper: check if event has a specific Sink property value
+// ── Helper: check if event has a specific Sink property value ─────────────────
 static bool HasSink(LogEvent e, params string[] sinks)
 {
     if (!e.Properties.TryGetValue("Sink", out var v)) return false;
@@ -124,12 +136,22 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ActivityLogger>();
-// builder.Services.AddSingleton<MetricsLogger>();
 builder.Services.AddHostedService<StallRecoveryService>();
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
-var secret = builder.Configuration["Jwt:Secret"]
-    ?? throw new Exception("Jwt:Secret missing");
+// var secret = builder.Configuration["Jwt:Secret"]
+//     ?? throw new Exception("Jwt:Secret missing");
+
+var part1   = builder.Configuration["Jwt:KeyPart1"]
+    ?? throw new Exception("Jwt:KeyPart1 missing");
+var part2   = builder.Configuration["Jwt:KeyPart2"]
+    ?? throw new Exception("Jwt:KeyPart2 missing");
+var part3   = Environment.MachineName;
+
+var combined   = $"{part1}:{part2}:{part3}";
+var signingKey = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(combined));
+
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -138,8 +160,7 @@ builder.Services
         opt.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(secret)),
+            IssuerSigningKey         = signingKey,
             ValidateIssuer   = true, ValidIssuer   = "MatPoll",
             ValidateAudience = true, ValidAudience = "MatPollClient",
             ClockSkew        = TimeSpan.Zero
@@ -157,7 +178,6 @@ builder.Services
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
-
 
 // ── Swagger ───────────────────────────────────────────────────────────────────
 builder.Services.AddEndpointsApiExplorer();
@@ -188,27 +208,30 @@ builder.Services.AddSwaggerGen(c =>
     }});
 });
 
-
+// ── Build app ─────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
+// ── DB Warmup: force EF init + open first connection at startup ───────────────
+// Prevents cold-start delay on first real request
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.ExecuteSqlRawAsync("SELECT 1");
-    // forces EF to initialize + opens first connection
-    // happens at startup, not on first request
 }
 
-
+// ── Middleware pipeline ───────────────────────────────────────────────────────
 app.UseSwagger();
-app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1"); c.RoutePrefix = string.Empty; });
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1");
+    c.RoutePrefix = string.Empty;
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-
-
-
+// ── Startup log ───────────────────────────────────────────────────────────────
+// Goes to info.log via the startup sink (no Sink property → caught by last WriteTo.Logger)
 Log.Information("MatPoll server started — TestingLog={Testing}",
     builder.Configuration.GetValue<bool>("TestingLog", false));
 

@@ -4,5 +4,6 @@
     {
         public int DeviceId { get; set; }
         public string TypeMID { get; set; }
+        public int DeviceType { get; set; }
     }
 }

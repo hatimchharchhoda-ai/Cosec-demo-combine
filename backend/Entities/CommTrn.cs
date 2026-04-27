@@ -19,5 +19,9 @@ namespace COSEC_demo.Entities
         public DateTime CreatedAt { get; set; }
 
         public string TypeMID { get; set; }
+
+        public int DeviceID { get; set; }
+        
+        public int DeviceType { get; set; }
     }
 }

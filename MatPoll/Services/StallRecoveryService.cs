@@ -44,15 +44,34 @@ public class StallRecoveryService : BackgroundService
 
                 var groups = await repo.ResetStalledRowsAsync(timeoutMins);
 
+
+
+
+               
+var process  = System.Diagnostics.Process.GetCurrentProcess();
+var memoryMb = process.WorkingSet64 / 1024 / 1024;
+var gcMemMb  = GC.GetTotalMemory(false) / 1024 / 1024;
+
+_actLog.LogTestingStep(
+    "[HEALTH] Memory:{MemMB}MB  GC:{GcMB}MB  Threads:{Threads}  ",
+    memoryMb,
+    gcMemMb,
+    process.Threads.Count
+   );
+
+
                 // Log results — writes to error.log if stalled rows found
                 _actLog.LogStallRecovery(groups);
             }
             catch (OperationCanceledException) { break; }
-            catch (Exception ex)
+            catch (Exception ex1)
             {
                 // DB connection failure during stall check → error.log
-                _actLog.LogDbFailure("STALL-RECOVERY", "N/A", ex);
+                _actLog.LogDbFailure("STALL-RECOVERY", 0, ex1);
             }
         }
     }
+
+
+    
 }
