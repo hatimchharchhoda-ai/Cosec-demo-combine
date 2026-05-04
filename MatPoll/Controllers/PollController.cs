@@ -16,11 +16,14 @@ public class PollController : ControllerBase
     private readonly ActivityLogger _actLog;
     private readonly IConfiguration _config;
 
-    public PollController(AppRepository repo, ActivityLogger actLog, IConfiguration config)
+    private readonly MetricsService _metrics;
+
+    public PollController(AppRepository repo, ActivityLogger actLog, IConfiguration config, MetricsService metrics)
     {
         _repo   = repo;
         _actLog = actLog;
         _config = config;
+        _metrics = metrics;
     }
 
     // ── GET /api/poll ─────────────────────────────────────────────────────────
@@ -38,9 +41,12 @@ public class PollController : ControllerBase
 
         try
         {
+              await _repo.UpdateLastSeenAsync(deviceId);
+              
             _actLog.LogTestingStep("[POLL-START] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}",
                 reqTime.ToString("HH:mm:ss.fff"), deviceId, deviceType);
-
+              
+          
             // ── use DeviceID + DeviceType, not TypeMID ────────────────────
             var hasDispatched = await _repo.HasDispatchedRowsAsync(deviceId, deviceType);
             if (hasDispatched)
@@ -78,7 +84,9 @@ public class PollController : ControllerBase
             }
 
             sw.Stop();
-
+             
+            _metrics.RecordPoll(sw.ElapsedMilliseconds);
+             
             _actLog.LogPollDataSent(
               deviceId, deviceType,
                 rows,
@@ -101,6 +109,7 @@ public class PollController : ControllerBase
         }
         catch (Exception ex)
         {
+            _metrics.RecordError();
             _actLog.LogException("POLL", deviceId, ex);
             return StatusCode(500, new { error = "Poll failed. See error log." });
         }
@@ -110,6 +119,7 @@ public class PollController : ControllerBase
     [HttpPost("ack")]
     public async Task<IActionResult> Ack([FromBody] AckRequest req)
     {
+       
         var t2         = DateTime.UtcNow;
         var sw         = Stopwatch.StartNew();
         var deviceId   = TokenService.GetDeviceId(User);
@@ -119,23 +129,28 @@ public class PollController : ControllerBase
         // if (string.IsNullOrEmpty(typeMid))
         //     return Unauthorized();
 
-        if (req.TrnIDs == null || req.TrnIDs.Count == 0)
-            return BadRequest(new { error = "TrnIDs list is empty." });
+        // if (req.TrnIDs == null || req.TrnIDs.Count == 0)
+        //     return BadRequest(new { error = "TrnIDs list is empty." });
+ 
+        if (req.TrnStatus == null || req.TrnStatus.Count == 0)
+            return BadRequest(new { error = "TrnStatus map is empty." });
 
         try
         {
+             await _repo.UpdateLastSeenAsync(deviceId);
             _actLog.LogTestingStep(
                 "[ACK-START] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}  Count:{Count}",
-                t2.ToString("HH:mm:ss.fff"), deviceId, deviceType, req.TrnIDs.Count);
+                t2.ToString("HH:mm:ss.fff"), deviceId, deviceType, req.TrnStatus.Count);
 
             var ackWarnSecs = _config.GetValue<int>(
                 "PollingSettings:AckTimeoutWarningSeconds", 30);
 
             // ── use DeviceID + DeviceType, not TypeMID ────────────────────
             var result = await _repo.MarkAcknowledgedAsync(
-                req.TrnIDs, deviceId, deviceType);
+                req.TrnStatus, deviceId, deviceType);
 
             sw.Stop();
+                _metrics.RecordAck(sw.ElapsedMilliseconds);
             long serverMs = sw.ElapsedMilliseconds;
 
             double upstreamMs = req.T1.HasValue
@@ -148,7 +163,7 @@ public class PollController : ControllerBase
 
             _actLog.LogAck(
                 deviceId, deviceType,
-                req.TrnIDs, result,
+                req.TrnStatus, result,
                 t2, serverMs,
                 upstreamMs, -1, fullRoundTripPrev,
                 ackWarnSecs);
@@ -163,6 +178,8 @@ public class PollController : ControllerBase
         }
         catch (Exception ex)
         {
+            _metrics.RecordError();
+             
             _actLog.LogException("ACK",  deviceId, ex);
             return StatusCode(500, new { error = "ACK failed. See error log." });
         }
@@ -172,6 +189,7 @@ public class PollController : ControllerBase
     [HttpPost("restore")]
     public async Task<IActionResult> Restore()
     {
+      
         var reqTime    = DateTime.UtcNow;
         var sw         = Stopwatch.StartNew();
         var deviceId   = TokenService.GetDeviceId(User);
@@ -183,6 +201,7 @@ public class PollController : ControllerBase
 
         try
         {
+              await _repo.UpdateLastSeenAsync(deviceId);
             _actLog.LogTestingStep(
                 "[RESTORE-START] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}",
                 reqTime.ToString("HH:mm:ss.fff"), deviceId, deviceType);
@@ -193,6 +212,8 @@ public class PollController : ControllerBase
             _actLog.LogRestore( deviceId, deviceType,
                 count, reqTime, sw.ElapsedMilliseconds);
 
+            sw.Stop();
+            _metrics.RecordEvent(sw.ElapsedMilliseconds);
             return Ok(new RestoreResponse
             {
                 Success       = true,
@@ -204,6 +225,7 @@ public class PollController : ControllerBase
         }
         catch (Exception ex)
         {
+            _metrics.RecordError();
             _actLog.LogException("RESTORE", deviceId, ex);
             return StatusCode(500, new { error = "Restore failed. See error log." });
         }
@@ -226,9 +248,11 @@ public class PollController : ControllerBase
 
         try
         {
+             await _repo.UpdateLastSeenAsync(deviceId);
             await _repo.InsertDeviceEventAsync(dto, deviceId, deviceType);
 
             sw.Stop();
+                _metrics.RecordEvent(sw.ElapsedMilliseconds);
             var t3 = DateTime.UtcNow;
 
             _actLog.LogBulkEvent(
@@ -246,6 +270,7 @@ public class PollController : ControllerBase
         }
         catch (Exception ex)
         {
+            _metrics.RecordError();
             _actLog.LogException("EVENT", deviceId, ex);
             return StatusCode(500, new { error = "Event failed. See error log." });
         }

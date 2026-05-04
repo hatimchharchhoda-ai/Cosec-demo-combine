@@ -25,6 +25,7 @@ public class DeviceConfig
     public required EventSection   Event   { get; set; }
     public required ServerSection  Server  { get; set; }
     public required LoggingSection Logging { get; set; }
+    public required AckFaultRuleConfig AckFaultRule { get; set; }
     // remove DeviceSection — replaced by Devices list
 }
 
@@ -44,6 +45,8 @@ public class TimingSection
 public class EventSection
 {
     public int EventCount { get; set; }
+    public int BulkAfterIntervals { get; set; }   
+    public int BulkEventCount     { get; set; }
 }
 
 public class ServerSection
@@ -61,9 +64,21 @@ public class LoggingSection
     public bool EnableWarn { get; set; }
 }
 
+public class AckFaultRuleConfig
+{
+    public int RejectLastDigit { get; set; }
+    public int RejectIntervalMinutes { get; set; }
+}
+
 public class DeviceInfo
 {
     public int    DeviceType { get; set; }
     public string MACAddr    { get; set; } = string.Empty;
     public string IPAddr     { get; set; } = string.Empty;
+}
+
+public class AckFaultOptions
+{
+    public int RejectLastDigit { get; init; }
+    public int RejectIntervalMinutes { get; init; }
 }

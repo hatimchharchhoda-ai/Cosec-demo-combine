@@ -22,10 +22,8 @@ public static class ConnectionSupervisor
                     // ── Wait until we detect a problem ────────────────────────
                     // Poll every 3 s so we react quickly when the token-refresh
                     // loop or a poll/event call marks the client disconnected.
-                    await Task.Delay(TimeSpan.FromSeconds(3));
 
                     bool needsReconnect =
-                        !api.IsConnected ||
                         api.ConsecutiveFailCount >= FailThreshold;
 
                     if (!needsReconnect)

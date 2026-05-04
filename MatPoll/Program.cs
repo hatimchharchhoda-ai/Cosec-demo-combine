@@ -3,25 +3,22 @@ using MatPoll.Data;
 using MatPoll.Repositories;
 using MatPoll.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Events;
-using Serilog.Filters;
-
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 // ─────────────────────────────────────────────────────────────────────────────
 // 4 Log Files:
-//
 //   Logs/info-YYYYMMDD.log    → Login, Poll, ACK, Restore, Refresh (summary)
 //   Logs/debug-YYYYMMDD.log   → Everything in info + row details, timings
 //   Logs/error-YYYYMMDD.log   → Exceptions, DB failures, ACK mismatches, stalls
 //   Logs/testing-YYYYMMDD.log → All internal steps (only when TestingLog=true)
-//
-// Console → shows only Debug level logs (no duplicates)
-//
-// Each sink filters by the "Sink" context property set in ActivityLogger.
-// Framework noise (EF SQL, ASP.NET pipeline) is silenced globally.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const string outputTemplate =
@@ -32,27 +29,20 @@ const string consoleTemplate =
 
 Log.Logger = new LoggerConfiguration()
 
-    // ── Global minimum: accept Debug and above ───────────────────────────────
     .MinimumLevel.Debug()
 
-    // ── Silence all framework namespaces ────────────────────────────────────
-    .MinimumLevel.Override("Microsoft",                         LogEventLevel.Fatal)
-    .MinimumLevel.Override("Microsoft.EntityFrameworkCore",     LogEventLevel.Fatal)
-    .MinimumLevel.Override("Microsoft.AspNetCore",              LogEventLevel.Fatal)
-    .MinimumLevel.Override("Microsoft.Hosting",                 LogEventLevel.Fatal)
-    .MinimumLevel.Override("System",                            LogEventLevel.Fatal)
+    .MinimumLevel.Override("Microsoft",                     LogEventLevel.Fatal)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Fatal)
+    .MinimumLevel.Override("Microsoft.AspNetCore",          LogEventLevel.Fatal)
+    .MinimumLevel.Override("Microsoft.Hosting",             LogEventLevel.Fatal)
+    .MinimumLevel.Override("System",                        LogEventLevel.Fatal)
 
-    // ── Console: show ONLY Debug level from your code ────────────────────────
-    // No Info/Warn/Error on console → no duplicate lines
-    // Only _debug.Debug(...) and _testing.Debug(...) appear here
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level == LogEventLevel.Debug &&
             HasSink(e, "debug", "testing"))
         .WriteTo.Console(outputTemplate: consoleTemplate))
 
-    // ── info.log: INFO + WARN only, Sink=info or Sink=debug ─────────────────
-    // Summary logs: LOGIN, POLL, ACK, RESTORE, REFRESH, EVENT
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Information &&
@@ -64,8 +54,6 @@ Log.Logger = new LoggerConfiguration()
             retainedFileCountLimit: 30,
             outputTemplate:         outputTemplate))
 
-    // ── debug.log: DEBUG + INFO + WARN, Sink=debug only ─────────────────────
-    // Detailed logs: timings, ReqTime, T1/T2/T3
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Debug &&
@@ -77,8 +65,6 @@ Log.Logger = new LoggerConfiguration()
             retainedFileCountLimit: 30,
             outputTemplate:         outputTemplate))
 
-    // ── error.log: ERROR + FATAL, Sink=error only ───────────────────────────
-    // Exceptions, DB failures, ACK mismatches, stalls
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Error &&
@@ -89,8 +75,6 @@ Log.Logger = new LoggerConfiguration()
             retainedFileCountLimit: 30,
             outputTemplate:         outputTemplate))
 
-    // ── testing.log: all levels, Sink=testing ───────────────────────────────
-    // Internal steps — only written when TestingLog=true in appsettings.json
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e => HasSink(e, "testing"))
         .WriteTo.File(
@@ -99,8 +83,6 @@ Log.Logger = new LoggerConfiguration()
             retainedFileCountLimit: 7,
             outputTemplate:         outputTemplate))
 
-    // ── Startup/shutdown → info.log only (no Sink property on these) ─────────
-    // Catches Log.Information("MatPoll server started...") and similar
     .WriteTo.Logger(lc => lc
         .Filter.ByIncludingOnly(e =>
             e.Level >= LogEventLevel.Information &&
@@ -115,7 +97,6 @@ Log.Logger = new LoggerConfiguration()
 
     .CreateLogger();
 
-// ── Helper: check if event has a specific Sink property value ─────────────────
 static bool HasSink(LogEvent e, params string[] sinks)
 {
     if (!e.Properties.TryGetValue("Sink", out var v)) return false;
@@ -130,28 +111,106 @@ builder.Host.UseSerilog();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    opt.UseSqlServer(builder.Configuration
+        .GetConnectionString("DefaultConnection")));
 
 // ── Services ──────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<AppRepository>();
 builder.Services.AddSingleton<TokenService>();
 builder.Services.AddSingleton<ActivityLogger>();
 builder.Services.AddHostedService<StallRecoveryService>();
+builder.Services.AddHostedService<DeviceStatusService>();
+builder.Services.AddHostedService<CommTrnRefillService>();
+builder.Services.AddSingleton<MetricsService>();
+builder.Services.AddHostedService(p => p.GetRequiredService<MetricsService>());
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   — Response Compression
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY: Compresses JSON responses before sending to devices.
+//      Reduces payload size by 60-80%.
+//      Example: 100KB poll response → becomes ~20KB → devices get data faster.
+//      Zero cost to client — HttpClient/browser decompresses automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+builder.Services.AddResponseCompression(opt =>
+{
+    opt.EnableForHttps = true; 
+    
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  — Health Check
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY: Exposes GET /health endpoint.
+//      Returns "Healthy" or "Unhealthy" + checks DB connection is alive.
+//      Used by IIS, load balancers, or monitoring tools (UptimeRobot etc.)
+//      to know if your server is actually working — not just running.
+// ─────────────────────────────────────────────────────────────────────────────
+builder.Services.AddHealthChecks()
+    .AddSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")!,
+        name:    "database",
+        failureStatus: HealthStatus.Unhealthy);
+
+// ─────────────────────────────────────────────────────────────────────────────
+//   — Rate Limiting
+// ─────────────────────────────────────────────────────────────────────────────
+// WHY: Prevents any single device/IP from flooding your server.
+//      "poll" policy = max 100 requests per 60 seconds per device.
+//      If exceeded → server returns 429 Too Many Requests automatically.
+//      Protects DB from being hammered by a buggy or malicious device.
+// ─────────────────────────────────────────────────────────────────────────────
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
+builder.Services.AddRateLimiter(opt =>
+{
+    opt.AddPolicy("poll", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit         = 100,
+                Window              = TimeSpan.FromSeconds(60),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit          = 0
+            }));
+
+    opt.OnRejected = async (ctx, ct) =>
+    {
+        var logger = ctx.HttpContext.RequestServices
+            .GetRequiredService<ActivityLogger>();
+
+        var ip   = ctx.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+        var path = ctx.HttpContext.Request.Path;
+
+        logger.LogRateLimitExceeded(path, ip);
+
+        ctx.HttpContext.Response.StatusCode = 429;
+        await ctx.HttpContext.Response.WriteAsync(
+            "{\"error\":\"Too many requests. Please slow down.\"}", ct);
+    };
+});
+
+//— Request Timeout
+
+builder.Services.AddRequestTimeouts(opt =>
+{
+    opt.DefaultPolicy = new Microsoft.AspNetCore.Http.Timeouts
+        .RequestTimeoutPolicy
+    {
+        Timeout = TimeSpan.FromSeconds(30)  
+    };
+});
 
 // ── JWT ───────────────────────────────────────────────────────────────────────
-// var secret = builder.Configuration["Jwt:Secret"]
-//     ?? throw new Exception("Jwt:Secret missing");
-
-var part1   = builder.Configuration["Jwt:KeyPart1"]
+var part1 = builder.Configuration["Jwt:KeyPart1"]
     ?? throw new Exception("Jwt:KeyPart1 missing");
-var part2   = builder.Configuration["Jwt:KeyPart2"]
+var part2 = builder.Configuration["Jwt:KeyPart2"]
     ?? throw new Exception("Jwt:KeyPart2 missing");
-var part3   = Environment.MachineName;
+var part3 = Environment.MachineName;
 
 var combined   = $"{part1}:{part2}:{part3}";
 var signingKey = new SymmetricSecurityKey(
     Encoding.UTF8.GetBytes(combined));
-
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -172,6 +231,46 @@ builder.Services
                 var c = ctx.Request.Cookies["mat_auth"];
                 if (!string.IsNullOrEmpty(c)) ctx.Token = c;
                 return Task.CompletedTask;
+            },
+
+            OnAuthenticationFailed = ctx =>
+            {
+                // Skip login/auth endpoints — they don't need a token
+                if (ctx.HttpContext.Request.Path
+                        .StartsWithSegments("/api/auth"))
+                    return Task.CompletedTask;
+
+                var logger = ctx.HttpContext.RequestServices
+                    .GetRequiredService<ActivityLogger>();
+                var ip   = ctx.HttpContext.Connection
+                    .RemoteIpAddress?.ToString() ?? "";
+                var path = ctx.HttpContext.Request.Path;
+
+                if (ctx.Exception is SecurityTokenExpiredException expEx)
+                    logger.LogTokenExpired(path, ip, expEx.Expires);
+                else
+                    logger.LogTokenInvalid(path, ip, ctx.Exception.Message);
+
+                return Task.CompletedTask;
+            },
+
+            OnChallenge = ctx =>
+            {
+                if (ctx.HttpContext.Request.Path
+                        .StartsWithSegments("/api/auth"))
+                    return Task.CompletedTask;
+
+                if (ctx.AuthenticateFailure == null)
+                {
+                    var logger = ctx.HttpContext.RequestServices
+                        .GetRequiredService<ActivityLogger>();
+                    var ip   = ctx.HttpContext.Connection
+                        .RemoteIpAddress?.ToString() ?? "";
+                    var path = ctx.HttpContext.Request.Path;
+
+                    logger.LogTokenMissing(path, ip);
+                }
+                return Task.CompletedTask;
             }
         };
     });
@@ -179,60 +278,116 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// ── Swagger ───────────────────────────────────────────────────────────────────
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+
+//  — Swagger only in Development
+
+
+if (builder.Environment.IsDevelopment())
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(c =>
     {
-        Title       = "MatPoll API",
-        Version     = "v1",
-        Description = "Device polling — TypeMID dispatch, 4-file structured logging"
-    });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name         = "Authorization",
-        Type         = SecuritySchemeType.Http,
-        Scheme       = "bearer",
-        BearerFormat = "JWT",
-        In           = ParameterLocation.Header
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {{
-        new OpenApiSecurityScheme
+        c.SwaggerDoc("v1", new OpenApiInfo
         {
-            Reference = new OpenApiReference
-                { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
-        },
-        Array.Empty<string>()
-    }});
-});
+            Title       = "MatPoll API",
+            Version     = "v1",
+            Description = "Device polling — TypeMID dispatch, 4-file structured logging"
+        });
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name         = "Authorization",
+            Type         = SecuritySchemeType.Http,
+            Scheme       = "bearer",
+            BearerFormat = "JWT",
+            In           = ParameterLocation.Header
+        });
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {{
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                    { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }});
+    });
+}
 
 // ── Build app ─────────────────────────────────────────────────────────────────
 var app = builder.Build();
 
-// ── DB Warmup: force EF init + open first connection at startup ───────────────
-// Prevents cold-start delay on first real request
+// ── DB Warmup ─────────────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.ExecuteSqlRawAsync("SELECT 1");
 }
 
-// ── Middleware pipeline ───────────────────────────────────────────────────────
-app.UseSwagger();
-app.UseSwaggerUI(c =>
+
+// — Global Exception Handler
+
+app.UseExceptionHandler(errApp =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1");
-    c.RoutePrefix = string.Empty;
+    errApp.Run(async ctx =>
+    {
+        var logger = ctx.RequestServices
+            .GetRequiredService<ActivityLogger>();
+
+        var ex = ctx.Features
+            .Get<IExceptionHandlerFeature>()?.Error;
+
+        if (ex != null)
+            logger.LogException("UNHANDLED_CRASH", 0, ex);
+
+        ctx.Response.StatusCode  = 500;
+        ctx.Response.ContentType = "application/json";
+        await ctx.Response.WriteAsync(
+            "{\"error\":\"Internal server error\"}");
+    });
 });
+
+
+//   — Security Headers
+
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    ctx.Response.Headers.Append("X-Frame-Options",        "DENY");
+    ctx.Response.Headers.Append("X-XSS-Protection",       "1; mode=block");
+    ctx.Response.Headers.Append("Referrer-Policy",        "no-referrer");
+    await next();
+}); 
+
+
+
+
+app.UseResponseCompression();
+
+// ── Swagger (Development only) ────────────────────────────────────────────────
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MatPoll v1");
+        c.RoutePrefix = string.Empty;
+    });
+}
+
+app.UseRateLimiter();
+app.UseRequestTimeouts();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
+
+// PRODUCTION ADD 9 — Health Check endpoint
+
+app.MapHealthChecks("/health");
+
 // ── Startup log ───────────────────────────────────────────────────────────────
-// Goes to info.log via the startup sink (no Sink property → caught by last WriteTo.Logger)
-Log.Information("MatPoll server started — TestingLog={Testing}",
+Log.Information("MatPoll server started — Environment={Env}  TestingLog={Testing}",
+    builder.Environment.EnvironmentName,
     builder.Configuration.GetValue<bool>("TestingLog", false));
 
 app.Run();

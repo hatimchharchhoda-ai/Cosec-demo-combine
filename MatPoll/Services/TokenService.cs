@@ -72,14 +72,14 @@ public static string GetDeviceName(ClaimsPrincipal user)
     // public static string GetTypeMid(ClaimsPrincipal user)
     //     => user.FindFirstValue("typeMid") ?? string.Empty;
 
-    public static void SetCookie(HttpResponse response, string token, int expiryMinutes)
+    public static void SetCookie(HttpResponse response, string token, int expirySeconds)
     {
         response.Cookies.Append("mat_auth", token, new CookieOptions
         {
             HttpOnly = true,
             Secure   = false,
             SameSite = SameSiteMode.Strict,
-            Expires  = DateTimeOffset.UtcNow.AddMinutes(expiryMinutes)
+            Expires  = DateTimeOffset.UtcNow.AddSeconds(expirySeconds)
         });
     }
 

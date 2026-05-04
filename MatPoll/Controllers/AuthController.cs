@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Security.Claims;
 
+using Microsoft.IdentityModel.Tokens;
 namespace MatPoll.Controllers;
 
 [ApiController]
@@ -37,6 +39,7 @@ public class AuthController : ControllerBase
 
         try
         {
+              
             _actLog.LogTestingStep(
                 "[LOGIN-START] {ReqTime}  DeviceType:{DeviceType}  MAC:{MAC}  IP:{IP}",
                 reqTime.ToString("HH:mm:ss.fff"), req.DeviceType, req.MACAddr, req.IPAddr);
@@ -118,18 +121,26 @@ public class AuthController : ControllerBase
                 { Success = false, Message = "No token.", ServerSentAt = DateTime.UtcNow });
 
         decimal deviceId   = 0;
-        // string  typeMid    = string.Empty;
+        // string  type   = string.Empty;
         decimal deviceType = 0;
 
         try
         {
+            var part1  = _config["Jwt:KeyPart1"]!;        // from appsettings
+            var part2  = _config["Jwt:KeyPart2"]!;        // from appsettings  
+            var part3  = Environment.MachineName;    
+
+            var combined = $"{part1}:{part2}:{part3}"; 
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(combined));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);    
+            
             var principal = new JwtSecurityTokenHandler()
                 .ValidateToken(oldToken,
                     new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(_config["Jwt:Secret"]!)),
+                        IssuerSigningKey = key,
                         ValidateIssuer   = true, ValidIssuer   = "MatPoll",
                         ValidateAudience = true, ValidAudience = "MatPollClient",
                         ValidateLifetime = false
@@ -148,14 +159,14 @@ public class AuthController : ControllerBase
                     { Success = false, Message = "Device inactive.", ServerSentAt = DateTime.UtcNow });
             }
 
-        
-            var expMins      = int.Parse(_config["Jwt:ExpiryMinutes"] ?? "60");
+            await _repo.UpdateLastSeenAsync(deviceId);
+            var expsec      = int.Parse(_config["Jwt:ExpirySeconds"] ?? "60");
             var newToken     = _tokenService.CreateToken(
              
                 device.DeviceID,
                 device.DeviceType);
 
-            TokenService.SetCookie(Response, newToken, expMins);
+            TokenService.SetCookie(Response, newToken, expsec);
 
             _actLog.LogRefresh( deviceId, device.DeviceType ?? 0,
                 true, sw.ElapsedMilliseconds, reqTime);      

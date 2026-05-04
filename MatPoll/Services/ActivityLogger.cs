@@ -154,7 +154,9 @@ public class ActivityLogger
         "[POLL]  DeviceID:{DeviceID}  Sent:{Sent}  IDs:[{IDs}]  ReqTime:{ReqTime}  ResTime:{ResTime}",
         deviceId, rowCount, idRange, req, res);
 }
-    // ── POLL NO DATA ──────────────────────────────────────────────────────────
+    // ── POLL NO DATA
+    
+    
     public void LogPollNoData(
         decimal deviceId, decimal deviceType,
         DateTime reqTime, long durationMs)
@@ -207,7 +209,7 @@ public class ActivityLogger
     // ── ACK RECEIVED ──────────────────────────────────────────────────────────
     public void LogAck(
          decimal deviceId, decimal deviceType,
-        List<decimal> clientIds, AckResult result,
+         Dictionary<decimal, bool> clientIds, AckResult result,
         DateTime t2, long serverMs,
         double upstreamMs, double downstreamMsPrev, double fullRoundTripPrev,
         int ackWarnSeconds)
@@ -216,7 +218,8 @@ public class ActivityLogger
         // var firstId  = clientIds.First();
         // var lastId   = clientIds.Last();
         // var ids  = claimed == 1 ? $"{firstId}" : $"{firstId}-{lastId}";
-        var idRange = string.Join(", ", clientIds);
+               var idRange = string.Join(", ",
+            clientIds.Select(kvp => $"{kvp.Key}:{(kvp.Value ? "T" : "F")}"));
 
         var avgDelay = result.AckDelays.Count > 0
             ? Math.Round(result.AckDelays.Values.Average(), 2) : 0.0;
@@ -229,21 +232,22 @@ public class ActivityLogger
         // t2 = when request arrived, res = now = when response sent
         var req = t2.ToString("HH:mm:ss.fff");
         var res = DateTime.UtcNow.ToString("HH:mm:ss.fff");
-
-        _info.Information(
+        var trueCount  = clientIds.Count(kvp => kvp.Value);
+        var falseCount = claimed - trueCount;
+      _info.Information(
             "[ACK]\n" +
-            "   [REQ] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}  Confirming:{Claimed} messages  IDs:[{IDs}]\n" +
-            "   [RES] {ResTime}  Confirmed:{Updated}  AvgDelay:{Avg}ms  MaxDelay:{Max}ms  ServerMs:{Server}ms  NetworkMs:{Up}",
-            req, deviceId, deviceType, claimed, idRange,
+            "   [REQ] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}  Claimed:{Claimed} (T:{True} F:{False})  IDs:[{IDs}]\n" +
+            "   [RES] {ResTime}  DB-Updated:{Updated}  AvgDelay:{Avg}ms  MaxDelay:{Max}ms  ServerMs:{Server}ms  NetworkMs:{Up}",
+            req, deviceId, deviceType,
+            claimed, trueCount, falseCount, idRange,
             res, result.UpdatedCount, avgDelay, maxDelay, serverMs, upLabel);
 
         _debug.Information(
             "[ACK]\n" +
-            "   [REQ] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}  Confirming:{Claimed} messages  IDs:[{IDs}]\n" +
+            "   [REQ] {ReqTime}  DeviceID:{DeviceID}  Type:{DeviceType}  Confirming:{Claimed} messages (T:{True} F:{False}) IDs:[{IDs}]\n" +
             "   [RES] {ResTime}  Confirmed:{Updated}  AvgDelay:{Avg}ms  MaxDelay:{Max}ms  ServerMs:{Server}ms  NetworkMs:{Up}  RoundTrip:{RT}",
-            req, deviceId, deviceType, claimed, idRange,
+            req, deviceId, deviceType, claimed, trueCount, falseCount, idRange,
             res, result.UpdatedCount, avgDelay, maxDelay, serverMs, upLabel, rtLabel);
-
         // Error cases
         if (maxDelay > ackWarnSeconds)
             _error.Warning(
@@ -409,12 +413,12 @@ public class ActivityLogger
         TestingLog("[EXCEPTION] Action:{Action}  Error:{Msg}", action, ex.Message);
     }
 
-    public void LogDbFailure(string action, decimal ?DeviceID, Exception ex)
+    public void LogDbFailure(string action, Exception ex)
     {
         _error.Error(ex,
             "[DB-ERROR] {Time}  Action:{Action}  Problem:{Msg}",
             DateTime.UtcNow.ToString("HH:mm:ss.fff"),
-            action, DeviceID, ex.Message);
+            action,  ex.Message);
 
         TestingLog("[DB-ERROR] Action:{Action}  Error:{Msg}", action, ex.Message);
     }
@@ -443,4 +447,219 @@ public class ActivityLogger
         if (!_testingEnabled) return;
         _testing.Debug(template, args);
     }
+
+    //add ;logs when device offline 
+    
+
+    // Add to ActivityLogger.cs:
+public void LogDeviceOffline(
+    decimal deviceId, string deviceName,
+    decimal deviceType, DateTime? lastSeenAt)
+{
+    var lastSeen = lastSeenAt?.ToString("HH:mm:ss.fff") ?? "never";
+    var now      = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+
+      _debug.Information(
+        "[DEVICE-OFFLINE]\n" +
+        "   Device:{Name}  DeviceID:{DeviceID}  Type:{DeviceType}\n" +
+        "   LastSeen:{LastSeen}  MarkedOfflineAt:{Now}",
+        deviceName, deviceId, deviceType, lastSeen, now);
+
+    _info.Warning(
+        "[DEVICE-OFFLINE]\n" +
+        "   Device:{Name}  DeviceID:{DeviceID}  Type:{DeviceType}\n" +
+        "   LastSeen:{LastSeen}  MarkedOfflineAt:{Now}",
+        deviceName, deviceId, deviceType, lastSeen, now);
+
+    _error.Warning(
+        "[DEVICE-OFFLINE] Device:{Name}  DeviceID:{DeviceID}  Type:{DeviceType}  LastSeen:{LastSeen}",
+        deviceName, deviceId, deviceType, lastSeen);
+}
+
+// Also add LogDeviceOnline — called when device reconnects after being offline:
+public void LogDeviceOnline(
+    decimal deviceId, string deviceName,
+    decimal deviceType, DateTime? offlineSince)
+{
+    var downSince = offlineSince?.ToString("HH:mm:ss.fff") ?? "unknown";
+    var now       = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+
+     _debug.Information(
+        "[DEVICE-ONLINE]\n" +
+        "   Device:{Name}  DeviceID:{DeviceID}  Type:{DeviceType}\n" +
+        "   BackOnlineAt:{Now}  WasOfflineSince:{Since}",
+        deviceName, deviceId, deviceType, now, downSince);
+    _info.Information(
+        "[DEVICE-ONLINE]\n" +
+        "   Device:{Name}  DeviceID:{DeviceID}  Type:{DeviceType}\n" +
+        "   BackOnlineAt:{Now}  WasOfflineSince:{Since}",
+        deviceName, deviceId, deviceType, now, downSince);
+}
+
+// Add to ActivityLogger.cs:
+public void LogRefill(int deviceCount, int totalRows, DateTime startTime)
+{
+    var duration = Math.Round(
+        (DateTime.UtcNow - startTime).TotalSeconds, 1);
+
+    _info.Information(
+        "[REFILL]\n" +
+        "   Devices:{DeviceCount}  RowsCreated:{Rows}  Duration:{Duration}s",
+        deviceCount, totalRows, duration);
+
+    _debug.Information(
+        "[REFILL]\n" +
+        "   Devices:{DeviceCount}  RowsCreated:{Rows}  Duration:{Duration}s  CompletedAt:{Time}",
+        deviceCount, totalRows, duration,
+        DateTime.UtcNow.ToString("HH:mm:ss.fff"));
+}
+
+
+
+
+
+//load checker logs
+
+
+// Track request counts and response times
+private static long _pollCount   = 0;
+private static long _ackCount    = 0;
+private static long _eventCount  = 0;
+private static long _totalReqMs  = 0;
+
+public void RecordPoll(long durationMs)
+{
+    Interlocked.Increment(ref _pollCount);
+    Interlocked.Add(ref _totalReqMs, durationMs);
+}
+
+public void RecordAck(long durationMs)
+{
+    Interlocked.Increment(ref _ackCount);
+    Interlocked.Add(ref _totalReqMs, durationMs);
+}
+
+public void RecordEvent(long durationMs)
+{
+    Interlocked.Increment(ref _eventCount);
+}
+
+// Call this from a background service every 60 seconds
+public void LogMetricsSummary()
+{
+    var poll   = Interlocked.Read(ref _pollCount);
+    var ack    = Interlocked.Read(ref _ackCount);
+    var events = Interlocked.Read(ref _eventCount);
+    var avgMs  = poll + ack > 0
+        ? Interlocked.Read(ref _totalReqMs) / (poll + ack)
+        : 0;
+
+    _info.Information(
+        "[METRICS]\n" +
+        "   Polls:{Polls}  ACKs:{Acks}  Events:{Events}  " +
+        "AvgResponseMs:{Avg}ms",
+        poll, ack, events, avgMs);
+
+    // reset counters
+    Interlocked.Exchange(ref _pollCount,  0);
+    Interlocked.Exchange(ref _ackCount,   0);
+    Interlocked.Exchange(ref _eventCount, 0);
+    Interlocked.Exchange(ref _totalReqMs, 0);
+}
+
+
+
+
+
+// ── TOKEN EXPIRED ─────────────────────────────────────────────────────────
+public void LogTokenExpired(string path, string ip, DateTime expiredAt)
+{
+    var now = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+    var exp = expiredAt.ToString("HH:mm:ss.fff");
+
+    _info.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — Token expired at {ExpiredAt}",
+        now, path, ip, exp);
+
+    _debug.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — Token expired at {ExpiredAt}",
+        now, path, ip, exp);
+
+    _error.Warning(
+        "[AUTH-EXPIRED] Time:{Now}  Path:{Path}  IP:{IP}  ExpiredAt:{ExpiredAt}",
+        now, path, ip, exp);
+}
+
+// ── TOKEN INVALID ─────────────────────────────────────────────────────────
+public void LogTokenInvalid(string path, string ip, string reason)
+{
+    var now = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+
+    _info.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — Token invalid  Reason:{Reason}",
+        now, path, ip, reason);
+
+    _debug.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — Token invalid  Reason:{Reason}",
+        now, path, ip, reason);
+
+    _error.Warning(
+        "[AUTH-INVALID] Time:{Now}  Path:{Path}  IP:{IP}  Reason:{Reason}",
+        now, path, ip, reason);
+}
+
+// ── TOKEN MISSING ─────────────────────────────────────────────────────────
+public void LogTokenMissing(string path, string ip)
+{
+    var now = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+
+    _info.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — No token provided",
+        now, path, ip);
+
+    _debug.Warning(
+        "[AUTH]\n" +
+        "   [REQ] {Now}  Path:{Path}  IP:{IP}\n" +
+        "   [RES] REJECTED — No token provided",
+        now, path, ip);
+
+    _error.Warning(
+        "[AUTH-MISSING] Time:{Now}  Path:{Path}  IP:{IP}",
+        now, path, ip);
+}
+
+
+// ── RATE LIMIT EXCEEDED ───────────────────────────────────────────────────
+public void LogRateLimitExceeded(string path, string ip)
+{
+    var now = DateTime.UtcNow.ToString("HH:mm:ss.fff");
+
+    _info.Warning(
+        "[RATE-LIMIT]\n" +
+        "   {Now}  Path:{Path}  IP:{IP}\n" +
+        "   REJECTED — Too many requests",
+        now, path, ip);
+
+    _debug.Warning(
+        "[RATE-LIMIT]\n" +
+        "   {Now}  Path:{Path}  IP:{IP}\n" +
+        "   REJECTED — Too many requests",
+        now, path, ip);
+
+    _error.Warning(
+        "[RATE-LIMIT] Time:{Now}  Path:{Path}  IP:{IP}  — device sending too fast",
+        now, path, ip);
+}
+
+
 }

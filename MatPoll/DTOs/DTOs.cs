@@ -55,7 +55,7 @@ public class TrnRow
 // ── ACK ───────────────────────────────────────────────────────────────────────
 public class AckRequest
 {
-    public List<decimal> TrnIDs      { get; set; } = new();
+    public Dictionary<decimal, bool> TrnStatus { get; set; } = new();
     public DateTime?     T1          { get; set; }  // client sent THIS request
     public DateTime?     T4Prev      { get; set; }  // client received PREVIOUS ack response
 }
@@ -90,6 +90,13 @@ public class DeviceEventDto
     public decimal   EventSeqNo { get; set; } 
 }
 
+// DTOs/CommTrnRequestDto.cs
+public class CommTrnRequestDto
+{
+    public int DeviceId   { get; set; }
+    public int DeviceType { get; set; }
+    // TypeMID removed — not needed anymore
+}
 // public class DeviceEventBulkRequest
 // {
 //     public List<DeviceEventDto> Events { get; set; } = new();

@@ -4,12 +4,15 @@ public class DeviceSimulator
     private readonly ApiClient    _api;
     private readonly DeviceLogger _logger;
     private readonly string       _label;
+    private DateTime              _nextRejectAllowedUtc = DateTime.MinValue;
 
     public DeviceSimulator(DeviceInfo device, DeviceConfig cfg)
     {
         _cfg    = cfg;
         _logger = new DeviceLogger(device, cfg.Logging);
-        _api    = new ApiClient(cfg.Server.BaseUrl, device, _logger);
+
+        _api = new ApiClient(cfg.Server.BaseUrl, device, _logger);
+
         _label  = $"[{device.MACAddr}]";
 
         if (cfg.Timing.PollIntervalSeconds  <= 0)
@@ -70,7 +73,7 @@ public class DeviceSimulator
         {
             try
             {
-                if (_api.SupervisorActive)
+                if (_api.SupervisorActive || DateTime.UtcNow < _api.NextAllowedRequestUtc)
                 {
                     // Supervisor is reconnecting — stay completely silent.
                     // Just sleep for a short period and check again.
@@ -78,16 +81,12 @@ public class DeviceSimulator
                     continue;
                 }
 
-                if (_api.IsConnected)
+                await _api.PollAndProcess();
+                var ids = _api.ConsumeLastIds();
+                if (ids.Count > 0)
                 {
-                    await _api.PollAndProcess();
-                }
-                else
-                {
-                    // Not connected but supervisor hasn't engaged yet
-                    // (fail count < 3).  PollAndProcess handles the 2 s wait
-                    // and the fail-count increment internally.
-                    await _api.PollAndProcess();
+                    var map = ApplyAckFault(ids);
+                    await _api.SendAckMap(map);
                 }
             }
             catch (Exception ex)
@@ -119,7 +118,7 @@ public class DeviceSimulator
         {
             try
             {
-                if (_api.SupervisorActive)
+                if (_api.SupervisorActive || DateTime.UtcNow < _api.NextAllowedRequestUtc)
                 {
                     // Supervisor is reconnecting — stay completely silent.
                     await Task.Delay(TimeSpan.FromSeconds(1), ct);
@@ -138,13 +137,18 @@ public class DeviceSimulator
 
                 intervalCounter++;
 
-                // Every 5th interval → 10x load burst.
-                int eventsThisRound = (intervalCounter % 5 == 0)
-                    ? _cfg.Event.EventCount * 10
+                bool isBulkRound =
+                    _cfg.Event.BulkAfterIntervals > 0 &&
+                    intervalCounter % _cfg.Event.BulkAfterIntervals == 0;
+
+                int eventsThisRound = isBulkRound
+                    ? _cfg.Event.BulkEventCount
                     : _cfg.Event.EventCount;
 
                 _logger.Debug(
                     $"{ctx} | Interval={intervalCounter} | Sending {eventsThisRound} event(s)");
+
+                if(isBulkRound) intervalCounter = 0; // reset after bulk round
 
                 for (int i = 0; i < eventsThisRound && !ct.IsCancellationRequested; i++)
                 {
@@ -169,5 +173,39 @@ public class DeviceSimulator
         }
 
         _logger.Debug($"{ctx} | Stopped | LastCounter={counter}");
+    }
+
+    private Dictionary<decimal, bool> ApplyAckFault(List<decimal> ids)
+    {
+        var map = new Dictionary<decimal, bool>();
+
+        foreach (var id in ids)
+        {
+            int lastDigit = (int)(id % 10);
+
+            if (lastDigit != _cfg.AckFaultRule.RejectLastDigit)
+            {
+                map[id] = true;
+                continue;
+            }
+
+            var now = DateTime.UtcNow;
+
+            if (now < _nextRejectAllowedUtc)
+            {
+                map[id] = true;
+                continue;
+            }
+
+            _nextRejectAllowedUtc =
+                now.AddMinutes(_cfg.AckFaultRule.RejectIntervalMinutes);
+
+            _logger.Warn(
+                $"ACK-FAULT | TrnID={id} marked FALSE. Next allowed at {_nextRejectAllowedUtc:HH:mm:ss}");
+
+            map[id] = false;
+        }
+
+        return map;
     }
 }

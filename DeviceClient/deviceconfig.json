@@ -10,10 +10,16 @@
     "EventIntervalSeconds": 5
   },
   "Event": {
-    "EventCount": 1
+    "EventCount": 1,
+    "BulkAfterIntervals": 10,
+    "BulkEventCount": 10
   },
   "Server": {
-    "BaseUrl": "http://192.168.28.79:5000/api/"
+    "BaseUrl": "http://192.168.28.56:5000/api/"
+  },
+  "AckFaultRule": {
+    "RejectLastDigit": 7,
+    "RejectIntervalMinutes": 2
   },
   "Logging": {
     "InfoFile": "logs/device_info.log",

@@ -97,11 +97,14 @@ public class AppRepository
     // ── ACK ───────────────────────────────────────────────────────────────────
     // Mark TrnStat=2, return AckResult with delays and mismatches
     public async Task<AckResult> MarkAcknowledgedAsync(
-        List<decimal> trnIds, decimal deviceId, decimal deviceType)
+        Dictionary<decimal, bool> trnStatus, decimal deviceId, decimal deviceType)
     {
         var result = new AckResult();
 
-        // Load rows: must match DeviceID + DeviceType + TrnStat=1
+        var trnIds = trnStatus.Keys.ToList();
+        var now    = DateTime.UtcNow;
+
+        // Load all matching rows in TrnStat = 1
         var rows = await _db.CommTrns
             .Where(t =>
                 trnIds.Contains(t.TrnID) &&
@@ -111,21 +114,24 @@ public class AppRepository
             .ToListAsync();
 
         var foundIds = rows.Select(r => r.TrnID).ToHashSet();
-        var now      = DateTime.UtcNow;
 
         foreach (var row in rows)
         {
-            row.TrnStat = 2;
+            bool ack = trnStatus[row.TrnID];
+
+            // TRUE -> TrnStat = 2
+            // FALSE -> TrnStat = 9
+            row.TrnStat = ack ? 2 : 9;
 
             if (row.DispatchedAt.HasValue)
             {
                 var delayMs = Math.Round(
                     (now - row.DispatchedAt.Value).TotalMilliseconds, 2);
+
                 result.AckDelays[row.TrnID] = delayMs;
             }
         }
 
-        // TrnIDs client claimed to ACK but not found/updated
         result.MismatchedIds = trnIds
             .Where(id => !foundIds.Contains(id))
             .ToList();
@@ -177,7 +183,7 @@ public class AppRepository
             .Select(g =>
             {
                 var resetRows  = g.Where(r => (int)(r.RetryCnt ?? 0) < 5).ToList();
-                var failedRows = g.Where(r => (int)(r.RetryCnt ?? 0) >= 50).ToList();
+                var failedRows = g.Where(r => (int)(r.RetryCnt ?? 0) >= 9).ToList();
 
                 foreach (var row in resetRows)
                     row.TrnStat = 0;
@@ -217,4 +223,100 @@ public class AppRepository
         _db.DeviceEvents.Add(entity);
         await _db.SaveChangesAsync();
     }
+
+
+    // Add this method to AppRepository.cs
+// Update the method to detect reconnection:
+public async Task UpdateLastSeenAsync(decimal deviceId)
+{
+    // check if device was offline before updating
+    var device = await _db.Devices
+        .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
+     
+    var wasOffline = device?.IsOnline == false;
+    var offlineSince = device?.OfflineSince;
+
+    await _db.Database.ExecuteSqlRawAsync(@"
+        UPDATE Mat_DeviceMst
+        SET LastSeenAt   = {0},
+            IsOnline     = 1,
+            OfflineSince = NULL
+        WHERE DeviceID   = {1}",
+        DateTime.UtcNow, deviceId);
+
+    // if device was offline, log it came back
+    if (wasOffline && device != null)
+        {
+            
+        }
+}
+// Add this for background job
+public async Task<List<MatDeviceMst>> GetStaleDevicesAsync(int timeoutMinutes)
+{
+    var cutoff = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
+    return await _db.Devices
+        .Where(d => d.IsOnline == true &&
+                    d.LastSeenAt != null &&
+                    d.LastSeenAt < cutoff)
+        .ToListAsync();
+}
+
+public async Task MarkDevicesOfflineAsync(List<decimal> deviceIds)
+{
+    var now = DateTime.UtcNow;
+    await _db.Database.ExecuteSqlRawAsync(@"
+        UPDATE Mat_DeviceMst
+        SET IsOnline     = 0,
+            OfflineSince = {0}
+        WHERE DeviceID IN (" + string.Join(",", deviceIds) + @")
+        AND IsOnline = 1",
+        now);
+}
+
+// Add this method to fetch active devices for CommTrn creation
+public Task<List<MatDeviceMst>> GetActiveDevicesAsync()
+    => _db.Devices
+        .AsNoTracking()
+        .Where(d => d.IsActive == 1)
+        .ToListAsync();
+
+
+
+
+
+       //add data in devise 
+
+
+    public async Task<int> CreateCommTrnRowsAsync(
+        decimal deviceId, decimal deviceType, int count)
+    {
+        var now = DateTime.UtcNow;
+ 
+        // get total rows ever created for this device
+        // used to continue sequence number from where we left off
+        // var lastSeq = await _db.CommTrns
+        //     .CountAsync(t => t.DeviceID == deviceId);
+ 
+        // build all rows in memory first
+        var rows = Enumerable.Range(1, count)
+            .Select(i => new MatCommTrn
+            {
+                MsgStr     = $"ENROLL|UID:USR|DID:{(int)deviceId}",
+                RetryCnt   = 0,
+                TrnStat    = 0,           // pending
+                CreatedAt  = now,
+               
+                DeviceID   = deviceId,
+                DeviceType = deviceType
+            })
+            .ToList();
+ 
+        // single AddRange + SaveChanges = ONE round trip for all rows
+        _db.CommTrns.AddRange(rows);
+        await _db.SaveChangesAsync();
+ 
+        return rows.Count;
+    }
+
+
 }

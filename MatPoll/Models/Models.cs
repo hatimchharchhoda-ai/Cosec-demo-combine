@@ -23,6 +23,11 @@ public class MatDeviceMst
 
     [Column(TypeName = "numeric(2,0)")]
     public decimal? DeviceType { get; set; }
+
+    // Add to your MatDeviceMst.cs model:
+public DateTime? LastSeenAt   { get; set; }
+public bool?     IsOnline     { get; set; }
+public DateTime? OfflineSince { get; set; }
 }
 
 [Table("Mat_UserMst")]

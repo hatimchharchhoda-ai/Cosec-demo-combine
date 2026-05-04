@@ -17,6 +17,7 @@ public class ApiClient
     private int?          _deviceType;
     private List<decimal> _lastIds          = new();
     private int           _refreshFailCount = 0;
+    private DateTime      _nextAllowedRequestUtc = DateTime.MinValue;
 
     // ── Fail-count / supervisor handshake ──────────────────────────────────────
     // Incremented by Poll and Event on any network failure.
@@ -62,6 +63,7 @@ public class ApiClient
 
     public bool IsConnected      => _isConnected;
     public bool SupervisorActive => _supervisorActive;
+    public DateTime NextAllowedRequestUtc => _nextAllowedRequestUtc;
 
     public int ConsecutiveFailCount => _consecutiveFailCount;
 
@@ -177,7 +179,6 @@ public class ApiClient
             _logger.Info(
                 $"{ctx} | SUCCESS | DeviceID={_deviceId} DeviceType={_deviceType}");
 
-            _ = Task.Run(Restore);
             _ = Task.Run(TokenRefreshLoop);
         }
         catch (TaskCanceledException tcex)
@@ -210,6 +211,13 @@ public class ApiClient
     {
         var ctx = "POLL";
 
+        var now = DateTime.UtcNow;
+        if (now < _nextAllowedRequestUtc)
+        {
+            var wait = _nextAllowedRequestUtc - now;
+            await Task.Delay(wait);
+        }
+
         // While the supervisor is active, poll must stay silent and do nothing.
         if (_supervisorActive) return;
 
@@ -217,7 +225,6 @@ public class ApiClient
         {
             // Count this as a failure and wait before returning.
             RecordFailure(ctx);
-            await Task.Delay(TimeSpan.FromSeconds(2));
             return;
         }
 
@@ -277,21 +284,6 @@ public class ApiClient
                 return;
             }
 
-            if (poll.NeedAckFirst)
-            {
-                _logger.Info($"{ctx} | NEED-ACK-FIRST | PendingIds={_lastIds.Count}");
-                if (_lastIds.Count > 0)
-                {
-                    await Ack(_lastIds);
-                    _lastIds.Clear();
-                }
-                else
-                {
-                    _logger.Warn($"{ctx} | NEED-ACK-FIRST | _lastIds is empty — possible state desync");
-                }
-                return;
-            }
-
             if (poll.HasData)
             {
                 if (poll.Rows == null || poll.Rows.Count == 0)
@@ -315,11 +307,9 @@ public class ApiClient
                 }
 
                 _lastIds = ids;
+
                 _logger.Info(
                     $"{ctx} | DATA | Count={ids.Count} TotalPending={poll.TotalPending} IDs={string.Join(",", ids)}");
-
-                await Ack(ids);
-                _lastIds.Clear();
             }
             else
             {
@@ -348,13 +338,19 @@ public class ApiClient
     {
         var ctx = "EVENT";
 
+        var now = DateTime.UtcNow;
+        if (now < _nextAllowedRequestUtc)
+        {
+            var wait = _nextAllowedRequestUtc - now;
+            await Task.Delay(wait);
+        }
+
         // While the supervisor is active, event must stay silent and do nothing.
         if (_supervisorActive) return;
 
         if (!_isConnected)
         {
             RecordFailure(ctx);
-            await Task.Delay(TimeSpan.FromSeconds(2));
             return;
         }
 
@@ -416,13 +412,27 @@ public class ApiClient
         }
     }
 
+    public async Task SendAckMap(Dictionary<decimal, bool> ackMap)
+    {
+        await Ack(ackMap);
+    }
+
+    public List<decimal> ConsumeLastIds()
+    {
+        var ids = _lastIds;
+        _lastIds = new List<decimal>();
+        return ids;
+    }
+
     // ── Private helpers ────────────────────────────────────────────────────────
 
     private void RecordFailure(string ctx)
     {
         _consecutiveFailCount++;
+        _nextAllowedRequestUtc = DateTime.UtcNow.AddSeconds(2);
+
         _logger.Warn(
-            $"{ctx} | REQUEST-FAIL | ConsecutiveFailCount={_consecutiveFailCount} " +
+            $"{ctx} | REQUEST-FAIL | ConsecutiveFailCount={_consecutiveFailCount} | NextAllowedAt={_nextAllowedRequestUtc:HH:mm:ss.fff}" +
             $"(supervisor takes over at 3)");
     }
 
@@ -434,22 +444,28 @@ public class ApiClient
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    private async Task Ack(List<decimal> ids)
+    private async Task Ack(Dictionary<decimal, bool> ackMap)
     {
         var ctx = "ACK";
 
-        if (ids == null || ids.Count == 0)
+        if (ackMap == null || ackMap.Count == 0)
         {
-            _logger.Warn($"{ctx} | SKIPPED | Empty IDs list");
+            _logger.Warn($"{ctx} | SKIPPED | Empty ACK map");
             return;
         }
 
         try
         {
-            var payload = new { TrnIDs = ids, T1 = DateTime.UtcNow };
+            var payload = new
+            {
+                TrnStatus = ackMap,
+                T1 = DateTime.UtcNow
+            };
+
             var content = new StringContent(
                 JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            var req     = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
+
+            var req = await CreateAuthedRequest(HttpMethod.Post, "poll/ack", content);
             var (res, body) = await HttpLogger.SendAsync(_http, req, ctx, _logger);
 
             if (res.StatusCode == HttpStatusCode.Unauthorized)
@@ -460,23 +476,14 @@ public class ApiClient
             }
 
             if (res.IsSuccessStatusCode)
-                _logger.Info($"{ctx} | SUCCESS | IDs={string.Join(",", ids)}");
+                _logger.Info($"{ctx} | SUCCESS | Count={ackMap.Count}");
             else
-                _logger.Error(
-                    $"{ctx} | FAILED | Status={(int)res.StatusCode} | IDs={string.Join(",", ids)} | Body={body}");
-        }
-        catch (TaskCanceledException tcex)
-        {
-            _logger.Error($"{ctx} | TIMEOUT | {tcex.Message} | IDs={string.Join(",", ids)}");
-        }
-        catch (HttpRequestException hre)
-        {
-            _logger.Error($"{ctx} | HTTP-ERROR | {hre.Message} | IDs={string.Join(",", ids)}");
+                _logger.Error($"{ctx} | FAILED | Status={(int)res.StatusCode} | Body={body}");
         }
         catch (Exception ex)
         {
             _logger.Error(
-                $"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | IDs={string.Join(",", ids)}");
+                $"{ctx} | EXCEPTION | {ex.GetType().Name}: {ex.Message} | ackMap={string.Join(",", ackMap.Select(kv => $"{kv.Key}:{kv.Value}"))}");
         }
     }
 
@@ -641,5 +648,14 @@ public class ApiClient
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _token);
         if (content != null) req.Content = content;
         return Task.FromResult(req);
+    }
+
+    private Dictionary<decimal, bool> BuildTrueAckMap(List<decimal> ids)
+    {
+        var map = new Dictionary<decimal, bool>();
+        foreach (var id in ids)
+            map[id] = true;
+
+        return map;
     }
 }

@@ -53,7 +53,7 @@ var memoryMb = process.WorkingSet64 / 1024 / 1024;
 var gcMemMb  = GC.GetTotalMemory(false) / 1024 / 1024;
 
 _actLog.LogTestingStep(
-    "[HEALTH] Memory:{MemMB}MB  GC:{GcMB}MB  Threads:{Threads}  ",
+    "[HEALTH] Memory:{MemMB}MB  GC:{GcMB}MB  Threads:{Threads}",
     memoryMb,
     gcMemMb,
     process.Threads.Count
@@ -67,7 +67,7 @@ _actLog.LogTestingStep(
             catch (Exception ex1)
             {
                 // DB connection failure during stall check → error.log
-                _actLog.LogDbFailure("STALL-RECOVERY", 0, ex1);
+                _actLog.LogDbFailure("STALL-RECOVERY",  ex1);
             }
         }
     }
