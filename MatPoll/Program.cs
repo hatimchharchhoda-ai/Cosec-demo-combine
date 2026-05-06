@@ -123,7 +123,13 @@ builder.Services.AddHostedService<DeviceStatusService>();
 builder.Services.AddHostedService<CommTrnRefillService>();
 builder.Services.AddSingleton<MetricsService>();
 builder.Services.AddHostedService(p => p.GetRequiredService<MetricsService>());
-
+// Add after other services — ORDER MATTERS
+// SyncService must be registered BEFORE StreamService
+// because StreamService depends on SyncService
+builder.Services.AddSingleton<GenetecSyncService>();
+builder.Services.AddHostedService(p =>
+    p.GetRequiredService<GenetecSyncService>());
+// builder.Services.AddHostedService<GenetecStreamService>();
 // ─────────────────────────────────────────────────────────────────────────────
 //   — Response Compression
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,7 +213,6 @@ var part1 = builder.Configuration["Jwt:KeyPart1"]
 var part2 = builder.Configuration["Jwt:KeyPart2"]
     ?? throw new Exception("Jwt:KeyPart2 missing");
 var part3 = Environment.MachineName;
-
 var combined   = $"{part1}:{part2}:{part3}";
 var signingKey = new SymmetricSecurityKey(
     Encoding.UTF8.GetBytes(combined));
@@ -312,6 +317,19 @@ if (builder.Environment.IsDevelopment())
         }});
     });
 }
+
+
+// var lifetime = app.Services
+//     .GetRequiredService<IHostApplicationLifetime>();
+
+// lifetime.ApplicationStopping.Register(() =>
+// {
+//     Log.Warning("[SHUTDOWN] Server stopping — draining requests...");
+//     // give in-flight requests 10s to complete
+//     Thread.Sleep(10000);
+//     Log.Warning("[SHUTDOWN] Drain complete — shutting down");
+//     Log.CloseAndFlush();
+// });
 
 // ── Build app ─────────────────────────────────────────────────────────────────
 var app = builder.Build();
