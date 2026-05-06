@@ -6,33 +6,33 @@ RUN npm install
 COPY ../frontend .
 RUN npm run build
 
-# ---------- STAGE 2 : Build .NET API ----------
+# ---------- STAGE 2 : Build .NET ----------
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish -c Release -o /app/publish
 
-# ---------- STAGE 3 : Final runtime with SQL Server ----------
-FROM mcr.microsoft.com/mssql/server:2022-latest
+# ---------- STAGE 3 : Runtime ----------
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 
-ENV ACCEPT_EULA=Y
-ENV SA_PASSWORD=Your_password123
-ENV MSSQL_PID=Express
-
-# install dotnet runtime + node deps for serving files
+# Install SQL Server on this image
 RUN apt-get update && \
-    apt-get install -y wget apt-transport-https && \
-    wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb && \
-    dpkg -i packages-microsoft-prod.deb && \
+    apt-get install -y curl apt-transport-https gnupg && \
+    curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    curl https://packages.microsoft.com/config/ubuntu/22.04/mssql-server-2022.list > /etc/apt/sources.list.d/mssql-server.list && \
     apt-get update && \
-    apt-get install -y aspnetcore-runtime-8.0
+    ACCEPT_EULA=Y apt-get install -y mssql-server
+
+ENV SA_PASSWORD=matrix_1
+ENV ACCEPT_EULA=Y
+ENV MSSQL_PID=Express
 
 WORKDIR /app
 
-# copy published api
+# copy api
 COPY --from=build /app/publish .
 
-# copy angular build into wwwroot
+# copy angular into wwwroot
 COPY --from=ngbuild /ng/dist /app/wwwroot
 
 EXPOSE 8080 1433
