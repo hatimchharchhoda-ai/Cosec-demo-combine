@@ -22,7 +22,7 @@ namespace COSEC_demo.Contollers
         {
             try
             {
-                var result = await _service.CreateCommTrnForAllUsers(dto.DeviceId, dto.TypeMID, dto.DeviceType);
+                var result = await _service.CreateCommTrnForAllUsers(dto.DeviceId, dto.DeviceType);
 
                 return Ok(new ApiResponseDto<object>
                 {

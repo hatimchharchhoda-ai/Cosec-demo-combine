@@ -17,7 +17,7 @@ namespace COSEC_demo.Services
             _userRepo = userRepo;
         }
 
-        public async Task<List<CommTrnResponseDto>> CreateCommTrnForAllUsers(int deviceId, string typeMid, int deviceType)
+        public async Task<List<CommTrnResponseDto>> CreateCommTrnForAllUsers(int deviceId, int deviceType)
         {
             var userIds = await _userRepo.GetActiveUserIds();
 
@@ -33,7 +33,6 @@ namespace COSEC_demo.Services
                     RetryCnt = 0,
                     TrnStat = 0,
                     CreatedAt = DateTime.Now,
-                    TypeMID = typeMid,
                     DeviceID = deviceId,
                     DeviceType = deviceType
                 };

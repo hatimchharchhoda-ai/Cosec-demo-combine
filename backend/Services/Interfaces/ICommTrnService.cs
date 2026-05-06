@@ -4,6 +4,6 @@ namespace COSEC_demo.Services.Interfaces
 {
     public interface ICommTrnService
     {
-        Task<List<CommTrnResponseDto>> CreateCommTrnForAllUsers(int deviceId, string typeMid, int deviceType);
+        Task<List<CommTrnResponseDto>> CreateCommTrnForAllUsers(int deviceId, int deviceType);
     }
 }

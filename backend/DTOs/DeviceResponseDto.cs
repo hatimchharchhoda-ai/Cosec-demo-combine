@@ -8,6 +8,5 @@
         public string IPAddr { get; set; }
         public int DeviceType { get; set; }
         public bool IsActive { get; set; }
-        public string TypeMID {  get; set; }
     }
 }

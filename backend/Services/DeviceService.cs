@@ -91,22 +91,7 @@ namespace COSEC_demo.Services
                 IPAddr = d.IPAddr,
                 DeviceType = (int)d.DeviceType,
                 IsActive = d.IsActive == 1,
-                TypeMID = GenerateTypeMID(d.MACAddr, d.IPAddr) // generated here
             };
-        }
-
-
-        private string GenerateTypeMID(string mac, string ip)
-        {
-            var input = $"{mac}|{ip}";
-            using var md5 = MD5.Create();
-            var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(input));
-
-            var sb = new StringBuilder();
-            foreach (var b in hashBytes)
-                sb.Append(b.ToString("x2"));
-
-            return sb.ToString().Substring(0, 12);
         }
     }
 }

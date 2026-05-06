@@ -9,10 +9,9 @@ export class CommTrnServiceService {
 
   constructor(private api: ApiServiceService) { }
 
-  syncUserToDevice(deviceId: number, typeMID: string, deviceType: number) {
+  syncUserToDevice(deviceId: number, deviceType: number) {
     return this.api.post(`${this.base}`, {
       DeviceId: deviceId,
-      TypeMID: typeMID,
       DeviceType: deviceType
     });
   }
