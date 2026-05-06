@@ -40,15 +40,15 @@ namespace COSEC_demo
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowAngular",
-                    policy => policy
-                        .WithOrigins("http://localhost:4200")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials());
-            });
+            // builder.Services.AddCors(options =>
+            // {
+            //     options.AddPolicy("AllowAngular",
+            //         policy => policy
+            //             .WithOrigins("http://localhost:4200")
+            //             .AllowAnyHeader()
+            //             .AllowAnyMethod()
+            //             .AllowCredentials());
+            // });
 
             var jwtKey = builder.Configuration["JwtSettings:SecretKey"];
 
@@ -88,15 +88,19 @@ namespace COSEC_demo
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowAngular");
+            // app.UseCors("AllowAngular");
 
             app.UseAuthentication();
             app.UseAuthorization();
 
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
 
             app.MapControllers();
 
-            app.Run();
+            // app.Run();
+            var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+            app.Run($"http://0.0.0.0:{port}");
         }
     }
 }
