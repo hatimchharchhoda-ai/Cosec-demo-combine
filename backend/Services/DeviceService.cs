@@ -91,6 +91,9 @@ namespace COSEC_demo.Services
                 IPAddr = d.IPAddr,
                 DeviceType = (int)d.DeviceType,
                 IsActive = d.IsActive == 1,
+                LastSeenAt   = d.LastSeenAt,
+                IsOnline     = d.IsOnline,
+                OfflineSince = d.OfflineSince,
             };
         }
     }

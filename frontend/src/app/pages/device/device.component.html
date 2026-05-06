@@ -12,11 +12,18 @@
 
         <!-- Device Info -->
         <div class="col-md-9">
-          <div class="row">
+          <div class="row align-items-center">
             <div class="col-md-3"><b>{{ d.deviceName }}</b></div>
             <div class="col-md-3">{{ d.macAddr }}</div>
-            <div class="col-md-3">{{ d.ipAddr }}</div>
-            <div class="col-md-3">Type: {{ d.deviceType }}</div>
+            <div class="col-md-2">{{ d.ipAddr }}</div>
+            <div class="col-md-2">Type: {{ d.deviceType }}</div>
+            <div class="col-md-2">
+              <span class="badge"
+                    [class.bg-success]="d.isOnline"
+                    [class.bg-danger]="!d.isOnline">
+                {{ d.isOnline ? 'Online' : 'Offline' }}
+              </span>
+            </div>
           </div>
         </div>
 

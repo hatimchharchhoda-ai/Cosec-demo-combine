@@ -11,15 +11,16 @@ namespace COSEC_demo.Entities
         public decimal TrnID { get; set; }
 
         public string MsgStr { get; set; }
-
         public decimal RetryCnt { get; set; }
 
+        // 0=Pending 1=Dispatched 2=Acknowledged 9=Failed
         public decimal TrnStat { get; set; }
 
         public DateTime CreatedAt { get; set; }
-
         public int DeviceID { get; set; }
-        
         public int DeviceType { get; set; }
+
+        // New fields
+        public DateTime? DispatchedAt { get; set; }
     }
 }

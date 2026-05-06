@@ -10,12 +10,12 @@
     "EventIntervalSeconds": 5
   },
   "Event": {
-    "EventCount": 1,
+    "EventCount": 10,
     "BulkAfterIntervals": 10,
     "BulkEventCount": 10
   },
   "Server": {
-    "BaseUrl": "http://192.168.28.56:5000/api/"
+    "BaseUrl": "http://192.168.28.79:5000/api/"
   },
   "AckFaultRule": {
     "RejectLastDigit": 7,

@@ -2,6 +2,24 @@
 
   <div class="card p-4">
 
+    <!-- Online Status Badge -->
+    <div class="row mb-3">
+      <div class="col-4 label">Status</div>
+      <div class="col-8 d-flex align-items-center gap-2 flex-wrap">
+        <span class="badge"
+              [class.bg-success]="d.isOnline"
+              [class.bg-danger]="!d.isOnline">
+          {{ d.isOnline ? 'Online' : 'Offline' }}
+        </span>
+        <small class="text-muted" *ngIf="d.lastSeenAt">
+          Last seen: {{ d.lastSeenAt | date:'medium' }}
+        </small>
+        <small class="text-muted" *ngIf="!d.isOnline && d.offlineSince">
+          · Offline since: {{ d.offlineSince | date:'medium' }}
+        </small>
+      </div>
+    </div>
+
     <!-- Device Fields -->
     <div class="row mb-3">
       <div class="col-4 label">Device Name</div>
@@ -38,21 +56,18 @@
 
     <button class="btn btn-secondary" (click)="back()">View</button>
 
-    <!-- ADD MODE -->
-    <button class="btn btn-success" *ngIf="isAddMode" (click)="save()">
-      Save
-    </button>
+    <button class="btn btn-success" *ngIf="isAddMode" (click)="save()">Save</button>
 
-    <!-- EDIT MODE -->
-    <button class="btn btn-success" *ngIf="!isAddMode" routerLink="/device/add"> Add </button>
+    <button class="btn btn-success" *ngIf="!isAddMode" routerLink="/device/add">Add</button>
 
-    <button class="btn btn-primary" *ngIf="!isAddMode && !isEdit" (click)="edit()"> Edit </button>
+    <button class="btn btn-primary"  *ngIf="!isAddMode && !isEdit" (click)="edit()">Edit</button>
 
-    <button class="btn btn-success" *ngIf="!isAddMode && isEdit" (click)="update()"> Update </button>
+    <button class="btn btn-success"  *ngIf="!isAddMode && isEdit"  (click)="update()">Update</button>
 
-    <button class="btn btn-danger" *ngIf="!isAddMode" (click)="delete()"> Delete </button>
+    <button class="btn btn-danger"   *ngIf="!isAddMode" (click)="delete()">Delete</button>
 
-    <button class="btn btn-warning" *ngIf="!isAddMode" (click)="syncUser()">Sync</button>
+    <button class="btn btn-warning"  *ngIf="!isAddMode" (click)="syncUser()">Sync</button>
+
   </div>
 
 </div>

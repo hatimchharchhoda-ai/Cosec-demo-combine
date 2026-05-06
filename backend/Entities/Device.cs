@@ -14,7 +14,11 @@ namespace COSEC_demo.Entities
         public string IPAddr { get; set; }
 
         public decimal IsActive { get; set; }
-
         public decimal DeviceType { get; set; }
+
+        // New fields from MatDeviceMst
+        public DateTime? LastSeenAt   { get; set; }
+        public bool?     IsOnline     { get; set; }
+        public DateTime? OfflineSince { get; set; }
     }
 }
