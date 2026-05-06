@@ -1,23 +1,22 @@
-# ---------- STAGE 1 : Build Angular ----------
-FROM node:20 AS ngbuild
-WORKDIR /frontend
-COPY ../frontend/package*.json ./
-RUN npm install
-COPY ../frontend .
-RUN npm run build
-
-# ---------- STAGE 2 : Build .NET ----------
+# ---------- BUILD STAGE ----------
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY . .
-RUN dotnet publish COSEC-demo.csproj -c Release -o /app/publish
 
-# ---------- STAGE 3 : Runtime ----------
+# copy only backend project
+COPY backend ./backend
+
+WORKDIR /src/backend
+
+RUN dotnet restore
+RUN dotnet publish -c Release -o /app/publish
+
+# ---------- RUNTIME STAGE ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
 COPY --from=build /app/publish .
-COPY --from=ngbuild /frontend/dist /app/wwwroot
 
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
-CMD ["dotnet", "COSEC-demo.dll", "--urls=http://0.0.0.0:8080"]
+
+ENTRYPOINT ["dotnet", "COSEC-demo.dll"]
