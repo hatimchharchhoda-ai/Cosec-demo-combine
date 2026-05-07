@@ -7,8 +7,13 @@ namespace COSEC_demo.Entities
     public class LoginUser
     {
         [Key]
+        [Column("LoginUserID")]
         public string LoginUserID { get; set; }
+
+        [Column("LoginPassword")]
         public string LoginPassword { get; set; }
+
+        [Column("IsActive")]
         public decimal IsActive { get; set; }
     }
 }

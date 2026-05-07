@@ -8,19 +8,28 @@ namespace COSEC_demo.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public decimal TrnID { get; set; }
+        [Column("TrnID")]
+        public long TrnID { get; set; }
 
-        public string MsgStr { get; set; }
-        public decimal RetryCnt { get; set; }
+        [Column("MsgStr")]
+        public string? MsgStr { get; set; }
 
-        // 0=Pending 1=Dispatched 2=Acknowledged 9=Failed
-        public decimal TrnStat { get; set; }
+        [Column("RetryCnt")]
+        public decimal? RetryCnt { get; set; }
 
-        public DateTime CreatedAt { get; set; }
-        public int DeviceID { get; set; }
-        public int DeviceType { get; set; }
+        [Column("TrnStat")]
+        public decimal? TrnStat { get; set; }
 
-        // New fields
+        [Column("CreatedAt")]
+        public DateTime? CreatedAt { get; set; }
+
+        [Column("DispatchedAt")]
         public DateTime? DispatchedAt { get; set; }
+
+        [Column("DeviceType")]
+        public decimal? DeviceType { get; set; }
+
+        [Column("DeviceID")]
+        public decimal? DeviceID { get; set; }
     }
 }
