@@ -16,7 +16,22 @@ namespace COSEC_demo.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<LoginUser>().HasKey(x => x.LoginUserID);
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<LoginUser>()
+                .HasKey(x => x.LoginUserID);
+
+            modelBuilder.Entity<LoginUser>()
+                .ToTable("Mat_LoginUserMst", "dbo");
+
+            modelBuilder.Entity<Device>()
+                .ToTable("Mat_DeviceMst", "dbo");
+
+            modelBuilder.Entity<CommTrn>()
+                .ToTable("Mat_CommTrn", "dbo");
+
+            modelBuilder.Entity<MatUserMst>()
+                .ToTable("Mat_UserMst", "dbo");
         }
     }
 }
