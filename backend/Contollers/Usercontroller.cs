@@ -212,7 +212,7 @@ namespace NMatGen.API.Controllers
                     MsgStr = $"User Enroll with UserId {id}",
                     RetryCnt = 0m,
                     TrnStat = 0m,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                 };
 
                 _context.CommTrns.Add(trn);

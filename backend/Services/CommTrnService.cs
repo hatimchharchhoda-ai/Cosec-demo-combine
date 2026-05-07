@@ -32,7 +32,7 @@ namespace COSEC_demo.Services
                     MsgStr = message,
                     RetryCnt = 0,
                     TrnStat = 0,
-                    CreatedAt = DateTime.Now,
+                    CreatedAt = DateTime.UtcNow,
                     DeviceID = Convert.ToDecimal(deviceId),
                     DeviceType = Convert.ToDecimal(deviceType)
                 };
