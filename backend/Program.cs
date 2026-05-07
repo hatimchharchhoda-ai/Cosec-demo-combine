@@ -99,6 +99,13 @@ namespace COSEC_demo
 
             app.MapControllers();
 
+            // Auto-apply migrations on startup
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                db.Database.Migrate();
+            }
+
             // app.Run();
             var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
             app.Run($"http://0.0.0.0:{port}");
