@@ -15,7 +15,7 @@ RUN dotnet restore "COSEC-demo.csproj"
 RUN dotnet publish "COSEC-demo.csproj" -c Release -o /app/publish
 
 # Copy Angular dist into wwwroot
-COPY --from=frontend-build /app/dist/<your-angular-app-name>/browser /app/publish/wwwroot
+COPY --from=frontend-build /app/dist/frontend/browser /app/publish/wwwroot
 
 # ---------- RUNTIME ----------
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
