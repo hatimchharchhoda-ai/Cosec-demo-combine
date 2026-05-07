@@ -33,8 +33,8 @@ namespace COSEC_demo.Services
                     RetryCnt = 0,
                     TrnStat = 0,
                     CreatedAt = DateTime.Now,
-                    DeviceID = deviceId,
-                    DeviceType = deviceType
+                    DeviceID = Convert.ToDecimal(deviceId),
+                    DeviceType = Convert.ToDecimal(deviceType)
                 };
 
                 var created = await _repo.AddCommTrn(entity);
@@ -50,8 +50,8 @@ namespace COSEC_demo.Services
             {
                 TrnID = (int)c.TrnID,
                 MsgStr = c.MsgStr,
-                RetryCnt = (int)c.RetryCnt,
-                TrnStat = (int)c.TrnStat
+                RetryCnt = (int)(c.RetryCnt ?? 0),
+                TrnStat = (int)(c.TrnStat ?? 0)
             };
         }
 

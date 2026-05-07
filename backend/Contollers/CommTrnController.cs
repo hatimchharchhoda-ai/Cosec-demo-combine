@@ -33,7 +33,11 @@ namespace COSEC_demo.Contollers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new
+                {
+                    error = ex.Message,
+                    inner = ex.InnerException?.Message
+                });
             }
         }
     }
