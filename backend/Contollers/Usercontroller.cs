@@ -39,7 +39,7 @@ namespace NMatGen.API.Controllers
                     {
                         UserId = u.UserId,
                         UserName = u.UserName,
-                        IsActive = u.isActive == 1,
+                        IsActive = u.IsActive == 1,
                         UserShortName = u.UserShortName,
                         UserIDN = u.UserIDN
                     })
@@ -85,7 +85,7 @@ namespace NMatGen.API.Controllers
                 {
                     UserId = user.UserId,
                     UserName = user.UserName,
-                    IsActive = user.isActive == 1,
+                    IsActive = user.IsActive == 1,
                     UserShortName = user.UserShortName,
                     UserIDN = user.UserIDN
                 }
@@ -102,7 +102,7 @@ namespace NMatGen.API.Controllers
                 {
                     UserId = dto.UserId,
                     UserName = dto.UserName,
-                    isActive = dto.IsActive ? 1 : 0,
+                    IsActive = dto.IsActive ? 1 : 0,
                     UserShortName = dto.UserShortName,
                     UserIDN = dto.UserIDN
                 };
@@ -140,7 +140,7 @@ namespace NMatGen.API.Controllers
                     });
 
                 user.UserName = dto.UserName;
-                user.isActive = dto.IsActive ? 1 : 0;
+                user.IsActive = dto.IsActive ? 1 : 0;
                 user.UserShortName = dto.UserShortName;
                 user.UserIDN = dto.UserIDN;
 
@@ -174,7 +174,7 @@ namespace NMatGen.API.Controllers
                         Message = "User not found"
                     });
 
-                user.isActive = 0; // Soft delete by setting isActive to 0
+                user.IsActive = 0; // Soft delete by setting IsActive to 0
                 //_context.MatUserMst.Remove(user);
                 await _context.SaveChangesAsync();
 

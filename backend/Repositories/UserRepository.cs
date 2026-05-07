@@ -16,7 +16,7 @@ namespace COSEC_demo.Repositories
         public async Task<List<string>> GetActiveUserIds()
         {
             return await _context.MatUserMsts
-                .Where(x => x.isActive == 1)
+                .Where(x => x.IsActive == 1)
                 .Select(x => x.UserId)
                 .ToListAsync();
         }
