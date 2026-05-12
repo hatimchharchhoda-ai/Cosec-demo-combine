@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Fragment>
+    <DirectoryRef Id="COSECFOLDER">
+
+      <Component Id="cmpCOSECExe"
+                 Guid="{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}"
+                 Win64="yes">
+        <File Id="filCOSECExe"
+              KeyPath="yes"
+              Source="$(var.COSECSourceDir)\COSEC-demo.exe" />
+
+        <ServiceInstall
+          Id="COSECService"
+          Type="ownProcess"
+          Name="COSECService"
+          DisplayName="COSEC API Service"
+          Description="COSEC Backend REST API on port 5210"
+          Start="auto"
+          ErrorControl="normal"
+          Account="LocalSystem" />
+
+        <ServiceControl
+          Id="ControlCOSECService"
+          Name="COSECService"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+          Wait="yes" />
+
+        <util:ServiceConfig
+          ServiceName="COSECService"
+          FirstFailureActionType="restart"
+          SecondFailureActionType="restart"
+          ThirdFailureActionType="none"
+          RestartServiceDelayInSeconds="10" />
+      </Component>
+
+      <Component Id="cmpCOSECAppSettings"
+                 Guid="{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
+                 Win64="yes">
+        <File Id="filCOSECAppSettings"
+              KeyPath="yes"
+              Source="$(var.COSECSourceDir)\appsettings.json" />
+      </Component>
+
+    </DirectoryRef>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="COSECServiceFiles">
+      <ComponentRef Id="cmpCOSECExe" />
+      <ComponentRef Id="cmpCOSECAppSettings" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

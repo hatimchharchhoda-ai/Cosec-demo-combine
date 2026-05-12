@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>3.10</ProductVersion>
+    <ProjectGuid>35b04d6f-7960-43dd-9139-ed60c2c85f2b</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>MatPollInstaller</OutputName>
+    <OutputType>Package</OutputType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>Debug;SourceDir=C:\Publish\MatPollServer;COSECSourceDir=SourceFiles\COSEC;COSECWebSourceDir=SourceFiles\COSECWeb</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>SourceDir=C:\Publish\MatPollServer;COSECSourceDir=SourceFiles\COSEC;COSECWebSourceDir=SourceFiles\COSECWeb</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="MatPollFiles.wxs" />
+    <Compile Include="Product.wxs" />
+    <Compile Include="COSECService.wxs" />
+    <Compile Include="COSECServiceDlls.wxs" />
+    <Compile Include="COSECWeb.wxs" />
+    <Compile Include="IISSetup.wxs" />
+    <WixExtension Include="WixUtilExtension" />
+    <WixExtension Include="WixUIExtension" />
+    <WixExtension Include="WixIIsExtension" />
+  </ItemGroup>
+
+  <!-- Import WiX targets — the EnsureWixToolsetInstalled target lives inside these files -->
+  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets"
+          Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
+</Project>

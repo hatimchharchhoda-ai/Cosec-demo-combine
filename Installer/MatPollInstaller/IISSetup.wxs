@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:iis="http://schemas.microsoft.com/wix/IIsExtension">
+  <Fragment>
+
+    <Property Id="IISINSTALLED">
+      <RegistrySearch Id="CheckIIS"
+                      Root="HKLM"
+                      Key="SYSTEM\CurrentControlSet\Services\W3SVC"
+                      Name="Start"
+                      Type="raw" />
+    </Property>
+
+    <DirectoryRef Id="COSECWEBFOLDER">
+      <Component Id="cmpIISConfig"
+                 Guid="{C3D4E5F6-A7B8-9012-CDEF-123456789012}"
+                 Win64="yes">
+
+        <CreateFolder />
+
+        <iis:WebAppPool
+          Id="COSECAppPool"
+          Name="COSECAppPool"
+          ManagedPipelineMode="Integrated" />
+
+        <iis:WebSite
+          Id="COSECWebSite"
+          Description="COSEC Frontend"
+          Directory="COSECWEBFOLDER"
+          AutoStart="yes">
+
+          <iis:WebAddress
+            Id="COSECWebAddress"
+            Port="8080"
+            IP="*" />
+
+          <iis:WebApplication
+            Id="COSECWebApp"
+            Name="COSEC"
+            WebAppPool="COSECAppPool" />
+
+        </iis:WebSite>
+
+      </Component>
+    </DirectoryRef>
+
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="IISComponents">
+      <ComponentRef Id="cmpIISConfig" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

@@ -108,6 +108,7 @@ static bool HasSink(LogEvent e, params string[] sinks)
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
+builder.Host.UseWindowsService();
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>

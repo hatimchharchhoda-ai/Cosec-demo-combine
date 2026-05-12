@@ -1,52 +1,66 @@
 # =====================
-# ANGULAR / NODE
+# OS / IDE
 # =====================
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+Thumbs.db
+.DS_Store
+
+# =====================
+# ENV / SENSITIVE
+# =====================
+*.env
+backend/appsettings.Development.json
+backend/appsettings.Production.json
+
+# =====================
+# FRONTEND (Angular/Node)
+# =====================
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.angular/
-
-# =====================
-# ANGULAR / NODE
-# =====================
 MatPollClient/node_modules/
 MatPollClient/dist/
 MatPollClient/.angular/
 
 # =====================
-# DOTNET
+# BACKEND & SERVICES (.NET)
 # =====================
+**/bin/
+**/obj/
+**/logs/
 backend/bin/
 backend/obj/
-backend/appsettings.Development.json 
-backend/appsettings.Production.json 
-
-# =====================
-# DOTNET
-# =====================
+backend/logs/
 MatPoll/bin/
 MatPoll/obj/
+MatPoll/logs/
+DeviceClient/bin/
+DeviceClient/obj/
+DeviceClient/logs/
 
 # =====================
-# VISUAL STUDIO
+# INSTALLER & PUBLISH
 # =====================
-.vs/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-
-# =====================
-# ENV FILES
-# =====================
-*.env
-
-# =====================
-# OS FILES
-# =====================
-Thumbs.db
-.DS_Store
-
-# =====================
-# VS CODE
-# =====================
-.vscode/
+Publish/
+Installer/bin/
+Installer/obj/
+Installer/MatPollInstaller/bin/
+Installer/MatPollInstaller/obj/
+*.msi
+*.cab
+*.wixpdb
+*.wixobj
+Installer/*.msi
+Installer/*.cab
+Installer/*.wixpdb
+Installer/*.wixobj
+Installer/MatPollInstaller/*.msi
+Installer/MatPollInstaller/*.cab
+Installer/MatPollInstaller/*.wixpdb
+Installer/MatPollInstaller/*.wixobj

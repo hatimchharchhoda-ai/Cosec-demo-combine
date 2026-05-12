@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="COSECWEBFOLDER">
+            <Component Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" Guid="{AE5EC91B-FC06-4EDE-BE8E-5119ED982292}" Win64="yes">
+                <File Id="fil7FB7953EBC6422C60CB12868DCC993D3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\favicon.ico" />
+            </Component>
+            <Component Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" Guid="{BEA03B10-F1A3-4E00-89BF-7B209E532E74}" Win64="yes">
+                <File Id="fil65DFF0EA3B1902D2C68637D83B3550B3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\index.html" />
+            </Component>
+            <Component Id="cmp307E8058F9C412AB36331218FFD51965" Guid="{CDA20914-077B-4F9F-AEFB-20C476871F43}" Win64="yes">
+                <File Id="filDEDD08F672DC7DCD23A1FFCE309ED039" KeyPath="yes" Source="$(var.COSECWebSourceDir)\main-I34MQJBZ.js" />
+            </Component>
+            <Component Id="cmp8F532485437E500011107DCFD974CDF4" Guid="{29B72A8A-FEE9-4AE4-8509-BACED93000C1}" Win64="yes">
+                <File Id="filDED0415AC962B83C029B7289767ABFAD" KeyPath="yes" Source="$(var.COSECWebSourceDir)\polyfills-FFHMD2TL.js" />
+            </Component>
+            <Component Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" Guid="{615B29E4-E111-4DA1-BFAC-1C3D234044D6}" Win64="yes">
+                <File Id="filA405BA7958351744ADC810274684AE78" KeyPath="yes" Source="$(var.COSECWebSourceDir)\styles-5M77VUB4.css" />
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="COSECWebFiles">
+            <ComponentRef Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" />
+            <ComponentRef Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" />
+            <ComponentRef Id="cmp307E8058F9C412AB36331218FFD51965" />
+            <ComponentRef Id="cmp8F532485437E500011107DCFD974CDF4" />
+            <ComponentRef Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>
