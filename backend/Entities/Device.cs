@@ -7,6 +7,7 @@ namespace COSEC_demo.Entities
     public class Device
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("DeviceID")]
         public decimal DeviceID { get; set; }
 

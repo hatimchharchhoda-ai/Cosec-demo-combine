@@ -9,7 +9,7 @@ namespace COSEC_demo.Entities
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("TrnID")]
-        public long TrnID { get; set; }
+        public decimal TrnID { get; set; } 
 
         [Column("MsgStr")]
         public string? MsgStr { get; set; }

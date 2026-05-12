@@ -1,0 +1,39 @@
+publish : dotnet publish .\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Publish\Backend
+
+
+copy files to SourceFiles -> COSEC
+
+
+if publish frontend : copy disk files -> wwwroot Backend
+
+
+// Run WiX Candle (Compile)
+"C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" -arch x64 ^
+  -dSourceDir="SourceFiles\MATPOLL" ^
+  -dCOSECSourceDir="SourceFiles\COSEC" ^
+  -dCOSECWebSourceDir="SourceFiles\COSECWeb" ^
+  Product.wxs ^
+  COSECService.wxs ^
+  COSECServiceDlls.wxs ^
+  COSECWeb.wxs ^
+  MatPollFiles.wxs ^
+  IISSetup.wxs ^
+  -ext WixIIsExtension ^
+  -ext WixUtilExtension
+
+
+// Run WiX Light (Link → MSI)
+"C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe" ^
+Product.wixobj ^
+COSECService.wixobj ^
+COSECServiceDlls.wixobj ^
+COSECWeb.wixobj ^
+MatPollFiles.wixobj ^
+IISSetup.wixobj ^
+-ext WixIIsExtension ^
+-ext WixUtilExtension ^
+-ext WixUIExtension ^
+-out MatPollSystem.msi
+
+
+then build the project installer
