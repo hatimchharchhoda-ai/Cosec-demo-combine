@@ -7,6 +7,47 @@ copy files to SourceFiles -> COSEC
 if publish frontend : copy disk files -> wwwroot Backend
 
 
+
+// if customAction changed
+first: msbuild CustomActions\CustomActions.csproj /p:Configuration=Release /p:Platform=x64
+then: "C:\Program Files (x86)\WiX Toolset v3.14\sdk\MakeSfxCA.exe" "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.CA.dll" "C:\Program Files (x86)\WiX Toolset v3.14\sdk\x64\SfxCA.dll" "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.dll" "C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll"
+
+// Candle when customAction is there
+"C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" -arch x64 ^
+  -dSourceDir="SourceFiles\MATPOLL" ^
+  -dCOSECSourceDir="SourceFiles\COSEC" ^
+  -dCOSECWebSourceDir="SourceFiles\COSECWeb" ^
+  -dCustomActionsDir="CustomActions\bin\Release" ^
+  Product.wxs ^
+  DatabaseSettingsDlg.wxs ^
+  CustomActionsRef.wxs ^
+  COSECService.wxs ^
+  COSECServiceDlls.wxs ^
+  COSECWeb.wxs ^
+  MatPollFiles.wxs ^
+  IISSetup.wxs ^
+  -ext WixIIsExtension ^
+  -ext WixUtilExtension ^
+  -ext WixUIExtension
+
+// Light when customAction is there
+"C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe" ^
+  Product.wixobj ^
+  DatabaseSettingsDlg.wixobj ^
+  CustomActionsRef.wixobj ^
+  COSECService.wixobj ^
+  COSECServiceDlls.wixobj ^
+  COSECWeb.wixobj ^
+  MatPollFiles.wixobj ^
+  IISSetup.wixobj ^
+  -ext WixIIsExtension ^
+  -ext WixUtilExtension ^
+  -ext WixUIExtension ^
+  -out MatPollSystem.msi
+
+
+
+
 // Run WiX Candle (Compile)
 "C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" -arch x64 ^
   -dSourceDir="SourceFiles\MATPOLL" ^

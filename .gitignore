@@ -43,6 +43,9 @@ MatPoll/logs/
 DeviceClient/bin/
 DeviceClient/obj/
 DeviceClient/logs/
+MatPollInstaller/CustomActions/bin/
+MatPollInstaller/CustomActions/obj/
+MatPollInstaller/CustomActions/Properties/
 
 # =====================
 # INSTALLER & PUBLISH

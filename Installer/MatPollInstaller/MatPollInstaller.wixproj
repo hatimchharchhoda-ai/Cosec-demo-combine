@@ -1,41 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="4.0" DefaultTargets="Build"
+         xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <Platform       Condition=" '$(Platform)'       == '' ">x86</Platform>
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>35b04d6f-7960-43dd-9139-ed60c2c85f2b</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
     <OutputName>MatPollInstaller</OutputName>
     <OutputType>Package</OutputType>
+
+    <!--
+      Point this at the folder that contains CustomActions.CA.dll
+      (the MakeSfxCA-wrapped managed CA assembly).
+    -->
+    <CustomActionsDir Condition=" '$(CustomActionsDir)' == '' ">
+      $(MSBuildThisFileDirectory)CustomActions\bin\$(Configuration)
+    </CustomActionsDir>
   </PropertyGroup>
 
+  <!-- ================================================================== -->
+  <!-- Debug configuration                                                  -->
+  <!-- ================================================================== -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <DefineConstants>Debug;SourceDir=C:\Publish\MatPollServer;COSECSourceDir=SourceFiles\COSEC;COSECWebSourceDir=SourceFiles\COSECWeb</DefineConstants>
+    <DefineConstants>
+      Debug;
+      SourceDir=C:\Publish\MatPollServer;
+      COSECSourceDir=SourceFiles\COSEC;
+      COSECWebSourceDir=SourceFiles\COSECWeb;
+      CustomActionsDir=$(CustomActionsDir)
+    </DefineConstants>
   </PropertyGroup>
 
+  <!-- ================================================================== -->
+  <!-- Release configuration                                                -->
+  <!-- ================================================================== -->
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
-    <DefineConstants>SourceDir=C:\Publish\MatPollServer;COSECSourceDir=SourceFiles\COSEC;COSECWebSourceDir=SourceFiles\COSECWeb</DefineConstants>
+    <DefineConstants>
+      SourceDir=C:\Publish\MatPollServer;
+      COSECSourceDir=SourceFiles\COSEC;
+      COSECWebSourceDir=SourceFiles\COSECWeb;
+      CustomActionsDir=$(CustomActionsDir)
+    </DefineConstants>
   </PropertyGroup>
 
+  <!-- ================================================================== -->
+  <!-- Source files                                                         -->
+  <!-- ================================================================== -->
   <ItemGroup>
-    <Compile Include="MatPollFiles.wxs" />
+    <!-- Core installer pages -->
     <Compile Include="Product.wxs" />
+    <Compile Include="DatabaseSettingsDlg.wxs" />
+    <Compile Include="CustomActionsRef.wxs" />
+
+    <!-- File component groups (unchanged from original) -->
+    <Compile Include="MatPollFiles.wxs" />
     <Compile Include="COSECService.wxs" />
     <Compile Include="COSECServiceDlls.wxs" />
     <Compile Include="COSECWeb.wxs" />
     <Compile Include="IISSetup.wxs" />
+  </ItemGroup>
+
+  <!-- ================================================================== -->
+  <!-- WiX extensions                                                       -->
+  <!-- ================================================================== -->
+  <ItemGroup>
     <WixExtension Include="WixUtilExtension" />
     <WixExtension Include="WixUIExtension" />
     <WixExtension Include="WixIIsExtension" />
   </ItemGroup>
 
-  <!-- Import WiX targets — the EnsureWixToolsetInstalled target lives inside these files -->
-  <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
+  <!-- ================================================================== -->
+  <!-- Build the managed CA project first                                   -->
+  <!-- ================================================================== -->
+  <ItemGroup>
+    <ProjectReference Include="CustomActions\CustomActions.csproj">
+      <Name>CustomActions</Name>
+      <Private>true</Private>
+      <DoNotHarvest>true</DoNotHarvest>
+    </ProjectReference>
+  </ItemGroup>
+
+  <!--
+    After the CA DLL is built, wrap it with MakeSfxCA so WiX can embed it.
+    MakeSfxCA.exe lives at %WIX%\sdk\MakeSfxCA.exe.
+  -->
+  <Target Name="WrapCustomAction" AfterTargets="Build" Condition="Exists('$(CustomActionsDir)\CustomActions.dll')">
+    <Exec Command="&quot;$(WixToolPath)sdk\MakeSfxCA.exe&quot; &quot;$(CustomActionsDir)\CustomActions.dll&quot; &quot;$(CustomActionsDir)\CustomActions.CA.dll&quot; &quot;$(WixToolPath)sdk\Microsoft.Deployment.WindowsInstaller.dll&quot;"
+          ContinueOnError="false" />
+    <Message Text="MakeSfxCA wrapped: $(CustomActionsDir)\CustomActions.CA.dll" />
+  </Target>
+
+  <!-- Import WiX targets -->
+  <Import Project="$(WixTargetsPath)"
+          Condition=" '$(WixTargetsPath)' != '' " />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets"
           Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />
+
 </Project>

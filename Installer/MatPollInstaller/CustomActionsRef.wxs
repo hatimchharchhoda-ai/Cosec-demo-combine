@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CustomActionsRef.wxs
+  =====================
+  Registers the CustomActions DLL and schedules two custom actions:
+
+  1. SetWriteAppSettingsData  – immediate action that packs all properties
+                                into CustomActionData before the install
+                                sequence goes deferred.
+
+  2. WriteAppSettings         – deferred action (runs with elevated rights)
+                                that calls the managed CA to write
+                                appsettings.json into COSECFOLDER.
+
+  3. SetRemoveAppSettingsData / RemoveAppSettings – mirror pair for uninstall.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+
+    <!-- ================================================================== -->
+    <!-- Binary: the compiled CustomActions DLL                              -->
+    <!-- ================================================================== -->
+    <Binary Id="CustomActionsBinary"
+            SourceFile="$(var.CustomActionsDir)\CustomActions.CA.dll" />
+    <!--
+      NOTE: WiX managed custom actions are wrapped by MakeSfxCA.exe into a
+      self-extracting DLL called CustomActions.CA.dll.  Add the build step to
+      your .wixproj (see comments at bottom of this file).
+    -->
+
+    <!-- ================================================================== -->
+    <!-- Custom Action declarations                                          -->
+    <!-- ================================================================== -->
+
+    <!--
+      IMMEDIATE action – packs MSI properties into CustomActionData string
+      so the deferred action (which has no access to the MSI property bag)
+      can read them.
+    -->
+    <CustomAction Id="SetWriteAppSettingsData"
+                  Property="WriteAppSettings"
+                  Value="COSECFOLDER=[COSECFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD]" />
+
+    <!--
+      DEFERRED action – runs elevated, after files are copied, calls the
+      managed entry point CustomActions.CustomActions.WriteAppSettings.
+    -->
+    <CustomAction Id="WriteAppSettings"
+                  BinaryKey="CustomActionsBinary"
+                  DllEntry="WriteAppSettings"
+                  Execute="deferred"
+                  Return="check"
+                  Impersonate="no" />
+
+    <!-- Uninstall pair -->
+    <CustomAction Id="SetRemoveAppSettingsData"
+                  Property="RemoveAppSettings"
+                  Value="COSECFOLDER=[COSECFOLDER]" />
+
+    <CustomAction Id="RemoveAppSettings"
+                  BinaryKey="CustomActionsBinary"
+                  DllEntry="RemoveAppSettings"
+                  Execute="deferred"
+                  Return="ignore"
+                  Impersonate="no" />
+
+    <!-- ================================================================== -->
+    <!-- Sequence scheduling                                                 -->
+    <!-- ================================================================== -->
+    <InstallExecuteSequence>
+
+      <!--
+        Schedule the immediate "setter" just before the deferred action so
+        CustomActionData is populated in time.
+        InstallFiles = 4000  → place our actions at 4001 / 4002.
+      -->
+      <Custom Action="SetWriteAppSettingsData"
+               After="InstallFiles">NOT Installed OR REINSTALL</Custom>
+
+      <Custom Action="WriteAppSettings"
+               After="SetWriteAppSettingsData">NOT Installed OR REINSTALL</Custom>
+
+      <!-- Uninstall: run before RemoveFiles (3500) -->
+      <Custom Action="SetRemoveAppSettingsData"
+               Before="RemoveFiles">REMOVE~="ALL"</Custom>
+
+      <Custom Action="RemoveAppSettings"
+               After="SetRemoveAppSettingsData">REMOVE~="ALL"</Custom>
+
+    </InstallExecuteSequence>
+
+  </Fragment>
+</Wix>
+
+<!--
+================================================================================
+HOW TO BUILD THE MANAGED CA DLL
+================================================================================
+
+1.  Build the CustomActions C# project targeting net472 (x64):
+      msbuild CustomActions\CustomActions.csproj /p:Configuration=Release
+
+2.  Wrap it with MakeSfxCA (ships with WiX Toolset, usually at
+    %WIX%\sdk\MakeSfxCA.exe):
+
+      MakeSfxCA.exe ^
+        CustomActions\bin\Release\CustomActions.dll ^
+        CustomActions.CA.dll ^
+        "%WIX%\sdk\Microsoft.Deployment.WindowsInstaller.dll"
+
+    The output CustomActions.CA.dll is the file referenced by the Binary
+    element above.  Place it where $(var.CustomActionsDir) points – e.g.
+    add to your .wixproj:
+
+      <PropertyGroup>
+        <CustomActionsDir>$(SolutionDir)CustomActions\bin\Release</CustomActionsDir>
+      </PropertyGroup>
+
+3.  Add a project reference from the .wixproj to CustomActions.csproj so
+    MSBuild builds the CA before the installer:
+
+      <ProjectReference Include="..\CustomActions\CustomActions.csproj">
+        <Name>CustomActions</Name>
+        <Project>{…}</Project>
+        <Private>true</Private>
+        <DoNotHarvest>true</DoNotHarvest>
+      </ProjectReference>
+================================================================================
+-->

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+
+    <UI>
+      <UIRef Id="WixUI_Common" />
+      <Dialog Id="DatabaseSettingsDlg"
+              Width="370" Height="420"
+              Title="[ProductName] – Database Settings">
+
+        <Control Id="BannerBitmap" Type="Bitmap"
+                 X="0" Y="0" Width="370" Height="44"
+                 TabSkip="yes" Text="WixUI_Bmp_Banner" />
+
+        <Control Id="BannerLine" Type="Line"
+                 X="0" Y="44" Width="370" Height="0" />
+
+        <Control Id="DlgTitle" Type="Text"
+                 X="15" Y="6" Width="300" Height="15"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Title}Database Configuration</Text>
+        </Control>
+
+        <!-- Inputs -->
+        <Control Id="DbServerEdit" Type="Edit"
+                 X="130" Y="70" Width="200" Height="18"
+                 Property="DB_SERVER" />
+
+        <Control Id="DbNameEdit" Type="Edit"
+                 X="130" Y="100" Width="200" Height="18"
+                 Property="DB_NAME" />
+
+        <Control Id="DbUserEdit" Type="Edit"
+                 X="130" Y="130" Width="200" Height="18"
+                 Property="DB_USER" />
+
+        <Control Id="DbPasswordEdit" Type="Edit"
+                 X="130" Y="160" Width="200" Height="18"
+                 Property="DB_PASSWORD"
+                 Password="yes" />
+
+        <!-- BACK -->
+        <Control Id="Back" Type="PushButton"
+                 X="180" Y="240" Width="56" Height="17"
+                 Text="Back">
+          <Publish Event="NewDialog" Value="LicenseAgreementDlg">1</Publish>
+        </Control>
+
+        <!-- NEXT -->
+        <Control Id="Next" Type="PushButton"
+                 X="240" Y="240" Width="56" Height="17"
+                 Default="yes"
+                 Text="Next">
+          <Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+        </Control>
+
+        <!-- CANCEL -->
+        <Control Id="Cancel" Type="PushButton"
+                 X="300" Y="240" Width="56" Height="17"
+                 Cancel="yes"
+                 Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+
+      </Dialog>
+    </UI>
+
+    <!-- Properties -->
+    <Property Id="DB_SERVER"   Value="localhost\SQLEXPRESS" />
+    <Property Id="DB_NAME"     Value="matgen" />
+    <Property Id="DB_USER"     Value="sa" />
+    <Property Id="DB_PASSWORD" Value="matrix_1" />
+
+  </Fragment>
+</Wix>

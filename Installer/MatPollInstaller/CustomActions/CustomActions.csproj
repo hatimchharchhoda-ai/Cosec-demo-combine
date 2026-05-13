@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <AssemblyName>CustomActions</AssemblyName>
+    <RootNamespace>CustomActions</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WiX DTF (Deployment Tools Foundation) – ships with WiX Toolset v3 -->
+    <Reference Include="Microsoft.Deployment.WindowsInstaller">
+      <HintPath>C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
