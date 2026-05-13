@@ -1,5 +1,5 @@
-publish : dotnet publish .\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Publish\Backend
-
+publish backend : dotnet publish .\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Publish\Backend
+publish frontend : ng build --configuration production   -> create ./dist folder
 
 copy files to SourceFiles -> COSEC
 
