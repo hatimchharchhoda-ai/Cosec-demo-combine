@@ -1,0 +1,107 @@
+=============================================================================
+ MATPOLL BUILD — QUICK REFERENCE
+ "Which steps do I run for this change?"
+=============================================================================
+
+STEP  COMMAND                  ALWAYS?   RUN WHEN
+────  ───────────────────────  ────────  ──────────────────────────────────────
+ 1    dotnet publish            YES       Any C# backend code change
+ 2    xcopy Backend→SourceFiles YES       After step 1
+ 3    ng build                  NO        Angular source changed
+ 4    xcopy dist→wwwroot        NO        After step 3 only
+ 5    msbuild ConfigCrypto      NO *      ConfigCryptoHelper.cs changed
+                                          EncryptedConfigExtensions.cs changed
+                                          FIRST TIME SETUP ← run this once
+ 6    msbuild CustomActions     NO *      CustomActions.cs changed
+                                          After step 5
+                                          FIRST TIME SETUP ← run this once
+ 7    MakeSfxCA                 NO *      After step 6
+                                          FIRST TIME SETUP ← run this once
+ 8    candle.exe                YES       Always (fast, always safe to run)
+ 9    light.exe                 YES       After step 8
+
+
+=============================================================================
+ COMMON SCENARIOS
+=============================================================================
+
+SCENARIO A: Only backend C# changed (most common day-to-day)
+  Run: 1 → 2 → 8 → 9
+  Skip: 3, 4, 5, 6, 7
+
+SCENARIO B: Only Angular frontend changed
+  Run: 3 → 4 → 8 → 9
+  Skip: 1, 2, 5, 6, 7
+
+SCENARIO C: Both backend and frontend changed
+  Run: 1 → 2 → 3 → 4 → 8 → 9
+  Skip: 5, 6, 7
+
+SCENARIO D: CustomActions.cs changed (encryption logic)
+  Run: 6 → 7 → 8 → 9
+  Skip: 1, 2, 3, 4, 5
+
+SCENARIO E: ConfigCrypto changed (INSTALL_PEPPER, crypto logic)
+  Run: 5 → 6 → 7 → 8 → 9
+  Skip: 1, 2, 3, 4
+  WARNING: Changing ConfigCrypto invalidates any already-installed
+           encrypted config files. Reinstall required on all machines.
+
+SCENARIO F: Only a .wxs file changed (dialog layout, directory, etc.)
+  Run: 8 → 9
+  Skip: 1, 2, 3, 4, 5, 6, 7
+
+SCENARIO G: First-time setup (new machine, new clone)
+  Run: ALL steps 1 → 2 → (3 → 4 if needed) → 5 → 6 → 7 → 8 → 9
+
+
+=============================================================================
+ PATH CHANGE SUMMARY (what changed from your original commands)
+=============================================================================
+
+BEFORE (your original candle command):
+  -dCustomActionsDir="CustomActions\bin\Release"
+
+AFTER (corrected to match msbuild /p:Platform=x64 output):
+  -dCustomActionsDir="CustomActions\bin\x64\Release\net472"
+
+WHY: msbuild with /p:Platform=x64 puts output under bin\x64\Release\net472\
+     (net472 = target framework folder). The old path "bin\Release" was for
+     the original project which didn't specify Platform. The .CA.dll that
+     WiX embeds must be found at this exact path.
+
+BEFORE (your original MakeSfxCA command — 4 arguments):
+  MakeSfxCA.exe CustomActions.CA.dll SfxCA.dll CustomActions.dll
+                Microsoft.Deployment.WindowsInstaller.dll
+
+AFTER (now 5 arguments — ConfigCrypto.dll added):
+  MakeSfxCA.exe CustomActions.CA.dll SfxCA.dll CustomActions.dll
+                Microsoft.Deployment.WindowsInstaller.dll
+                ConfigCrypto.dll
+
+WHY: The CA DLL now depends on ConfigCrypto.dll. MakeSfxCA bundles ALL
+     dependent DLLs into the self-extracting archive so the MSI runtime
+     can find them. If ConfigCrypto.dll is missing from this list, the
+     installer crashes at runtime with "assembly not found".
+
+
+=============================================================================
+ WHERE EACH FILE MUST LIVE BEFORE CANDLE RUNS
+=============================================================================
+
+SourceFiles\COSEC\            ← filled by step 2 (xcopy from dotnet publish)
+  COSEC-demo.exe
+  appsettings.json            ← placeholder only; installer overwrites it
+  *.dll  (all backend DLLs)
+  wwwroot\                    ← filled by step 4 (ng build output)
+
+SourceFiles\MATPOLL\          ← your existing MatPoll publish output
+  MatPoll.exe
+
+SourceFiles\COSECWeb\         ← your existing COSECWeb files
+  (IIS-hosted frontend files if separate from wwwroot)
+
+CustomActions\bin\x64\Release\net472\   ← filled by steps 5+6+7
+  CustomActions.dll
+  CustomActions.CA.dll        ← created by MakeSfxCA (step 7)
+  ConfigCrypto.dll            ← created by step 5, copied here by MSBuild

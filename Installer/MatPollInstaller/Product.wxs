@@ -18,7 +18,6 @@
 
     <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
 
-    <!-- Correct base UI -->
     <UIRef Id="WixUI_InstallDir" />
 
     <UI>
@@ -41,6 +40,7 @@
 
     <Feature Id="MainFeature" Title="MatPoll" Level="1">
       <ComponentGroupRef Id="MatPollFiles" />
+      <ComponentGroupRef Id="MatPollServiceFiles" />
       <ComponentGroupRef Id="COSECServiceFiles" />
       <ComponentGroupRef Id="COSECServiceDlls" />
       <ComponentGroupRef Id="COSECWebFiles" />
@@ -50,10 +50,29 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="INSTALLFOLDER" Name="MatPoll" />
-        <Directory Id="COSECFOLDER" Name="COSEC" />
+        <Directory Id="COSECFOLDER"   Name="COSEC" />
         <Directory Id="COSECWEBFOLDER" Name="COSECWeb" />
       </Directory>
     </Directory>
+
+    <!--
+      FIX 1: MATPOLLFOLDER must be set in InstallExecuteSequence so that
+      deferred custom actions can read it via CustomActionData.
+
+      - Sequence="both"  → fires in BOTH InstallUISequence and
+                           InstallExecuteSequence.
+      - After="CostFinalize" is valid in both sequences and runs before
+        any custom actions or file operations, so [INSTALLFOLDER] is
+        already resolved by the time the CA reads it.
+
+      DO NOT use Sequence="execute" with After="AppSearch" — AppSearch
+      does not exist in InstallExecuteSequence and the property silently
+      stays empty, which is the root cause of the plaintext-file bug.
+    -->
+    <SetProperty Id="MATPOLLFOLDER"
+                 Value="[INSTALLFOLDER]"
+                 After="CostFinalize"
+                 Sequence="both" />
 
   </Product>
 </Wix>

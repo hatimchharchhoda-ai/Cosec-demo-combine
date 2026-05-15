@@ -1,5 +1,6 @@
 using System.Text;
 using MatPoll.Data;
+using ConfigCrypto;
 using MatPoll.Repositories;
 using MatPoll.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -109,6 +110,17 @@ static bool HasSink(LogEvent e, params string[] sinks)
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 builder.Host.UseWindowsService();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DECRYPT CONFIG  <- THIS BLOCK (must come BEFORE anything reads config)
+// ─────────────────────────────────────────────────────────────────────────────
+builder.Configuration.DecryptEncryptedValues();
+// After this line:
+//   builder.Configuration.GetConnectionString("DefaultConnection")  → plain SQL string
+//   builder.Configuration["Jwt:KeyPart1"]                           → plain "matpoll-auth"
+//   builder.Configuration["Genetec:Password"]                       → plain password
+// The appsettings.json file on disk still has "ENC:…" — only RAM is decrypted.
+
 
 // ── Database ──────────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(opt =>

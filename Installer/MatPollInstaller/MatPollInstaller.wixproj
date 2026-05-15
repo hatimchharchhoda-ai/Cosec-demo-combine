@@ -28,7 +28,7 @@
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>
       Debug;
-      SourceDir=C:\Publish\MatPollServer;
+      SourceDir=SourceFiles\MATPOLL;
       COSECSourceDir=SourceFiles\COSEC;
       COSECWebSourceDir=SourceFiles\COSECWeb;
       CustomActionsDir=$(CustomActionsDir)
@@ -42,7 +42,7 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <DefineConstants>
-      SourceDir=C:\Publish\MatPollServer;
+      SourceDir=SourceFiles\MATPOLL;
       COSECSourceDir=SourceFiles\COSEC;
       COSECWebSourceDir=SourceFiles\COSECWeb;
       CustomActionsDir=$(CustomActionsDir)
@@ -60,6 +60,7 @@
 
     <!-- File component groups (unchanged from original) -->
     <Compile Include="MatPollFiles.wxs" />
+    <Compile Include="MatPollService.wxs" />
     <Compile Include="COSECService.wxs" />
     <Compile Include="COSECServiceDlls.wxs" />
     <Compile Include="COSECWeb.wxs" />

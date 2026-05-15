@@ -15,4 +15,11 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Shared crypto helper – compiled into the same output so MakeSfxCA
+         wraps a single self-contained DLL.  Use ProjectReference so MSBuild
+         builds ConfigCrypto first. -->
+    <ProjectReference Include="..\ConfigCrypto\ConfigCrypto.csproj" />
+  </ItemGroup>
+  
 </Project>

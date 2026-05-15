@@ -4,6 +4,7 @@ using COSEC_demo.Repositories;
 using COSEC_demo.Repositories.Interfaces;
 using COSEC_demo.Services;
 using COSEC_demo.Services.Interfaces;
+using ConfigCrypto;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -16,6 +17,8 @@ namespace COSEC_demo
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Configuration.DecryptEncryptedValues();
 
             builder.Host.UseWindowsService();
 
@@ -88,7 +91,6 @@ namespace COSEC_demo
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            // IMPORTANT: UseCors() must come BEFORE UseAuthentication/UseAuthorization
             app.UseCors("AllowAngular");
 
             app.UseDefaultFiles();
