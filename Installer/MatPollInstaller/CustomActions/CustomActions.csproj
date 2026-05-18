@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>CustomActions</AssemblyName>
@@ -9,17 +8,38 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- WiX DTF (Deployment Tools Foundation) – ships with WiX Toolset v3 -->
     <Reference Include="Microsoft.Deployment.WindowsInstaller">
-      <HintPath>C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
+      <HintPath>C:\Program Files (x86)\WiX Toolset v3.14\SDK\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Shared crypto helper – compiled into the same output so MakeSfxCA
-         wraps a single self-contained DLL.  Use ProjectReference so MSBuild
-         builds ConfigCrypto first. -->
-    <ProjectReference Include="..\ConfigCrypto\ConfigCrypto.csproj" />
+    <ProjectReference Include="..\ConfigCrypto\ConfigCrypto.Installer.csproj" />
   </ItemGroup>
-  
+
+  <Target Name="MakeSfxCA" AfterTargets="Build">
+    <PropertyGroup>
+      <WixSdkDir>C:\Program Files (x86)\WiX Toolset v3.14\SDK\</WixSdkDir>
+      <OutDir>$(MSBuildProjectDirectory)\bin\x64\Release\net472\</OutDir>
+      <SfxOutput>$(OutDir)CustomActions.CA.dll</SfxOutput>
+      <SfxInput>$(OutDir)CustomActions.dll</SfxInput>
+      <ConfigCryptoDll>$(OutDir)ConfigCrypto.dll</ConfigCryptoDll>
+      <WixInstallerDll>$(WixSdkDir)Microsoft.Deployment.WindowsInstaller.dll</WixInstallerDll>
+      <!-- CORRECT PATH: x64 subfolder -->
+      <SfxDll>$(WixSdkDir)x64\sfxca.dll</SfxDll>
+    </PropertyGroup>
+
+    <Error Condition="!Exists('$(SfxInput)')"
+           Text="CustomActions.dll not found at: $(SfxInput)" />
+    <Error Condition="!Exists('$(ConfigCryptoDll)')"
+           Text="ConfigCrypto.dll not found at: $(ConfigCryptoDll)" />
+    <Error Condition="!Exists('$(SfxDll)')"
+           Text="SfxCA.dll not found at: $(SfxDll)" />
+    <Error Condition="!Exists('$(WixInstallerDll)')"
+           Text="Microsoft.Deployment.WindowsInstaller.dll not found at: $(WixInstallerDll)" />
+
+    <Exec Command="&quot;$(WixSdkDir)MakeSfxCA.exe&quot; &quot;$(SfxOutput)&quot; &quot;$(SfxDll)&quot; &quot;$(SfxInput)&quot; &quot;$(WixInstallerDll)&quot; &quot;$(ConfigCryptoDll)&quot;"
+          ConsoleToMSBuild="true" />
+  </Target>
+
 </Project>

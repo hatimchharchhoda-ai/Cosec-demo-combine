@@ -6,52 +6,16 @@ using Microsoft.Win32;
 
 namespace ConfigCrypto
 {
-    /// <summary>
-    /// AES-256-CBC + HMAC-SHA256 encryption/decryption helper.
-    ///
-    /// WHY CBC INSTEAD OF GCM?
-    /// =======================
-    /// The WiX custom action project targets net472.  AesGcm is a .NET Core /
-    /// .NET 5+ type and does NOT exist on .NET Framework 4.x.  If we use an
-    /// #if NET8_0_OR_GREATER guard, the CA (net472) writes CBC ciphertext and
-    /// the runtime service (net8) tries to decrypt it as GCM — they are
-    /// incompatible wire formats and decryption silently fails or throws.
-    ///
-    /// The safe fix is to use CBC + HMAC-SHA256 on BOTH sides.  CBC is
-    /// perfectly strong when used correctly (random IV, HMAC authentication).
-    /// The key is machine-bound via PBKDF2(MachineGuid + pepper), so the
-    /// ciphertext is not portable across machines anyway.
-    ///
-    /// Wire format (binary, then Base64-encoded, prefixed with "ENC:"):
-    ///   [ 16 bytes AES IV ]
-    ///   [ 32 bytes HMAC-SHA256 tag over the ciphertext ]
-    ///   [ N  bytes AES-256-CBC ciphertext (PKCS7 padded) ]
-    ///
-    /// Key derivation:
-    ///   PBKDF2-SHA256( password: SHA256(MachineGuid + PEPPER), salt: APP_SALT,
-    ///                  iterations: 100_000 ) → 32 bytes
-    /// </summary>
     public static class ConfigCryptoHelper
     {
-        // -----------------------------------------------------------------
-        // Change both constants before your first production build.
-        // They are baked into every encrypted blob; changing them after
-        // deployment will make existing encrypted files unreadable.
-        // -----------------------------------------------------------------
         private const string INSTALL_PEPPER = "MatPoll-COSEC-2026-#Kx9!zQ";
         private const string APP_SALT       = "MatPollCOSECConfigSalt-v1";
 
         private const string ENC_PREFIX = "ENC:";
 
-        // -----------------------------------------------------------------
-        //  Public API
-        // -----------------------------------------------------------------
-
-        /// <summary>Returns true when <paramref name="value"/> is an ENC: token.</summary>
         public static bool IsEncrypted(string value)
             => value != null && value.StartsWith(ENC_PREFIX, StringComparison.Ordinal);
 
-        /// <summary>Encrypts <paramref name="plaintext"/> → "ENC:&lt;base64&gt;".</summary>
         public static string Encrypt(string plaintext)
         {
             if (string.IsNullOrEmpty(plaintext)) return plaintext;
@@ -83,10 +47,6 @@ namespace ConfigCrypto
             }
         }
 
-        /// <summary>
-        /// Decrypts an "ENC:&lt;base64&gt;" token → original plaintext.
-        /// Returns the input unchanged when it is NOT an ENC: token.
-        /// </summary>
         public static string Decrypt(string encryptedValue)
         {
             if (!IsEncrypted(encryptedValue)) return encryptedValue;
@@ -131,10 +91,6 @@ namespace ConfigCrypto
             }
         }
 
-        // -----------------------------------------------------------------
-        //  Key derivation
-        // -----------------------------------------------------------------
-
         private static byte[] DeriveKey()
         {
             string machineSecret = GetMachineSecret();
@@ -150,11 +106,6 @@ namespace ConfigCrypto
             }
         }
 
-        /// <summary>
-        /// Returns a stable hex string derived from the Windows machine GUID
-        /// and a build-time pepper.  This ties every encrypted file to the
-        /// specific machine the installer ran on.
-        /// </summary>
         private static string GetMachineSecret()
         {
             string machineGuid = ReadMachineGuid();
@@ -184,10 +135,6 @@ namespace ConfigCrypto
             }
         }
 
-        // -----------------------------------------------------------------
-        //  AES helpers (keep encrypt/decrypt byte-array logic here so the
-        //  caller does not need to manage streams)
-        // -----------------------------------------------------------------
         private static byte[] EncryptBytes(Aes aes, byte[] plain)
         {
             using (var ms = new MemoryStream())
@@ -210,19 +157,11 @@ namespace ConfigCrypto
             }
         }
 
-        // -----------------------------------------------------------------
-        //  HMAC helper
-        // -----------------------------------------------------------------
-
         private static byte[] ComputeHmac(byte[] key, byte[] data)
         {
             using (var hmac = new HMACSHA256(key))
                 return hmac.ComputeHash(data);
         }
-
-        // -----------------------------------------------------------------
-        //  Constant-time comparison (avoids timing side-channels)
-        // -----------------------------------------------------------------
 
         private static bool FixedTimeEquals(byte[] a, byte[] b)
         {

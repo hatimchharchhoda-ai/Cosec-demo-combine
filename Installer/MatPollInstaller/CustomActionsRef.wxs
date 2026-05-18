@@ -1,68 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  CustomActionsRef.wxs  (FIXED)
-  ==============================
-  Key fixes vs. the original:
-
-  1. SetWriteXxxData immediate CAs are now scheduled BEFORE InstallFiles
-     (After="InstallInitialize") so that [MATPOLLFOLDER] and [COSECFOLDER]
-     are resolved in the UI sequence and already baked into CustomActionData
-     before the deferred CAs execute.
-
-  2. WriteXxxAppSettings deferred CAs are scheduled AFTER InstallFiles.
-     This matters because:
-       - The source appsettings.json component is installed during InstallFiles.
-       - Our CA then OVERWRITES it with the encrypted version.
-     If you schedule the CA before InstallFiles the source file will clobber
-     the encrypted file on a normal install or repair.
-
-  3. The uninstall (REMOVE) CAs are scheduled Before="RemoveFiles" so that
-     the CA can still find appsettings.json to delete it if needed, though
-     RemoveFiles will clean the file anyway — kept for completeness.
--->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
 
-    <!-- ================================================================== -->
-    <!-- Binary: the MakeSfxCA-wrapped managed CA assembly                   -->
-    <!-- ================================================================== -->
-    <Binary Id="CustomActionsBinary"
+    <Binary Id="CustomActBinary"
             SourceFile="$(var.CustomActionsDir)\CustomActions.CA.dll" />
 
-    <!-- ================================================================== -->
-    <!-- Properties                                                           -->
-    <!-- ================================================================== -->
-    <Property Id="JWT_SECRET"         Value="REPLACE_WITH_MIN_32_CHAR_SECRET_KEY" />
-    <Property Id="MATPOLL_JWT_KEY1"   Value="matpoll-auth" />
-    <Property Id="MATPOLL_JWT_KEY2"   Value="device-polling-2026" />
-    <Property Id="GENETEC_SERVER"     Value="192.168.27.115" />
-    <Property Id="GENETEC_PORT"       Value="4590" />
-    <Property Id="GENETEC_USER"       Value="Admin" />
+    <Property Id="JWT_SECRET"         Value="REPLACE_WITH_MIN_32_CHAR_SECRET_KEY" Secure="yes" />
+    <Property Id="MATPOLL_JWT_KEY1"   Value="matpoll-auth" Secure="yes" />
+    <Property Id="MATPOLL_JWT_KEY2"   Value="device-polling-2026" Secure="yes" />
+    <Property Id="GENETEC_SERVER"     Value="192.168.27.115" Secure="yes" />
+    <Property Id="GENETEC_PORT"       Value="4590" Secure="yes" />
+    <Property Id="GENETEC_USER"       Value="Admin" Secure="yes" />
     <Property Id="GENETEC_PASSWORD"   Secure="yes" />
     <Property Id="GENETEC_APPID"      Secure="yes" />
 
-    <!-- ================================================================== -->
-    <!-- COSEC API custom actions                                             -->
-    <!-- ================================================================== -->
-
-    <!--
-      Immediate CA: packs all properties into the CustomActionData string
-      that the deferred CA will read.  Must run in the execute sequence so
-      that directory properties (COSECFOLDER) are fully resolved.
-      Scheduled early — After="InstallInitialize" — so the value is ready
-      before InstallFiles.
-    -->
     <CustomAction Id="SetWriteAppSettingsData"
                   Property="WriteAppSettings"
                   Value="COSECFOLDER=[COSECFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];JWT_SECRET=[JWT_SECRET]" />
 
-    <!--
-      Deferred CA: writes the encrypted appsettings.json.
-      Runs AFTER InstallFiles so it overwrites the plain source file that
-      the component just dropped.
-    -->
     <CustomAction Id="WriteAppSettings"
-                  BinaryKey="CustomActionsBinary"
+                  BinaryKey="CustomActBinary"
                   DllEntry="WriteAppSettings"
                   Execute="deferred"
                   Return="check"
@@ -73,22 +30,18 @@
                   Value="COSECFOLDER=[COSECFOLDER]" />
 
     <CustomAction Id="RemoveAppSettings"
-                  BinaryKey="CustomActionsBinary"
+                  BinaryKey="CustomActBinary"
                   DllEntry="RemoveAppSettings"
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
-
-    <!-- ================================================================== -->
-    <!-- MatPoll Device Server custom actions                                 -->
-    <!-- ================================================================== -->
 
     <CustomAction Id="SetWriteMatPollAppSettingsData"
                   Property="WriteMatPollAppSettings"
                   Value="MATPOLLFOLDER=[MATPOLLFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];MATPOLL_JWT_KEY1=[MATPOLL_JWT_KEY1];MATPOLL_JWT_KEY2=[MATPOLL_JWT_KEY2];GENETEC_SERVER=[GENETEC_SERVER];GENETEC_PORT=[GENETEC_PORT];GENETEC_USER=[GENETEC_USER];GENETEC_PASSWORD=[GENETEC_PASSWORD];GENETEC_APPID=[GENETEC_APPID]" />
 
     <CustomAction Id="WriteMatPollAppSettings"
-                  BinaryKey="CustomActionsBinary"
+                  BinaryKey="CustomActBinary"
                   DllEntry="WriteMatPollAppSettings"
                   Execute="deferred"
                   Return="check"
@@ -99,40 +52,25 @@
                   Value="MATPOLLFOLDER=[MATPOLLFOLDER]" />
 
     <CustomAction Id="RemoveMatPollAppSettings"
-                  BinaryKey="CustomActionsBinary"
+                  BinaryKey="CustomActBinary"
                   DllEntry="RemoveMatPollAppSettings"
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
 
-    <!-- ================================================================== -->
-    <!-- Sequence                                                             -->
-    <!-- ================================================================== -->
     <InstallExecuteSequence>
 
-      <!--
-        Immediate "Set" CAs: pack properties into CustomActionData.
-        Must run before the deferred CAs, and before InstallFiles so the
-        deferred CA path is ready.  After="InstallInitialize" is the
-        earliest safe point in InstallExecuteSequence.
-      -->
       <Custom Action="SetWriteAppSettingsData"
-               After="InstallInitialize">NOT Installed</Custom>
+         After="InstallInitialize">NOT REMOVE</Custom>
 
       <Custom Action="SetWriteMatPollAppSettingsData"
-               After="SetWriteAppSettingsData">NOT Installed</Custom>
+              After="SetWriteAppSettingsData">NOT REMOVE</Custom>
 
-      <!--
-        Deferred CAs: write encrypted files.
-        After="InstallFiles" ensures the source appsettings.json component
-        has already been written, and our CA overwrites it with the
-        encrypted version.
-      -->
       <Custom Action="WriteAppSettings"
-               After="InstallFiles">NOT Installed</Custom>
+              After="InstallFiles">NOT REMOVE</Custom>
 
       <Custom Action="WriteMatPollAppSettings"
-               After="WriteAppSettings">NOT Installed</Custom>
+              After="WriteAppSettings">NOT REMOVE</Custom>
 
       <!-- Uninstall: before RemoveFiles (sequence ~3500) -->
       <Custom Action="SetRemoveAppSettingsData"

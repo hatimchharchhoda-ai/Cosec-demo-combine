@@ -1,0 +1,143 @@
+@echo off
+setlocal EnableDelayedExpansion
+
+REM =============================================================================
+REM  MATPOLL SYSTEM — PRE-BUILD CLEANUP
+REM  Run from:  D:\COSEC-demo\Installer\MatPollInstaller\
+REM
+REM  Run this BEFORE build.bat whenever you want a guaranteed clean state.
+REM  Safe to run at any time — it only deletes generated/compiled output,
+REM  never your source .wxs files or .cs files.
+REM
+REM  WHAT GETS CLEANED:
+REM    1. WiX intermediate files     (.wixobj, .wixpdb, .msi)
+REM    2. Published backend output   (SourceFiles\COSEC\, SourceFiles\MATPOLL\)
+REM    3. Published frontend output  (SourceFiles\COSECWeb\)
+REM    4. CA build output            (CustomActions\bin\, CustomActions\obj\)
+REM    5. ConfigCrypto build output  (ConfigCrypto\bin\, ConfigCrypto\obj\)
+REM    6. MakeSfxCA wrapped DLL      (CustomActions.CA.dll)
+REM =============================================================================
+
+echo.
+echo ============================================================
+echo  MatPoll pre-build cleanup
+echo  Working directory: %CD%
+echo ============================================================
+echo.
+
+REM Safety check — make sure we are in the right folder before deleting anything
+if not exist Product.wxs (
+    echo ERROR: Product.wxs not found in %CD%
+    echo Run this script from D:\COSEC-demo\Installer\MatPollInstaller\
+    pause
+    exit /b 1
+)
+
+
+REM =============================================================================
+REM  1 — WiX intermediate and output files
+REM =============================================================================
+
+echo [1] Cleaning WiX intermediates...
+
+del /f /q *.wixobj  2>nul
+del /f /q *.wixpdb  2>nul
+del /f /q *.msi     2>nul
+
+echo     Done.
+
+
+REM =============================================================================
+REM  2 — Published COSEC backend
+REM  Entire contents wiped so a removed DLL from a NuGet change does not linger.
+REM =============================================================================
+
+echo [2] Cleaning SourceFiles\COSEC\...
+
+if exist SourceFiles\COSEC\ (
+    rd /s /q SourceFiles\COSEC
+    mkdir SourceFiles\COSEC
+    echo     Done.
+) else (
+    mkdir SourceFiles\COSEC
+    echo     Created empty SourceFiles\COSEC\
+)
+
+
+REM =============================================================================
+REM  3 — Published MatPoll backend
+REM =============================================================================
+
+echo [3] Cleaning SourceFiles\MATPOLL\...
+
+if exist SourceFiles\MATPOLL\ (
+    rd /s /q SourceFiles\MATPOLL
+    mkdir SourceFiles\MATPOLL
+    echo     Done.
+) else (
+    mkdir SourceFiles\MATPOLL
+    echo     Created empty SourceFiles\MATPOLL\
+)
+
+
+REM =============================================================================
+REM  4 — Published Angular frontend
+REM =============================================================================
+
+echo [4] Cleaning SourceFiles\COSECWeb\...
+
+if exist SourceFiles\COSECWeb\ (
+    rd /s /q SourceFiles\COSECWeb
+    mkdir SourceFiles\COSECWeb
+    echo     Done.
+) else (
+    mkdir SourceFiles\COSECWeb
+    echo     Created empty SourceFiles\COSECWeb\
+)
+
+
+REM =============================================================================
+REM  5 — CustomActions build output (bin\ and obj\)
+REM  Removes the compiled CustomActions.dll and any MSBuild cache.
+REM  Does NOT touch CustomActions.cs or CustomActions.csproj.
+REM =============================================================================
+
+echo [5] Cleaning CustomActions build output...
+
+if exist CustomActions\bin\ (
+    rd /s /q CustomActions\bin
+    echo     Removed CustomActions\bin\
+)
+if exist CustomActions\obj\ (
+    rd /s /q CustomActions\obj
+    echo     Removed CustomActions\obj\
+)
+echo     Done.
+
+
+REM =============================================================================
+REM  6 — ConfigCrypto build output (bin\ and obj\)
+REM  Does NOT touch ConfigCryptoHelper.cs or ConfigCrypto.csproj.
+REM =============================================================================
+
+echo [6] Cleaning ConfigCrypto build output...
+
+if exist ConfigCrypto\bin\ (
+    rd /s /q ConfigCrypto\bin
+    echo     Removed ConfigCrypto\bin\
+)
+if exist ConfigCrypto\obj\ (
+    rd /s /q ConfigCrypto\obj
+    echo     Removed ConfigCrypto\obj\
+)
+echo     Done.
+
+
+echo.
+echo ============================================================
+echo  Cleanup complete. All output directories are empty.
+echo  Run build.bat to do a full rebuild.
+echo ============================================================
+echo.
+
+endlocal

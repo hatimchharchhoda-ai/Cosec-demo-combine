@@ -16,7 +16,7 @@
       (the MakeSfxCA-wrapped managed CA assembly).
     -->
     <CustomActionsDir Condition=" '$(CustomActionsDir)' == '' ">
-      $(MSBuildThisFileDirectory)CustomActions\bin\$(Configuration)
+      $(MSBuildThisFileDirectory)CustomActions\bin\x64\$(Configuration)\net472
     </CustomActionsDir>
   </PropertyGroup>
 
@@ -87,15 +87,6 @@
     </ProjectReference>
   </ItemGroup>
 
-  <!--
-    After the CA DLL is built, wrap it with MakeSfxCA so WiX can embed it.
-    MakeSfxCA.exe lives at %WIX%\sdk\MakeSfxCA.exe.
-  -->
-  <Target Name="WrapCustomAction" AfterTargets="Build" Condition="Exists('$(CustomActionsDir)\CustomActions.dll')">
-    <Exec Command="&quot;$(WixToolPath)sdk\MakeSfxCA.exe&quot; &quot;$(CustomActionsDir)\CustomActions.dll&quot; &quot;$(CustomActionsDir)\CustomActions.CA.dll&quot; &quot;$(WixToolPath)sdk\Microsoft.Deployment.WindowsInstaller.dll&quot;"
-          ContinueOnError="false" />
-    <Message Text="MakeSfxCA wrapped: $(CustomActionsDir)\CustomActions.CA.dll" />
-  </Target>
 
   <!-- Import WiX targets -->
   <Import Project="$(WixTargetsPath)"

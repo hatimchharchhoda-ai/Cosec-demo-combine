@@ -1,54 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  MatPollService.wxs
-  ===================
-  Registers MatPoll.exe as a Windows Service.
-  Modelled exactly on COSECService.wxs.
-
-  IMPORTANT: MatPoll.exe must be a self-hosted .NET app that calls
-  builder.Host.UseWindowsService() (or WebApplication.CreateBuilder with
-  UseWindowsService) so that the process responds correctly to SCM
-  start/stop signals.  If it does not, the service will install but
-  immediately fail to start.
-
-  Add this file to the <ItemGroup> in your .wixproj:
-    <Compile Include="MatPollService.wxs" />
-
-  And reference the component group in Product.wxs Feature:
-    <ComponentGroupRef Id="MatPollServiceFiles" />
--->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
   <Fragment>
-    <DirectoryRef Id="INSTALLFOLDER">
+    <DirectoryRef Id="MATPOLLFOLDER">
 
-      <!--
-        Component that owns MatPoll.exe and the service registration.
-        MatPoll.exe is already installed by the MatPollFiles component
-        group (MatPollFiles.wxs), so we do NOT install the file a second
-        time here.  Instead we create a separate component that only
-        carries the ServiceInstall/ServiceControl elements and references
-        the already-installed file as a non-KeyPath file reference.
-
-        NOTE: If your build tooling complains about the same file being
-        in two components, remove the <File> element below and instead
-        move the ServiceInstall/ServiceControl into the existing component
-        in MatPollFiles.wxs that owns filD34D61B6DAC852B75F082842AB387635
-        (MatPoll.exe).  Both approaches are valid; this one keeps
-        MatPollFiles.wxs untouched.
-      -->
-      <Component Id="cmpMatPollService"
-                 Guid="{C3D4E5F6-A7B8-9012-CDEF-123456789ABC}"
+      <Component Id="cmpMatPollExe"
+                 Guid="{B8A6E1E4-F63D-4A2B-8C9F-D7E3A1C2B5D9}"
                  Win64="yes">
-
-        <!--
-          Reference MatPoll.exe as KeyPath so WiX knows which file this
-          component is bound to.  The file itself is installed by
-          MatPollFiles.wxs; we reference it here only to satisfy the
-          component's KeyPath requirement and to give the ServiceInstall
-          a stable target.
-        -->
-        <File Id="filMatPollServiceExe"
+        <File Id="filMatPollExe"
               KeyPath="yes"
               Source="$(var.SourceDir)\MatPoll.exe" />
 
@@ -56,8 +15,8 @@
           Id="MatPollService"
           Type="ownProcess"
           Name="MatPollService"
-          DisplayName="MatPoll Device Server"
-          Description="MatPoll Device Polling Server on port 5000"
+          DisplayName="MatPoll Device Service"
+          Description="MatPoll Backend Service for device polling"
           Start="auto"
           ErrorControl="normal"
           Account="LocalSystem" />
@@ -70,17 +29,12 @@
           Remove="uninstall"
           Wait="yes" />
 
-        <!--
-          Restart the service automatically on the first two failures;
-          take no action on the third.
-        -->
         <util:ServiceConfig
           ServiceName="MatPollService"
           FirstFailureActionType="restart"
           SecondFailureActionType="restart"
           ThirdFailureActionType="none"
           RestartServiceDelayInSeconds="10" />
-
       </Component>
 
     </DirectoryRef>
@@ -88,7 +42,7 @@
 
   <Fragment>
     <ComponentGroup Id="MatPollServiceFiles">
-      <ComponentRef Id="cmpMatPollService" />
+      <ComponentRef Id="cmpMatPollExe" />
     </ComponentGroup>
   </Fragment>
 </Wix>

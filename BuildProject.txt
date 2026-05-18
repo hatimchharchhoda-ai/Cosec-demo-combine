@@ -17,45 +17,9 @@ REM  Output goes to D:\COSEC-demo\Publish\Backend\
 REM =============================================================================
 
 echo [1/9] Publishing COSEC backend...
-dotnet publish D:\COSEC-demo\COSEC-demo.csproj ^
-    -c Release ^
-    -r win-x64 ^
-    --self-contained true ^
-    -o D:\COSEC-demo\Publish\Backend
-
-
-REM =============================================================================
-REM  STEP 2 — COPY BACKEND OUTPUT to SourceFiles\COSEC                 [ALWAYS]
-REM  Syncs the dotnet publish output into the WiX source folder so candle
-REM  picks up the latest binaries.
-REM  /E = include subfolders, /Y = overwrite silently, /I = create if missing
-REM =============================================================================
-
-echo [2/9] Copying backend to SourceFiles\COSEC...
-xcopy /E /Y /I "D:\COSEC-demo\Publish\Backend\*" "SourceFiles\COSEC\"
-
-
-REM =============================================================================
-REM  STEP 3 — BUILD ANGULAR FRONTEND                               [IF CHANGED]
-REM  Run manually from your Angular project folder when frontend code changed:
-REM    cd D:\COSEC-demo\Frontend
-REM    ng build --configuration production
-REM  Output: D:\COSEC-demo\Frontend\dist\<project-name>\
-REM =============================================================================
-
-REM [IF CHANGED] - uncomment and adjust:
-REM cd /d D:\COSEC-demo\Frontend
-REM ng build --configuration production
-REM cd /d D:\COSEC-demo\Installer\MatPollInstaller
-
-
-REM =============================================================================
-REM  STEP 4 — COPY FRONTEND DIST to SourceFiles\COSEC\wwwroot        [IF CHANGED]
-REM  Only needed after step 3. Replace <your-project-name> with actual folder.
-REM =============================================================================
-
-REM [IF CHANGED] - uncomment and adjust:
-REM xcopy /E /Y /I "D:\COSEC-demo\Frontend\dist\<your-project-name>\*" "SourceFiles\COSEC\wwwroot\"
+dotnet publish .\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\COSEC\ 
+dotnet publish .\MatPoll.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\MATPOLL\
+ng build --configuration production
 
 
 REM =============================================================================
@@ -69,14 +33,15 @@ REM  The -t HeatTransform.xslt flag automatically adds Win64="yes" to every
 REM  generated component so you never edit that manually.
 REM
 REM  AFTER running heat you MUST check COSECServiceDlls.wxs and remove any
-REM  Component + ComponentRef entries for these two files if heat included them
-REM  (they are managed in COSECService.wxs, not here):
-REM      COSEC-demo.exe
-REM      appsettings.json
+REM  Component + ComponentRef entries for these files if heat included them:
+REM      COSEC-demo.exe       (managed in COSECService.wxs)
+REM      appsettings.json     (written ONLY by the custom action with encryption)
+REM      appsettings.Development.json  (optional — remove if not needed)
 REM =============================================================================
 
+
 REM [IF CHANGED] - uncomment to re-harvest:
-REM echo [4b] Re-harvesting COSECServiceDlls.wxs...
+REM echo  Re-harvesting COSECServiceDlls.wxs...
      "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir ^
          "SourceFiles\COSEC" ^
          -nologo ^
@@ -89,8 +54,22 @@ REM echo [4b] Re-harvesting COSECServiceDlls.wxs...
          -var var.COSECSourceDir ^
          -out COSECServiceDlls.wxs 
 REM echo [4b] Done. Open COSECServiceDlls.wxs and remove COSEC-demo.exe
-REM echo      and appsettings.json entries if heat included them, then press any key.
-REM pause
+
+
+REM ── STEP 6: HEAT MatPoll ───────────────────────────────────────────────
+echo [6/9] Harvesting MatPoll files...
+mkdir SourceFiles\MATPOLL 2>nul
+    "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir "SourceFiles\MATPOLL" ^
+        -nologo -sfrag -srd -sreg -gg ^
+        -cg MatPollFiles ^
+        -dr MATPOLLFOLDER ^
+        -var var.SourceDir ^
+        -out MatPollFiles.wxs
+if errorlevel 1 ( echo FAILED step 6 & pause & exit /b 1 )
+REM  AFTER running heat: open MatPollFiles.wxs and REMOVE the Component +
+REM  ComponentRef for these files:
+REM      appsettings.json (written ONLY by the custom action with encryption)
+REM      MatPoll.exe      (managed in MatPollService.wxs to install the Windows Service)
 
 
 REM =============================================================================
@@ -105,7 +84,9 @@ REM echo [5/9] Building ConfigCrypto...
      "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" ^
         ConfigCrypto\ConfigCrypto.csproj ^
         /p:Configuration=Release ^
-        /p:TargetFramework=net472
+        /p:Platform=x64 ^
+        /p:TargetFramework=net472 ^
+        /t:Restore;Build
 
 
 REM =============================================================================
@@ -119,8 +100,9 @@ REM [IF CHANGED] - uncomment:
 REM echo [6/9] Building CustomActions DLL...
      "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe" ^
          CustomActions\CustomActions.csproj ^
-         /p:Configuration=Release ^
-         /p:Platform=x64
+        /p:Configuration=Release ^
+        /p:Platform=x64 ^
+        /t:Restore;Build
 
 
 REM =============================================================================
@@ -135,42 +117,19 @@ REM    Arg 2: SfxCA.dll    → WiX self-extractor stub
 REM    Arg 3: Your DLL     → CustomActions.dll
 REM    Arg 4: DTF DLL      → Microsoft.Deployment.WindowsInstaller.dll
 REM    Arg 5: Crypto DLL   → ConfigCrypto.dll  (NEW — added for encryption)
+REM    Arg 6: Config       → CustomAction.config (Fixes BadImageFormatException)
 REM =============================================================================
+
 
 REM [IF CHANGED] - uncomment:
 REM echo [7/9] Wrapping with MakeSfxCA...
      "C:\Program Files (x86)\WiX Toolset v3.14\sdk\MakeSfxCA.exe" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.CA.dll" ^
-        "C:\Program Files (x86)\WiX Toolset v3.14\sdk\x64\SfxCA.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.dll" ^
-        "C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\ConfigCrypto.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Text.Json.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Text.Encodings.Web.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Memory.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Buffers.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Runtime.CompilerServices.Unsafe.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Numerics.Vectors.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.Threading.Tasks.Extensions.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\System.IO.Pipelines.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Bcl.AsyncInterfaces.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.Primitives.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.Configuration.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.Configuration.Abstractions.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.Configuration.FileExtensions.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.Configuration.Json.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.FileProviders.Abstractions.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.FileProviders.Physical.dll" ^
-        "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\Microsoft.Extensions.FileSystemGlobbing.dll"
-
-REM heat command for matpoll server
-    "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir ^
-      "SourceFiles\MATPOLL" ^
-      -nologo -sfrag -srd -sreg -gg ^
-      -cg MatPollFiles ^
-      -dr INSTALLFOLDER ^
-      -var var.SourceDir ^
-      -out MatPollFiles.wxs
+      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.CA.dll" ^
+      "C:\Program Files (x86)\WiX Toolset v3.14\sdk\x64\SfxCA.dll" ^
+      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.dll" ^
+      "C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll" ^
+      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\ConfigCrypto.dll" ^
+      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\CustomAction.config"
 
 REM =============================================================================
 REM  STEP 8 — WiX CANDLE (Compile .wxs to .wixobj)                     [ALWAYS]
