@@ -65,22 +65,6 @@ if exist SourceFiles\COSEC\ (
 
 
 REM =============================================================================
-REM  3 — Published MatPoll backend
-REM =============================================================================
-
-echo [3] Cleaning SourceFiles\MATPOLL\...
-
-if exist SourceFiles\MATPOLL\ (
-    rd /s /q SourceFiles\MATPOLL
-    mkdir SourceFiles\MATPOLL
-    echo     Done.
-) else (
-    mkdir SourceFiles\MATPOLL
-    echo     Created empty SourceFiles\MATPOLL\
-)
-
-
-REM =============================================================================
 REM  4 — Published Angular frontend
 REM =============================================================================
 

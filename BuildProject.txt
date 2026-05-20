@@ -17,8 +17,7 @@ REM  Output goes to D:\COSEC-demo\Publish\Backend\
 REM =============================================================================
 
 echo [1/9] Publishing COSEC backend...
-dotnet publish .\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\COSEC\ 
-dotnet publish .\MatPoll.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\MATPOLL\
+dotnet publish D:\COSEC-demo\backend\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\COSEC\ 
 ng build --configuration production
 
 
@@ -55,21 +54,6 @@ REM echo  Re-harvesting COSECServiceDlls.wxs...
          -out COSECServiceDlls.wxs 
 REM echo [4b] Done. Open COSECServiceDlls.wxs and remove COSEC-demo.exe and appsettings.json
 
-
-REM ── STEP 6: HEAT MatPoll ───────────────────────────────────────────────
-echo [6/9] Harvesting MatPoll files...
-mkdir SourceFiles\MATPOLL 2>nul
-    "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir "SourceFiles\MATPOLL" ^
-        -nologo -sfrag -srd -sreg -gg ^
-        -cg MatPollFiles ^
-        -dr MATPOLLFOLDER ^
-        -var var.SourceDir ^
-        -out MatPollFiles.wxs
-if errorlevel 1 ( echo FAILED step 6 & pause & exit /b 1 )
-REM  AFTER running heat: open MatPollFiles.wxs and REMOVE the Component +
-REM  ComponentRef for these files:
-REM      appsettings.json (written ONLY by the custom action with encryption)
-REM      MatPoll.exe      (managed in MatPollService.wxs to install the Windows Service)
 
 
 REM =============================================================================
