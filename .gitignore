@@ -37,9 +37,7 @@ MatPollClient/.angular/
 backend/bin/
 backend/obj/
 backend/logs/
-MatPoll/bin/
-MatPoll/obj/
-MatPoll/logs/
+backend/MatPoll/logs/
 DeviceClient/bin/
 DeviceClient/obj/
 DeviceClient/logs/
@@ -55,6 +53,7 @@ Installer/bin/
 Installer/obj/
 Installer/MatPollInstaller/bin/
 Installer/MatPollInstaller/obj/
+Installer/MatPollInstaller/SourceFiles/
 *.msi
 *.cab
 *.wixpdb
