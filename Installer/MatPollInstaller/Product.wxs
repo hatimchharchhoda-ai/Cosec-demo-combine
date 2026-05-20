@@ -1,11 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <Product Id="*"
-           Name="MatPoll System"
+           Name="Matrix Integrator"
            Language="1033"
            Version="1.0.0.0"
-           Manufacturer="MatPollInstaller"
+           Manufacturer="MatInt"
            UpgradeCode="A395DCB3-A767-4FAB-A65C-94FF30DAF379">
 
     <Package InstallerVersion="500"
@@ -22,13 +22,13 @@
 
     <UI>
       <DialogRef Id="DatabaseSettingsDlg" />
+      <DialogRef Id="MyLicenseDlg" />
 
-      <!-- License -> Database -->
-      <Publish Dialog="LicenseAgreementDlg"
+      <Publish Dialog="WelcomeDlg"
                Control="Next"
                Event="NewDialog"
-               Value="DatabaseSettingsDlg"
-               Order="3">LicenseAccepted = "1"</Publish>
+               Value="MyLicenseDlg"
+               Order="2">1</Publish>
 
       <!-- Back from InstallDir -> Database -->
       <Publish Dialog="InstallDirDlg"
@@ -38,7 +38,7 @@
                Order="1">1</Publish>
     </UI>
 
-    <Feature Id="MainFeature" Title="MatPoll" Level="1">
+    <Feature Id="MainFeature" Title="Matrix Integrator" Level="1">
       <ComponentGroupRef Id="MatPollFiles" />
       <ComponentGroupRef Id="MatPollServiceFiles" />
       <ComponentGroupRef Id="COSECServiceFiles" />

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ConfigCrypto\ConfigCrypto.Installer.csproj" />
+    <None Include="CustomAction.config" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="MakeSfxCA" AfterTargets="Build">
@@ -29,6 +30,11 @@
       <SfxDll>$(WixSdkDir)x64\sfxca.dll</SfxDll>
     </PropertyGroup>
 
+    <ItemGroup>
+      <CAFilesToCopy Include="$(TargetDir)*.dll;$(TargetDir)*.pdb;$(TargetDir)*.config" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CAFilesToCopy)" DestinationFolder="$(OutDir)" />
+
     <Error Condition="!Exists('$(SfxInput)')"
            Text="CustomActions.dll not found at: $(SfxInput)" />
     <Error Condition="!Exists('$(ConfigCryptoDll)')"
@@ -37,8 +43,10 @@
            Text="SfxCA.dll not found at: $(SfxDll)" />
     <Error Condition="!Exists('$(WixInstallerDll)')"
            Text="Microsoft.Deployment.WindowsInstaller.dll not found at: $(WixInstallerDll)" />
+    <Error Condition="!Exists('$(OutDir)CustomAction.config')"
+           Text="CustomAction.config not found at: $(OutDir)CustomAction.config" />
 
-    <Exec Command="&quot;$(WixSdkDir)MakeSfxCA.exe&quot; &quot;$(SfxOutput)&quot; &quot;$(SfxDll)&quot; &quot;$(SfxInput)&quot; &quot;$(WixInstallerDll)&quot; &quot;$(ConfigCryptoDll)&quot;"
+    <Exec Command="&quot;$(WixSdkDir)MakeSfxCA.exe&quot; &quot;$(SfxOutput)&quot; &quot;$(SfxDll)&quot; &quot;$(SfxInput)&quot; &quot;$(WixInstallerDll)&quot; &quot;$(ConfigCryptoDll)&quot; &quot;$(OutDir)CustomAction.config&quot;"
           ConsoleToMSBuild="true" />
   </Target>
 

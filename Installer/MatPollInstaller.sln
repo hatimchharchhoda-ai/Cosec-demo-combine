@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.37111.16 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "MatPollInstaller", "MatPollInstaller\MatPollInstaller.wixproj", "{35B04D6F-7960-43DD-9139-ED60C2C85F2B}"
+Project("{B7DD6F7E-DEF8-4E67-B5B7-07EF123DB6F0}") = "MatInt", "MatPollInstaller\MatPollInstaller.wixproj", "{35B04D6F-7960-43DD-9139-ED60C2C85F2B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

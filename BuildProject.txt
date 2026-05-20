@@ -53,7 +53,7 @@ REM echo  Re-harvesting COSECServiceDlls.wxs...
          -dr COSECFOLDER ^
          -var var.COSECSourceDir ^
          -out COSECServiceDlls.wxs 
-REM echo [4b] Done. Open COSECServiceDlls.wxs and remove COSEC-demo.exe
+REM echo [4b] Done. Open COSECServiceDlls.wxs and remove COSEC-demo.exe and appsettings.json
 
 
 REM ── STEP 6: HEAT MatPoll ───────────────────────────────────────────────
@@ -150,6 +150,7 @@ echo [8/9] Running WiX Candle...
     -dCustomActionsDir="CustomActions\bin\x64\Release\net472" ^
     Product.wxs ^
     DatabaseSettingsDlg.wxs ^
+    MyLicenseDlg.wxs ^
     CustomActionsRef.wxs ^
     COSECService.wxs ^
     COSECServiceDlls.wxs ^
@@ -172,6 +173,7 @@ echo [9/9] Running WiX Light...
 "C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe" ^
     Product.wixobj ^
     DatabaseSettingsDlg.wixobj ^
+    MyLicenseDlg.wixobj ^
     CustomActionsRef.wixobj ^
     COSECService.wixobj ^
     COSECServiceDlls.wixobj ^

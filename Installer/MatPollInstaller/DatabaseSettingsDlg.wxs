@@ -1,13 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
 
     <UI>
       <UIRef Id="WixUI_Common" />
+
       <Dialog Id="DatabaseSettingsDlg"
-              Width="370" Height="420"
+              Width="370" Height="270"
               Title="[ProductName] – Database Settings">
 
+        <!-- Banner -->
         <Control Id="BannerBitmap" Type="Bitmap"
                  X="0" Y="0" Width="370" Height="44"
                  TabSkip="yes" Text="WixUI_Bmp_Banner" />
@@ -15,61 +17,131 @@
         <Control Id="BannerLine" Type="Line"
                  X="0" Y="44" Width="370" Height="0" />
 
+        <!-- Title -->
         <Control Id="DlgTitle" Type="Text"
                  X="15" Y="6" Width="300" Height="15"
                  Transparent="yes" NoPrefix="yes">
           <Text>{\WixUI_Font_Title}Database Configuration</Text>
         </Control>
 
-        <!-- Inputs -->
+        <Control Id="DlgDesc" Type="Text"
+                 X="25" Y="23" Width="280" Height="15"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>Enter the database connection details below.</Text>
+        </Control>
+
+        <!-- Bottom separator line -->
+        <Control Id="BottomLine" Type="Line"
+                 X="0" Y="228" Width="370" Height="0" />
+
+        <!-- ── LABELS ── -->
+        <Control Id="DbServerLabel" Type="Text"
+                 X="25" Y="73" Width="100" Height="17"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>Server\Instance:</Text>
+        </Control>
+
+        <Control Id="DbNameLabel" Type="Text"
+                 X="25" Y="103" Width="100" Height="17"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>Database Name:</Text>
+        </Control>
+
+        <Control Id="DbUserLabel" Type="Text"
+                 X="25" Y="133" Width="100" Height="17"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>Username:</Text>
+        </Control>
+
+        <Control Id="DbPasswordLabel" Type="Text"
+                 X="25" Y="163" Width="100" Height="17"
+                 Transparent="yes" NoPrefix="yes">
+          <Text>Password:</Text>
+        </Control>
+
+        <!-- ── INPUTS ── -->
         <Control Id="DbServerEdit" Type="Edit"
-                 X="130" Y="70" Width="200" Height="18"
+                 X="130" Y="70" Width="210" Height="18"
                  Property="DB_SERVER" />
 
         <Control Id="DbNameEdit" Type="Edit"
-                 X="130" Y="100" Width="200" Height="18"
+                 X="130" Y="100" Width="210" Height="18"
                  Property="DB_NAME" />
 
         <Control Id="DbUserEdit" Type="Edit"
-                 X="130" Y="130" Width="200" Height="18"
+                 X="130" Y="130" Width="210" Height="18"
                  Property="DB_USER" />
 
         <Control Id="DbPasswordEdit" Type="Edit"
-                 X="130" Y="160" Width="200" Height="18"
+                 X="130" Y="160" Width="210" Height="18"
                  Property="DB_PASSWORD"
                  Password="yes" />
 
-        <!-- BACK -->
+        <!-- ── BUTTONS ── -->
         <Control Id="Back" Type="PushButton"
-                 X="180" Y="240" Width="56" Height="17"
+                 X="180" Y="243" Width="56" Height="17"
                  Text="Back">
-          <Publish Event="NewDialog" Value="LicenseAgreementDlg">1</Publish>
+          <Publish Event="NewDialog" Value="MyLicenseDlg">1</Publish>
         </Control>
 
-        <!-- NEXT -->
         <Control Id="Next" Type="PushButton"
-                 X="240" Y="240" Width="56" Height="17"
+                 X="240" Y="243" Width="56" Height="17"
                  Default="yes"
                  Text="Next">
-          <Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+          <!-- FIX: Validate all fields are filled before allowing Next -->
+          <Publish Event="NewDialog" Value="InstallDirDlg">
+            DB_SERVER AND DB_NAME AND DB_USER AND DB_PASSWORD
+          </Publish>
         </Control>
 
-        <!-- CANCEL -->
         <Control Id="Cancel" Type="PushButton"
-                 X="300" Y="240" Width="56" Height="17"
+                 X="300" Y="243" Width="56" Height="17"
                  Cancel="yes"
                  Text="Cancel">
           <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
         </Control>
 
+        <!-- ── VALIDATION ERRORS (shown when Next clicked with empty fields) ── -->
+        <Control Id="DbServerError" Type="Text"
+                 X="130" Y="88" Width="210" Height="12"
+                 Hidden="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Normal}*Server name is required.</Text>
+          <Condition Action="show">NOT DB_SERVER</Condition>
+          <Condition Action="hide">DB_SERVER</Condition>
+        </Control>
+
+        <Control Id="DbNameError" Type="Text"
+                 X="130" Y="118" Width="210" Height="12"
+                 Hidden="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Normal}*Database name is required.</Text>
+          <Condition Action="show">NOT DB_NAME</Condition>
+          <Condition Action="hide">DB_NAME</Condition>
+        </Control>
+
+        <Control Id="DbUserError" Type="Text"
+                 X="130" Y="148" Width="210" Height="12"
+                 Hidden="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Normal}*Username is required.</Text>
+          <Condition Action="show">NOT DB_USER</Condition>
+          <Condition Action="hide">DB_USER</Condition>
+        </Control>
+
+        <Control Id="DbPasswordError" Type="Text"
+                 X="130" Y="178" Width="210" Height="12"
+                 Hidden="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Normal}*Password is required.</Text>
+          <Condition Action="show">NOT DB_PASSWORD</Condition>
+          <Condition Action="hide">DB_PASSWORD</Condition>
+        </Control>
+
       </Dialog>
     </UI>
 
-    <!-- Properties -->
+    <!-- Properties — remove default values for sensitive fields in production -->
     <Property Id="DB_SERVER"   Value="localhost\SQLEXPRESS" Secure="yes" />
-    <Property Id="DB_NAME"     Value="matgen" Secure="yes" />
-    <Property Id="DB_USER"     Value="sa" Secure="yes" />
-    <Property Id="DB_PASSWORD" Value="matrix_1" Secure="yes" />
+    <Property Id="DB_NAME"     Value="matgen"               Secure="yes" />
+    <Property Id="DB_USER"     Value="sa"                   Secure="yes" />
+    <Property Id="DB_PASSWORD"                              Secure="yes" />
 
   </Fragment>
 </Wix>

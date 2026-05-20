@@ -8,16 +8,14 @@
     <ProductVersion>3.10</ProductVersion>
     <ProjectGuid>35b04d6f-7960-43dd-9139-ed60c2c85f2b</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
-    <OutputName>MatPollInstaller</OutputName>
+    <OutputName>MatInt</OutputName>
     <OutputType>Package</OutputType>
 
     <!--
       Point this at the folder that contains CustomActions.CA.dll
       (the MakeSfxCA-wrapped managed CA assembly).
     -->
-    <CustomActionsDir Condition=" '$(CustomActionsDir)' == '' ">
-      $(MSBuildThisFileDirectory)CustomActions\bin\x64\$(Configuration)\net472
-    </CustomActionsDir>
+    <CustomActionsDir Condition=" '$(CustomActionsDir)' == '' ">$(MSBuildThisFileDirectory)CustomActions\bin\x64\$(Configuration)\net472</CustomActionsDir>
   </PropertyGroup>
 
   <!-- ================================================================== -->
@@ -26,6 +24,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <SuppressValidation>true</SuppressValidation>
     <DefineConstants>
       Debug;
       SourceDir=SourceFiles\MATPOLL;
@@ -41,6 +40,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <SuppressValidation>true</SuppressValidation>
     <DefineConstants>
       SourceDir=SourceFiles\MATPOLL;
       COSECSourceDir=SourceFiles\COSEC;
@@ -55,6 +55,7 @@
   <ItemGroup>
     <!-- Core installer pages -->
     <Compile Include="Product.wxs" />
+    <Compile Include="MyLicenseDlg.wxs" />
     <Compile Include="DatabaseSettingsDlg.wxs" />
     <Compile Include="CustomActionsRef.wxs" />
 
