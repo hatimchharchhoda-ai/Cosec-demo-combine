@@ -52,10 +52,16 @@
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
-        <Directory Id="MATPOLLFOLDER" Name="MatPoll" />
-        <Directory Id="COSECFOLDER"   Name="COSEC" />
-        <Directory Id="COSECWEBFOLDER" Name="COSECWeb" />
+        <Directory Id="MATPOLLFOLDER" Name="MATINT Device Server" />
+        <Directory Id="COSECFOLDER"   Name="MATINT Matgen Service" />
+      </Directory>
+
+      <Directory Id="InetpubFolder" Name="inetpub">
+        <Directory Id="WwwrootFolder" Name="wwwroot">
+          <Directory Id="COSECWEBFOLDER" Name="MATINTWeb" />
+        </Directory>
       </Directory>
     </Directory>
+
   </Product>
 </Wix>
