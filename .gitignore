@@ -16,53 +16,31 @@ Thumbs.db
 *.env
 backend/appsettings.Development.json
 backend/appsettings.Production.json
+backend/wwwroot/
+appsettings.json
 
 # =====================
 # FRONTEND (Angular/Node)
 # =====================
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.angular/
-MatPollClient/node_modules/
-MatPollClient/dist/
-MatPollClient/.angular/
+dist/
+.angular/
+.npm/
 
 # =====================
-# BACKEND & SERVICES (.NET)
+# .NET (Backend / Custom Actions / Installer)
 # =====================
-**/bin/
-**/obj/
-**/logs/
-backend/bin/
-backend/obj/
-backend/logs/
-backend/MatPoll/logs/
-DeviceClient/bin/
-DeviceClient/obj/
-DeviceClient/logs/
-MatPollInstaller/CustomActions/bin/
-MatPollInstaller/CustomActions/obj/
-MatPollInstaller/CustomActions/Properties/
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+[Tt]est[Rr]esults/
 
 # =====================
-# INSTALLER & PUBLISH
+# WiX INSTALLER & PUBLISH
 # =====================
 Publish/
-Installer/bin/
-Installer/obj/
-Installer/MatPollInstaller/bin/
-Installer/MatPollInstaller/obj/
-Installer/MatPollInstaller/SourceFiles/
+SourceFiles/
 *.msi
 *.cab
 *.wixpdb
 *.wixobj
-Installer/*.msi
-Installer/*.cab
-Installer/*.wixpdb
-Installer/*.wixobj
-Installer/MatPollInstaller/*.msi
-Installer/MatPollInstaller/*.cab
-Installer/MatPollInstaller/*.wixpdb
-Installer/MatPollInstaller/*.wixobj
