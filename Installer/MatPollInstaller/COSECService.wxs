@@ -12,25 +12,25 @@
               Source="$(var.COSECSourceDir)\COSEC-demo.exe" />
 
         <ServiceInstall
-          Id="COSECService"
+          Id="MATINTService"
           Type="ownProcess"
-          Name="COSECService"
-          DisplayName="COSEC API Service"
-          Description="COSEC Backend REST API on port 5210"
+          Name="MATINTService"
+          DisplayName="MATINT Api Service"
+          Description="MATINT Backend REST API and Server on port 5210"
           Start="auto"
           ErrorControl="normal"
           Account="LocalSystem" />
 
         <ServiceControl
           Id="ControlCOSECService"
-          Name="COSECService"
+          Name="MATINTService"
           Start="install"
           Stop="both"
           Remove="uninstall"
           Wait="yes" />
 
         <util:ServiceConfig
-          ServiceName="COSECService"
+          ServiceName="MATINTService"
           FirstFailureActionType="restart"
           SecondFailureActionType="restart"
           ThirdFailureActionType="none"

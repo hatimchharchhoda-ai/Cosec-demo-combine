@@ -60,8 +60,6 @@
     <Compile Include="CustomActionsRef.wxs" />
 
     <!-- File component groups (unchanged from original) -->
-    <Compile Include="MatPollFiles.wxs" />
-    <Compile Include="MatPollService.wxs" />
     <Compile Include="COSECService.wxs" />
     <Compile Include="COSECServiceDlls.wxs" />
     <Compile Include="COSECWeb.wxs" />

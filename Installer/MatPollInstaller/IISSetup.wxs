@@ -25,7 +25,7 @@
 
         <iis:WebSite
           Id="COSECWebSite"
-          Description="COSEC Frontend"
+          Description="MATINTWeb"
           Directory="COSECWEBFOLDER"
           AutoStart="yes">
 
@@ -36,7 +36,7 @@
 
           <iis:WebApplication
             Id="COSECWebApp"
-            Name="COSEC"
+            Name="MATINT"
             WebAppPool="COSECAppPool" />
 
         </iis:WebSite>

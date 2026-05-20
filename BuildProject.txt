@@ -155,8 +155,6 @@ echo [8/9] Running WiX Candle...
     COSECService.wxs ^
     COSECServiceDlls.wxs ^
     COSECWeb.wxs ^
-    MatPollFiles.wxs ^
-    MatPollService.wxs ^
     IISSetup.wxs ^
     -ext WixIIsExtension ^
     -ext WixUtilExtension ^
@@ -178,8 +176,6 @@ echo [9/9] Running WiX Light...
     COSECService.wixobj ^
     COSECServiceDlls.wixobj ^
     COSECWeb.wixobj ^
-    MatPollFiles.wixobj ^
-    MatPollService.wixobj ^
     IISSetup.wixobj ^
     -ext WixIIsExtension ^
     -ext WixUtilExtension ^

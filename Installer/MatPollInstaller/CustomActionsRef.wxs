@@ -16,7 +16,7 @@
 
     <CustomAction Id="SetWriteAppSettingsData"
                   Property="WriteAppSettings"
-                  Value="COSECFOLDER=[COSECFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];JWT_SECRET=[JWT_SECRET]" />
+                  Value="COSECFOLDER=[COSECFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];JWT_SECRET=[JWT_SECRET];MATPOLL_JWT_KEY1=[MATPOLL_JWT_KEY1];MATPOLL_JWT_KEY2=[MATPOLL_JWT_KEY2];GENETEC_SERVER=[GENETEC_SERVER];GENETEC_PORT=[GENETEC_PORT];GENETEC_USER=[GENETEC_USER];GENETEC_PASSWORD=[GENETEC_PASSWORD];GENETEC_APPID=[GENETEC_APPID]" />
 
     <CustomAction Id="WriteAppSettings"
                   BinaryKey="CustomActBinary"
@@ -36,41 +36,13 @@
                   Return="ignore"
                   Impersonate="no" />
 
-    <CustomAction Id="SetWriteMatPollAppSettingsData"
-              Property="WriteMatPollAppSettings"
-              Value="MATPOLLFOLDER=[MATPOLLFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];MATPOLL_JWT_KEY1=[MATPOLL_JWT_KEY1];MATPOLL_JWT_KEY2=[MATPOLL_JWT_KEY2];GENETEC_SERVER=[GENETEC_SERVER];GENETEC_PORT=[GENETEC_PORT];GENETEC_USER=[GENETEC_USER];GENETEC_PASSWORD=[GENETEC_PASSWORD];GENETEC_APPID=[GENETEC_APPID]" />
-
-    <CustomAction Id="WriteMatPollAppSettings"
-                  BinaryKey="CustomActBinary"
-                  DllEntry="WriteMatPollAppSettings"
-                  Execute="deferred"
-                  Return="check"
-                  Impersonate="no" />
-
-    <CustomAction Id="SetRemoveMatPollAppSettingsData"
-                  Property="RemoveMatPollAppSettings"
-                  Value="MATPOLLFOLDER=[MATPOLLFOLDER]" />
-
-    <CustomAction Id="RemoveMatPollAppSettings"
-                  BinaryKey="CustomActBinary"
-                  DllEntry="RemoveMatPollAppSettings"
-                  Execute="deferred"
-                  Return="ignore"
-                  Impersonate="no" />
-
     <InstallExecuteSequence>
 
       <Custom Action="SetWriteAppSettingsData"
          After="InstallInitialize">NOT REMOVE</Custom>
 
-      <Custom Action="SetWriteMatPollAppSettingsData"
-              After="SetWriteAppSettingsData">NOT REMOVE</Custom>
-
       <Custom Action="WriteAppSettings"
-              After="InstallFiles">NOT REMOVE</Custom>
-
-      <Custom Action="WriteMatPollAppSettings"
-              After="WriteAppSettings">NOT REMOVE</Custom>
+               After="InstallFiles">NOT REMOVE</Custom>
 
       <!-- Uninstall: before RemoveFiles (sequence ~3500) -->
       <Custom Action="SetRemoveAppSettingsData"
@@ -78,12 +50,6 @@
 
       <Custom Action="RemoveAppSettings"
                After="SetRemoveAppSettingsData">REMOVE~="ALL"</Custom>
-
-      <Custom Action="SetRemoveMatPollAppSettingsData"
-               After="RemoveAppSettings">REMOVE~="ALL"</Custom>
-
-      <Custom Action="RemoveMatPollAppSettings"
-               After="SetRemoveMatPollAppSettingsData">REMOVE~="ALL"</Custom>
 
     </InstallExecuteSequence>
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <Product Id="*"
@@ -16,7 +16,7 @@
     <MediaTemplate />
     <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
 
-    <Property Id="WIXUI_INSTALLDIR" Value="MATPOLLFOLDER" />
+    <Property Id="WIXUI_INSTALLDIR" Value="COSECFOLDER" />
 
     <UIRef Id="WixUI_InstallDir" />
 
@@ -39,8 +39,6 @@
     </UI>
 
     <Feature Id="MainFeature" Title="Matrix Integrator" Level="1">
-      <ComponentGroupRef Id="MatPollFiles" />
-      <ComponentGroupRef Id="MatPollServiceFiles" />
       <ComponentGroupRef Id="COSECServiceFiles" />
       <ComponentGroupRef Id="COSECServiceDlls" />
       <ComponentGroupRef Id="COSECWebFiles" />
@@ -48,19 +46,29 @@
     </Feature>
 
     <CustomActionRef Id="WriteAppSettings" />
-    <CustomActionRef Id="WriteMatPollAppSettings" />
+
+    <!-- Read actual IIS wwwroot path from registry -->
+    <Property Id="WWWROOT_DIR">
+      <RegistrySearch Id="IISWwwRoot"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\InetStp"
+                      Name="PathWWWRoot"
+                      Type="raw" />
+    </Property>
+
+    <SetDirectory Id="COSECWEBFOLDER"
+                  Value="[WWWROOT_DIR]\MATINTWeb">
+      WWWROOT_DIR
+    </SetDirectory>
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
-        <Directory Id="MATPOLLFOLDER" Name="MATINT Device Server" />
-        <Directory Id="COSECFOLDER"   Name="MATINT Matgen Service" />
-      </Directory>
-
-      <Directory Id="InetpubFolder" Name="inetpub">
-        <Directory Id="WwwrootFolder" Name="wwwroot">
-          <Directory Id="COSECWEBFOLDER" Name="MATINTWeb" />
+        <Directory Id="MATRIXFOLDER" Name="Matrix">
+          <Directory Id="COSECFOLDER" Name="MATINT Matgen Service" />
         </Directory>
       </Directory>
+
+      <Directory Id="COSECWEBFOLDER" Name="MATINTWeb" />
     </Directory>
 
   </Product>
