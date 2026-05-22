@@ -20,7 +20,6 @@ echo [1/9] Publishing COSEC backend...
 dotnet publish D:\COSEC-demo\backend\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\COSEC\ 
 ng build --configuration production
 
-
 REM =============================================================================
 REM  STEP 4b — RE-HARVEST WITH HEAT                                [IF CHANGED]
 REM
@@ -42,16 +41,29 @@ REM ============================================================================
 REM [IF CHANGED] - uncomment to re-harvest:
 REM echo  Re-harvesting COSECServiceDlls.wxs...
      "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir ^
-         "SourceFiles\COSEC" ^
-         -nologo ^
-         -sfrag ^
-         -srd ^
-         -sreg ^
-         -gg ^
-         -cg COSECServiceDlls ^
-         -dr COSECFOLDER ^
-         -var var.COSECSourceDir ^
-         -out COSECServiceDlls.wxs 
+        "SourceFiles\COSEC" ^
+        -nologo ^
+        -sfrag ^
+        -srd ^
+        -sreg ^
+        -gg ^
+        -cg COSECServiceDlls ^
+        -dr COSECFOLDER ^
+        -var var.COSECSourceDir ^
+        -out COSECServiceDlls.wxs
+
+
+    "C:\Program Files (x86)\WiX Toolset v3.14\bin\heat.exe" dir ^
+        "SourceFiles\COSECWeb" ^
+        -nologo ^
+        -sfrag ^
+        -srd ^
+        -sreg ^
+        -gg ^
+        -cg COSECWebFiles ^
+        -dr COSECWEBFOLDER ^
+        -var var.COSECWebSourceDir ^
+        -out COSECWebFiles.wxs
 REM echo [4b] Done. Open COSECServiceDlls.wxs and remove COSEC-demo.exe and appsettings.json
 
 
@@ -128,17 +140,15 @@ REM ============================================================================
 
 echo [8/9] Running WiX Candle...
 "C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe" -arch x64 ^
-    -dSourceDir="SourceFiles\MATPOLL" ^
     -dCOSECSourceDir="SourceFiles\COSEC" ^
     -dCOSECWebSourceDir="SourceFiles\COSECWeb" ^
     -dCustomActionsDir="CustomActions\bin\x64\Release\net472" ^
     Product.wxs ^
-    DatabaseSettingsDlg.wxs ^
     MyLicenseDlg.wxs ^
     CustomActionsRef.wxs ^
     COSECService.wxs ^
     COSECServiceDlls.wxs ^
-    COSECWeb.wxs ^
+    COSECWebFiles.wxs ^
     IISSetup.wxs ^
     -ext WixIIsExtension ^
     -ext WixUtilExtension ^
@@ -154,12 +164,11 @@ REM ============================================================================
 echo [9/9] Running WiX Light...
 "C:\Program Files (x86)\WiX Toolset v3.14\bin\light.exe" ^
     Product.wixobj ^
-    DatabaseSettingsDlg.wixobj ^
     MyLicenseDlg.wixobj ^
     CustomActionsRef.wixobj ^
     COSECService.wixobj ^
     COSECServiceDlls.wixobj ^
-    COSECWeb.wixobj ^
+    COSECWebFiles.wixobj ^
     IISSetup.wixobj ^
     -ext WixIIsExtension ^
     -ext WixUtilExtension ^

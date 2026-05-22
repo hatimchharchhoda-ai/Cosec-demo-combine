@@ -11,6 +11,8 @@
     <Reference Include="Microsoft.Deployment.WindowsInstaller">
       <HintPath>C:\Program Files (x86)\WiX Toolset v3.14\SDK\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
     </Reference>
+    
+    <Reference Include="System.ServiceProcess" />
   </ItemGroup>
 
   <ItemGroup>

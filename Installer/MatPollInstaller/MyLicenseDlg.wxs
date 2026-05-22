@@ -38,7 +38,7 @@
                  X="240" Y="230" Width="56" Height="17"
                  Default="yes"
                  Text="Next">
-          <Publish Event="NewDialog" Value="DatabaseSettingsDlg">
+          <Publish Event="NewDialog" Value="InstallDirDlg">
             MY_LICENSE_ACCEPTED = "1"
           </Publish>
         </Control>

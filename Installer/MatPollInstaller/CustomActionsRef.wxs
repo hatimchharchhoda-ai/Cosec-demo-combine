@@ -25,13 +25,26 @@
                   Return="check"
                   Impersonate="no" />
 
-    <CustomAction Id="SetRemoveAppSettingsData"
-                  Property="RemoveAppSettings"
+    <!-- Uninstall: stop and delete the service before files are removed -->
+    <CustomAction Id="StopAndRemoveService"
+                  BinaryKey="CustomActBinary"
+                  DllEntry="StopAndRemoveService"
+                  Execute="deferred"
+                  Return="ignore"
+                  Impersonate="no" />
+
+    <!--
+      New CA: deletes everything in COSECFOLDER except appsettings.json,
+      then removes any empty subdirectories. Runs after RemoveFiles so WiX
+      has already cleaned up its own tracked files first.
+    -->
+    <CustomAction Id="SetCleanupFolderData"
+                  Property="CleanupInstallFolder"
                   Value="COSECFOLDER=[COSECFOLDER]" />
 
-    <CustomAction Id="RemoveAppSettings"
+    <CustomAction Id="CleanupInstallFolder"
                   BinaryKey="CustomActBinary"
-                  DllEntry="RemoveAppSettings"
+                  DllEntry="CleanupInstallFolder"
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
@@ -44,12 +57,17 @@
       <Custom Action="WriteAppSettings"
                After="InstallFiles">NOT REMOVE</Custom>
 
-      <!-- Uninstall: before RemoveFiles (sequence ~3500) -->
-      <Custom Action="SetRemoveAppSettingsData"
-               Before="RemoveFiles">REMOVE~="ALL"</Custom>
+      <!-- Uninstall: stop+delete service BEFORE files are removed -->
+      <Custom Action="StopAndRemoveService"
+              Before="RemoveFiles">REMOVE~="ALL"</Custom>
+      
+      <!-- Set data for cleanup CA -->
+      <Custom Action="SetCleanupFolderData"
+               After="StopAndRemoveService">REMOVE~="ALL"</Custom>
 
-      <Custom Action="RemoveAppSettings"
-               After="SetRemoveAppSettingsData">REMOVE~="ALL"</Custom>
+      <!-- Clean folder after WiX removes its own tracked files -->
+      <Custom Action="CleanupInstallFolder"
+               After="RemoveFiles">REMOVE~="ALL"</Custom>
 
     </InstallExecuteSequence>
 

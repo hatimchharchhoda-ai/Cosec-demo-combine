@@ -4,7 +4,7 @@
   <Product Id="*"
            Name="Matrix Integrator"
            Language="1033"
-           Version="1.0.0.0"
+           Version="2.0.0.0"
            Manufacturer="MatInt"
            UpgradeCode="A395DCB3-A767-4FAB-A65C-94FF30DAF379">
 
@@ -14,14 +14,16 @@
              Platform="x64" />
 
     <MediaTemplate />
-    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MajorUpgrade
+      DowngradeErrorMessage="A newer version is already installed."
+      Schedule="afterInstallExecute"
+      AllowSameVersionUpgrades="no" />
 
     <Property Id="WIXUI_INSTALLDIR" Value="COSECFOLDER" />
 
     <UIRef Id="WixUI_InstallDir" />
 
     <UI>
-      <DialogRef Id="DatabaseSettingsDlg" />
       <DialogRef Id="MyLicenseDlg" />
 
       <Publish Dialog="WelcomeDlg"
@@ -30,12 +32,41 @@
                Value="MyLicenseDlg"
                Order="2">1</Publish>
 
-      <!-- Back from InstallDir -> Database -->
+      <!-- Back from InstallDir -> License -->
       <Publish Dialog="InstallDirDlg"
                Control="Back"
                Event="NewDialog"
-               Value="DatabaseSettingsDlg"
+               Value="MyLicenseDlg"
                Order="1">1</Publish>
+
+      <!-- Custom progress messages -->
+      <ProgressText Action="InstallInitialize">Preparing MATINT installation...</ProgressText>
+      <ProgressText Action="InstallFinalize">Finalizing MATINT installation...</ProgressText>
+
+      <ProgressText Action="InstallFiles">Copying MATINT application files...</ProgressText>
+      <ProgressText Action="RemoveFiles">Removing MATINT application files...</ProgressText>
+      <ProgressText Action="RemoveExistingProducts">Removing previous version of Matrix Integrator...</ProgressText>
+
+      <ProgressText Action="InstallServices">Registering MATINT API Service...</ProgressText>
+      <ProgressText Action="StartServices">Starting MATINT API Service...</ProgressText>
+      <ProgressText Action="StopServices">Stopping MATINT API Service...</ProgressText>
+      <ProgressText Action="DeleteServices">Unregistering MATINT API Service...</ProgressText>
+
+      <ProgressText Action="WriteRegistryValues">Writing configuration to registry...</ProgressText>
+      <ProgressText Action="RemoveRegistryValues">Removing registry configuration...</ProgressText>
+
+      <ProgressText Action="CreateFolders">Creating required directories...</ProgressText>
+      <ProgressText Action="RemoveFolders">Cleaning up directories...</ProgressText>
+
+      <ProgressText Action="WriteIniValues">Writing application settings...</ProgressText>
+      <ProgressText Action="SelfRegModules">Registering application components...</ProgressText>
+      <ProgressText Action="CreateShortcuts">Creating shortcuts...</ProgressText>
+      <ProgressText Action="RollbackCleanup">Rolling back changes...</ProgressText>
+
+      <ProgressText Action="WriteMetabaseValues">Setting up IIS application pool and website...</ProgressText>
+      
+      <!-- Custom actions -->
+      <ProgressText Action="WriteAppSettings">Configuring appsettings.json...</ProgressText>
     </UI>
 
     <Feature Id="MainFeature" Title="Matrix Integrator" Level="1">

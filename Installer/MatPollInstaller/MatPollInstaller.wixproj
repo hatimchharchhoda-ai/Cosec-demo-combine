@@ -27,7 +27,6 @@
     <SuppressValidation>true</SuppressValidation>
     <DefineConstants>
       Debug;
-      SourceDir=SourceFiles\MATPOLL;
       COSECSourceDir=SourceFiles\COSEC;
       COSECWebSourceDir=SourceFiles\COSECWeb;
       CustomActionsDir=$(CustomActionsDir)
@@ -42,7 +41,6 @@
     <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
     <SuppressValidation>true</SuppressValidation>
     <DefineConstants>
-      SourceDir=SourceFiles\MATPOLL;
       COSECSourceDir=SourceFiles\COSEC;
       COSECWebSourceDir=SourceFiles\COSECWeb;
       CustomActionsDir=$(CustomActionsDir)
@@ -56,7 +54,6 @@
     <!-- Core installer pages -->
     <Compile Include="Product.wxs" />
     <Compile Include="MyLicenseDlg.wxs" />
-    <Compile Include="DatabaseSettingsDlg.wxs" />
     <Compile Include="CustomActionsRef.wxs" />
 
     <!-- File component groups (unchanged from original) -->

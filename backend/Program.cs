@@ -34,7 +34,7 @@ namespace COSEC_demo
                 "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}";
 
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
+            .MinimumLevel.Debug()   
                 .MinimumLevel.Override("Microsoft",                     LogEventLevel.Fatal)
                 .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Fatal)
                 .MinimumLevel.Override("Microsoft.AspNetCore",          LogEventLevel.Fatal)
@@ -102,6 +102,11 @@ namespace COSEC_demo
             // DECRYPT CONFIG (must come BEFORE anything reads config)
             builder.Configuration.DecryptEncryptedValues();
 
+            var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+            bool isDbConfigured = !string.IsNullOrWhiteSpace(defaultConnection) && 
+                                  !defaultConnection.Contains("Server=;") && 
+                                  !defaultConnection.Contains("Database=;");
+
             // ── Database Contexts ────────────────────────────────────────────────────────
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(
@@ -125,13 +130,17 @@ namespace COSEC_demo
             builder.Services.AddScoped<MatPoll.Repositories.AppRepository>();
             builder.Services.AddSingleton<MatPoll.Services.TokenService>();
             builder.Services.AddSingleton<MatPoll.Services.ActivityLogger>();
-            builder.Services.AddHostedService<MatPoll.Services.StallRecoveryService>();
-            builder.Services.AddHostedService<MatPoll.Services.DeviceStatusService>();
-            builder.Services.AddHostedService<MatPoll.Services.CommTrnRefillService>();
             builder.Services.AddSingleton<MatPoll.Services.MetricsService>();
-            builder.Services.AddHostedService(p => p.GetRequiredService<MatPoll.Services.MetricsService>());
             builder.Services.AddSingleton<MatPoll.Services.GenetecSyncService>();
-            builder.Services.AddHostedService(p => p.GetRequiredService<MatPoll.Services.GenetecSyncService>());
+
+            if (isDbConfigured)
+            {
+                builder.Services.AddHostedService<MatPoll.Services.StallRecoveryService>();
+                builder.Services.AddHostedService<MatPoll.Services.DeviceStatusService>();
+                builder.Services.AddHostedService<MatPoll.Services.CommTrnRefillService>();
+                builder.Services.AddHostedService(p => p.GetRequiredService<MatPoll.Services.MetricsService>());
+                builder.Services.AddHostedService(p => p.GetRequiredService<MatPoll.Services.GenetecSyncService>());
+            }
 
             builder.Services.AddControllers(options =>
             {
@@ -146,11 +155,14 @@ namespace COSEC_demo
                 opt.EnableForHttps = true; 
             });
 
-            builder.Services.AddHealthChecks()
-                .AddSqlServer(
+            var healthChecks = builder.Services.AddHealthChecks();
+            if (isDbConfigured)
+            {
+                healthChecks.AddSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection")!,
                     name:    "database",
                     failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy);
+            }
 
             // ── CORS Policy ──────────────────────────────────────────────────────────────
             builder.Services.AddCors(options =>
@@ -306,10 +318,20 @@ namespace COSEC_demo
             var app = builder.Build();
 
             // ── DB Warmup for MatPoll ─────────────────────────────────────────────────────
-            using (var scope = app.Services.CreateScope())
+            if (isDbConfigured)
             {
-                var db = scope.ServiceProvider.GetRequiredService<MatPoll.Data.MatPollDbContext>();
-                db.Database.ExecuteSqlRaw("SELECT 1");
+                using (var scope = app.Services.CreateScope())
+                {
+                    try
+                    {
+                        var db = scope.ServiceProvider.GetRequiredService<MatPoll.Data.MatPollDbContext>();
+                        db.Database.ExecuteSqlRaw("SELECT 1");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"DB Warmup failed: {ex.Message}");
+                    }
+                }
             }
 
             // ── Global Exception Handler for MatPoll ──────────────────────────────────────
@@ -353,20 +375,23 @@ namespace COSEC_demo
             app.MapFallbackToFile("index.html");
 
             // Startup migrations for original DbContext
-            using (var scope = app.Services.CreateScope())
+            if (isDbConfigured)
             {
-                var logger = scope.ServiceProvider
-                    .GetRequiredService<ILogger<Program>>();
-                try
+                using (var scope = app.Services.CreateScope())
                 {
-                    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                    db.Database.Migrate();
-                    logger.LogInformation("Database migration applied successfully.");
-                }
-                catch (Exception ex)
-                {
-                    logger.LogError(ex, "Database migration failed. " +
-                        "Check your connection string and SQL Server availability.");
+                    var logger = scope.ServiceProvider
+                        .GetRequiredService<ILogger<Program>>();
+                    try
+                    {
+                        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        db.Database.Migrate();
+                        logger.LogInformation("Database migration applied successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "Database migration failed. " +
+                            "Check your connection string and SQL Server availability.");
+                    }
                 }
             }
 

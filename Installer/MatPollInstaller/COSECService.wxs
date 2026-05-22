@@ -25,10 +25,10 @@
           Id="ControlCOSECService"
           Name="MATINTService"
           Start="install"
-          Stop="both"
+          Stop="uninstall"
           Remove="uninstall"
           Wait="yes" />
-
+        
         <util:ServiceConfig
           ServiceName="MATINTService"
           FirstFailureActionType="restart"
@@ -37,12 +37,24 @@
           RestartServiceDelayInSeconds="10" />
       </Component>
 
+      <!-- NeverOverwrite="yes" = if this file already exists on disk, installer will NEVER replace it, even during a major upgrade/reinstall. -->
+      <Component Id="cmpAppSettings"
+           Guid="{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
+           Win64="yes"
+           Permanent="yes"
+           NeverOverwrite="yes">
+        <File Id="filAppSettings"
+              KeyPath="yes"
+              Source="$(var.COSECSourceDir)\appsettings.json" />
+      </Component>
+
     </DirectoryRef>
   </Fragment>
 
   <Fragment>
     <ComponentGroup Id="COSECServiceFiles">
       <ComponentRef Id="cmpCOSECExe" />
+      <ComponentRef Id="cmpAppSettings" />
     </ComponentGroup>
   </Fragment>
 </Wix>
