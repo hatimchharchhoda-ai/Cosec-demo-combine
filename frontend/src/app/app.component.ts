@@ -130,35 +130,32 @@ import { ApiServiceService } from './services/api/api-service.service';
   styles: [`
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :host { display: block; }
-    .shell { min-height: 100vh; background: #edeef0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+    .shell { min-height: 100vh; background: #f5f5f5; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
 
     .topnav {
       display: flex; align-items: center; height: 58px; padding: 0 1.75rem;
-      background: #f2f2f5; border-bottom: 1px solid #161d2a;
+      background: #ffffff; border-bottom: 1px solid #dcdcdc;
       position: sticky; top: 0; z-index: 200; gap: 1.5rem;
     }
     .nav-links { display: flex; gap: 4px; flex: 1; }
-    .nav-links a { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 7px; color: #64748b; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: all 0.15s; border: 1px solid transparent; }
-    .nav-links a:hover { color: #1e293b; background: #f9fafc; }
-    .nav-links a.active { color: #38bdf8; background: rgba(30, 41, 59, 0.05); border-color: rgba(30, 41, 59, 0.1); }
+    .nav-links a { display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 6px; color: #666; text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: all 0.15s; border: 1px solid transparent; }
+    .nav-links a:hover { color: #1a1a1a; background: #f2f2f2; }
+    .nav-links a.active { color: #1e293b; background: #eeeeee; border-color: #dcdcdc; }
 
-    /* ── STUNNING GLASSMORPHIC OVERLAY ── */
+    /* ── OVERLAY ── */
     .config-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: radial-gradient(circle at center, #1e293b, #0f172a);
+      background: #f5f5f5;
       display: flex; align-items: center; justify-content: center;
       z-index: 9999; padding: 1.5rem;
     }
 
     .config-card {
       width: 100%; max-width: 480px;
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-radius: 8px;
       padding: 2.5rem 2rem;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
       animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
@@ -168,23 +165,22 @@ import { ApiServiceService } from './services/api/api-service.service';
 
     .logo-accent {
       width: 52px; height: 52px;
-      background: linear-gradient(135deg, #38bdf8, #0284c7);
-      border-radius: 14px;
+      background: #1e293b;
+      border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 1.25rem;
-      box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
     }
-    
+
     .logo-symbol {
       color: #ffffff; font-size: 1.6rem; font-weight: bold;
     }
 
     .config-header h2 {
-      color: #f8fafc; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0.5rem;
+      color: #1a1a1a; font-size: 1.75rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0.5rem;
     }
 
     .subtitle {
-      color: #94a3b8; font-size: 0.9rem; line-height: 1.4;
+      color: #666; font-size: 0.9rem; line-height: 1.4;
     }
 
     .form-container {
@@ -196,48 +192,48 @@ import { ApiServiceService } from './services/api/api-service.service';
     }
 
     .input-group label {
-      color: #cbd5e1; font-size: 0.825rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+      color: #444; font-size: 0.825rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
     }
 
     .input-group input {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
+      background: #fafafa;
+      border: 1px solid #dcdcdc;
+      border-radius: 6px;
       padding: 0.75rem 1rem;
-      color: #f8fafc;
+      color: #1a1a1a;
       font-size: 0.95rem;
       transition: all 0.2s ease;
     }
 
     .input-group input::placeholder {
-      color: #475569;
+      color: #aaa;
     }
 
     .input-group input:focus {
-      outline: none; border-color: #38bdf8;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-      background: rgba(15, 23, 42, 0.6);
+      outline: none; border-color: #1e293b;
+      box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.08);
+      background: #ffffff;
     }
 
     /* ── ALERT BOX ── */
     .alert-info {
-      background: rgba(56, 189, 248, 0.1);
-      border-left: 4px solid #38bdf8;
-      border-radius: 8px;
+      background: #fafafa;
+      border-left: 4px solid #1e293b;
+      border-radius: 4px;
       padding: 1rem;
-      display: flex; gap: 0.75rem; color: #bae6fd; font-size: 0.85rem; line-height: 1.4;
+      display: flex; gap: 0.75rem; color: #555; font-size: 0.85rem; line-height: 1.4;
     }
     .alert-info strong {
-      display: block; font-weight: 600; margin-bottom: 0.25rem; color: #f8fafc;
+      display: block; font-weight: 600; margin-bottom: 0.25rem; color: #1a1a1a;
     }
 
     /* ── ERROR MESSAGE ── */
     .error-msg {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      color: #fca5a5;
+      background: #fff3f3;
+      border: 1px solid #f5c6c6;
+      color: #c0392b;
       padding: 0.75rem 1rem;
-      border-radius: 10px;
+      border-radius: 6px;
       font-size: 0.85rem;
       display: flex; align-items: center; gap: 0.5rem;
       line-height: 1.4;
@@ -246,27 +242,25 @@ import { ApiServiceService } from './services/api/api-service.service';
 
     /* ── BUTTONS ── */
     .btn-primary {
-      background: linear-gradient(135deg, #38bdf8, #0284c7);
+      background: #1e293b;
       color: #ffffff;
       border: none;
-      border-radius: 10px;
+      border-radius: 6px;
       padding: 0.85rem;
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 0.5rem;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #0ea5e9, #0369a1);
+      background: #111827;
       transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
     }
 
     .btn-primary:disabled {
-      opacity: 0.6; cursor: not-allowed;
+      opacity: 0.5; cursor: not-allowed;
     }
 
     .btn-row {
@@ -275,10 +269,10 @@ import { ApiServiceService } from './services/api/api-service.service';
 
     .btn-secondary {
       flex: 1;
-      background: rgba(15, 23, 42, 0.4);
-      color: #94a3b8;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
+      background: #fafafa;
+      color: #555;
+      border: 1px solid #dcdcdc;
+      border-radius: 6px;
       padding: 0.85rem;
       font-weight: 600;
       cursor: pointer;
@@ -286,8 +280,8 @@ import { ApiServiceService } from './services/api/api-service.service';
     }
 
     .btn-secondary:hover:not(:disabled) {
-      background: rgba(15, 23, 42, 0.6);
-      color: #cbd5e1;
+      background: #eeeeee;
+      color: #1a1a1a;
     }
 
     .btn-primary {
@@ -304,17 +298,17 @@ import { ApiServiceService } from './services/api/api-service.service';
     }
 
     .config-card h3 {
-      color: #f8fafc; font-size: 1.3rem; font-weight: 600; margin-bottom: 1.25rem;
+      color: #1a1a1a; font-size: 1.3rem; font-weight: 600; margin-bottom: 1.25rem;
     }
 
     .loading-subtext {
-      color: #94a3b8; font-size: 0.85rem;
+      color: #666; font-size: 0.85rem;
     }
 
     /* ── PROGRESS BAR ANIMATION ── */
     .progress-bar {
       height: 6px; width: 100%;
-      background-color: rgba(255, 255, 255, 0.08);
+      background-color: #eeeeee;
       border-radius: 3px;
       overflow: hidden;
       margin: 1.5rem 0;
@@ -322,7 +316,7 @@ import { ApiServiceService } from './services/api/api-service.service';
 
     .progress-bar-value {
       width: 100%; height: 100%;
-      background-color: #38bdf8;
+      background-color: #1e293b;
       animation: indeterminate 2s infinite linear;
       transform-origin: 0% 50%;
     }
@@ -330,7 +324,7 @@ import { ApiServiceService } from './services/api/api-service.service';
     /* ── SPINNER ── */
     .spinner {
       width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
+      border: 2px solid rgba(255,255,255,0.4);
       border-radius: 50%;
       border-top-color: #fff;
       animation: spin 0.8s infinite linear;
@@ -341,9 +335,9 @@ import { ApiServiceService } from './services/api/api-service.service';
     }
 
     @keyframes indeterminate {
-      0% { transform:  translateX(0) scaleX(0); }
-      40% { transform:  translateX(0) scaleX(0.4); }
-      100% { transform:  translateX(100%) scaleX(0.5); }
+      0% { transform: translateX(0) scaleX(0); }
+      40% { transform: translateX(0) scaleX(0.4); }
+      100% { transform: translateX(100%) scaleX(0.5); }
     }
 
     @keyframes fadeIn {
