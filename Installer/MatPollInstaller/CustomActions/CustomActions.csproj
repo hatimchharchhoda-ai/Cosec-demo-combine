@@ -23,7 +23,7 @@
   <Target Name="MakeSfxCA" AfterTargets="Build">
     <PropertyGroup>
       <WixSdkDir>C:\Program Files (x86)\WiX Toolset v3.14\SDK\</WixSdkDir>
-      <OutDir>$(MSBuildProjectDirectory)\bin\x64\Release\net472\</OutDir>
+      <OutDir>$(MSBuildProjectDirectory)\bin\x64\$(Configuration)\net472\</OutDir>
       <SfxOutput>$(OutDir)CustomActions.CA.dll</SfxOutput>
       <SfxInput>$(OutDir)CustomActions.dll</SfxInput>
       <ConfigCryptoDll>$(OutDir)ConfigCrypto.dll</ConfigCryptoDll>

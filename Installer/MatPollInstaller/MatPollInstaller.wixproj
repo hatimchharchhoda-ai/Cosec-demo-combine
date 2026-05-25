@@ -6,10 +6,11 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Release</Configuration>
     <Platform       Condition=" '$(Platform)'       == '' ">x86</Platform>
     <ProductVersion>3.10</ProductVersion>
-    <ProjectGuid>35b04d6f-7960-43dd-9139-ed60c2c85f2b</ProjectGuid>
+    <ProjectGuid>{35B04D6F-7960-43DD-9139-ED60C2C85F2B}</ProjectGuid>
     <SchemaVersion>2.0</SchemaVersion>
     <OutputName>MatInt</OutputName>
     <OutputType>Package</OutputType>
+    <DefineSolutionProperties>false</DefineSolutionProperties>
 
     <!--
       Point this at the folder that contains CustomActions.CA.dll
@@ -59,7 +60,7 @@
     <!-- File component groups (unchanged from original) -->
     <Compile Include="COSECService.wxs" />
     <Compile Include="COSECServiceDlls.wxs" />
-    <Compile Include="COSECWeb.wxs" />
+    <Compile Include="COSECWebFiles.wxs" />
     <Compile Include="IISSetup.wxs" />
   </ItemGroup>
 
@@ -78,6 +79,7 @@
   <ItemGroup>
     <ProjectReference Include="CustomActions\CustomActions.csproj">
       <Name>CustomActions</Name>
+      <Project>{74734530-67EE-4F9B-8B1D-B514F12F9AB6}</Project>
       <Private>true</Private>
       <DoNotHarvest>true</DoNotHarvest>
     </ProjectReference>

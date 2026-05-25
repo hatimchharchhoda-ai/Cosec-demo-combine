@@ -4,7 +4,7 @@
   <Product Id="*"
            Name="Matrix Integrator"
            Language="1033"
-           Version="2.0.0.0"
+           Version="1.0.0.0"
            Manufacturer="MatInt"
            UpgradeCode="A395DCB3-A767-4FAB-A65C-94FF30DAF379">
 

@@ -4,7 +4,6 @@
     <AssemblyName>ConfigCrypto</AssemblyName>
     <RootNamespace>ConfigCrypto</RootNamespace>
   </PropertyGroup>
-  <!-- NO package references — only BCL crypto, which is built into net472 -->
 
   <ItemGroup>
     <Compile Remove="EncryptedConfigExtensions.cs" />

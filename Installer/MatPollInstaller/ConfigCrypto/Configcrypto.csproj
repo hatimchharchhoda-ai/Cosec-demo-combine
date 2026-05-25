@@ -1,12 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--
-      net472 so it can be referenced by both the WiX custom-action project
-      (which must target net472) and your .NET 6/8 service projects.
-      AesGcm is available on net472 via the System.Security.Cryptography
-      namespace shipped with .NET Framework 4.7.2+.
-    -->
     <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <AssemblyName>ConfigCrypto</AssemblyName>
     <RootNamespace>ConfigCrypto</RootNamespace>
