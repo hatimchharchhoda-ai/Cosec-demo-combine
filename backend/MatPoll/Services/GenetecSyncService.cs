@@ -1,4 +1,5 @@
-using MatPoll.Data;
+using COSEC_demo.Data;
+using COSEC_demo.Entities;
 using MatPoll.Models;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -191,7 +192,7 @@ public class GenetecSyncService : BackgroundService
         {
             using var scope = _scope.CreateScope();
             var db = scope.ServiceProvider
-                .GetRequiredService<MatPollDbContext>();
+                .GetRequiredService<AppDbContext>();
 
             // Get all active devices
             var devices = await db.Devices
@@ -215,7 +216,7 @@ public class GenetecSyncService : BackgroundService
             var now     = DateTime.UtcNow;
             var newRows = devices
                 .Where(d => !existingSet.Contains(d.DeviceID))
-                .Select(d => new MatCommTrn
+                .Select(d => new CommTrn
                 {
                     MsgStr     = $"ENROLL|UID:{guid}|NAME:{firstName} {lastName}|DID:{(int)d.DeviceID}",
                     RetryCnt   = 0,

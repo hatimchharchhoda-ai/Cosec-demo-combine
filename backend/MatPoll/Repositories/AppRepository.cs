@@ -1,25 +1,31 @@
-using MatPoll.Data;
+using COSEC_demo.Data;
+using COSEC_demo.Entities;
+using NMatGen.API.Models;
 using MatPoll.Models;
 using Microsoft.EntityFrameworkCore;
 using MatPoll.DTOs;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MatPoll.Repositories;
 
 public class AppRepository
 {
-    private readonly MatPollDbContext _db;
+    private readonly AppDbContext _db;
 
-    public AppRepository(MatPollDbContext db) => _db = db;
+    public AppRepository(AppDbContext db) => _db = db;
 
     // ── Device ────────────────────────────────────────────────────────────────
 
-    public Task<MatDeviceMst?> FindDeviceAsync(decimal deviceType, string mac, string ip)
+    public Task<Device?> FindDeviceAsync(decimal deviceType, string mac, string ip)
         => _db.Devices.AsNoTracking().FirstOrDefaultAsync(d =>
             d.DeviceType == deviceType &&
             d.MACAddr    == mac        &&
             d.IPAddr     == ip);
 
-    public Task<MatDeviceMst?> FindDeviceByIdAsync(decimal deviceId)
+    public Task<Device?> FindDeviceByIdAsync(decimal deviceId)
         => _db.Devices.AsNoTracking().FirstOrDefaultAsync(d => d.DeviceID == deviceId);
 
     // ── CommTrn ───────────────────────────────────────────────────────────────
@@ -41,7 +47,7 @@ public class AppRepository
                 t.DeviceType == deviceType);
 
     // Get all dispatched rows for this device
-    public Task<List<MatCommTrn>> GetDispatchedRowsAsync(decimal deviceId, decimal deviceType)
+    public Task<List<CommTrn>> GetDispatchedRowsAsync(decimal deviceId, decimal deviceType)
         => _db.CommTrns
             .Where(t =>
                 t.TrnStat    == 1 &&
@@ -52,7 +58,7 @@ public class AppRepository
 
     // ── FETCH AND MARK DISPATCHED ─────────────────────────────────────────────
     // Fetch TrnStat=0 rows, flip to TrnStat=1, stamp DispatchedAt
-    public async Task<List<MatCommTrn>> FetchAndMarkDispatchedAsync(
+    public async Task<List<CommTrn>> FetchAndMarkDispatchedAsync(
         decimal deviceId, decimal deviceType, int bunchSize)
     {
         // Step 1 — fetch rows by DeviceID + DeviceType
@@ -177,8 +183,8 @@ public class AppRepository
         var groups = stalled
             .GroupBy(r => new
             {
-                DeviceID   = r.DeviceID   ,
-                DeviceType = r.DeviceType 
+                DeviceID   = r.DeviceID ?? 0,
+                DeviceType = r.DeviceType ?? 0
             })
             .Select(g =>
             {
@@ -211,7 +217,7 @@ public class AppRepository
     public async Task InsertDeviceEventAsync(
         DeviceEventDto dto, decimal deviceId, decimal? deviceType)
     {
-        var entity = new MatDeviceEvent
+        var entity = new DeviceEvent
         {
             DeviceID   = deviceId,
             DeviceType = deviceType,
@@ -234,7 +240,6 @@ public async Task UpdateLastSeenAsync(decimal deviceId)
         .FirstOrDefaultAsync(d => d.DeviceID == deviceId);
      
     var wasOffline = device?.IsOnline == false;
-    var offlineSince = device?.OfflineSince;
 
     await _db.Database.ExecuteSqlRawAsync(@"
         UPDATE Mat_DeviceMst
@@ -246,12 +251,12 @@ public async Task UpdateLastSeenAsync(decimal deviceId)
 
     // if device was offline, log it came back
     if (wasOffline && device != null)
-        {
-            
-        }
+    {
+        
+    }
 }
 // Add this for background job
-public async Task<List<MatDeviceMst>> GetStaleDevicesAsync(int timeoutMinutes)
+public async Task<List<Device>> GetStaleDevicesAsync(int timeoutMinutes)
 {
     var cutoff = DateTime.UtcNow.AddMinutes(-timeoutMinutes);
     return await _db.Devices
@@ -274,32 +279,20 @@ public async Task MarkDevicesOfflineAsync(List<decimal> deviceIds)
 }
 
 // Add this method to fetch active devices for CommTrn creation
-public Task<List<MatDeviceMst>> GetActiveDevicesAsync()
+public Task<List<Device>> GetActiveDevicesAsync()
     => _db.Devices
         .AsNoTracking()
         .Where(d => d.IsActive == 1)
         .ToListAsync();
-
-
-
-
-
-       //add data in devise 
-
 
     public async Task<int> CreateCommTrnRowsAsync(
         decimal deviceId, decimal deviceType, int count)
     {
         var now = DateTime.UtcNow;
  
-        // get total rows ever created for this device
-        // used to continue sequence number from where we left off
-        // var lastSeq = await _db.CommTrns
-        //     .CountAsync(t => t.DeviceID == deviceId);
- 
         // build all rows in memory first
         var rows = Enumerable.Range(1, count)
-            .Select(i => new MatCommTrn
+            .Select(i => new CommTrn
             {
                 MsgStr     = $"ENROLL|UID:USR|DID:{(int)deviceId}",
                 RetryCnt   = 0,
@@ -317,6 +310,4 @@ public Task<List<MatDeviceMst>> GetActiveDevicesAsync()
  
         return rows.Count;
     }
-
-
 }

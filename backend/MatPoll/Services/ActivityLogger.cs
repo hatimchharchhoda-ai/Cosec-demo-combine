@@ -1,4 +1,5 @@
 using MatPoll.Models;
+using COSEC_demo.Entities;
 using Serilog;
 
 namespace MatPoll.Services;
@@ -84,7 +85,7 @@ public class ActivityLogger
 
     public void LogPollDataSent(
     decimal deviceId, decimal deviceType,
-    List<MatCommTrn> rows,
+    List<CommTrn> rows,
     DateTime reqTime, long durationMs)
 {
     var rowCount = rows.Count;

@@ -112,9 +112,7 @@ namespace COSEC_demo
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddDbContext<MatPoll.Data.MatPollDbContext>(opt =>
-                opt.UseSqlServer(builder.Configuration
-                    .GetConnectionString("DefaultConnection")));
+
 
             // ── Original Backend Services ───────────────────────────────────────────────
             builder.Services.AddScoped<JwtHelper>();
@@ -324,7 +322,7 @@ namespace COSEC_demo
                 {
                     try
                     {
-                        var db = scope.ServiceProvider.GetRequiredService<MatPoll.Data.MatPollDbContext>();
+                        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                         db.Database.ExecuteSqlRaw("SELECT 1");
                     }
                     catch (Exception ex)

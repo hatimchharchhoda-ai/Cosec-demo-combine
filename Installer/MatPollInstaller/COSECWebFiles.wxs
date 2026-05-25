@@ -2,19 +2,19 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="COSECWEBFOLDER">
-            <Component Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" Guid="{9F9D06AE-AC31-4D91-AA9E-10BC2B01864E}">
+            <Component Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" Guid="{E9970BBA-747B-4259-AD16-F8911A2DDFE5}">
                 <File Id="fil7FB7953EBC6422C60CB12868DCC993D3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\favicon.ico" />
             </Component>
-            <Component Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" Guid="{3B096A9F-C80C-47D1-90BC-96F9B0956BA3}">
+            <Component Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" Guid="{F7AA50E5-08F7-438E-AE84-18BE0B545055}">
                 <File Id="fil65DFF0EA3B1902D2C68637D83B3550B3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\index.html" />
             </Component>
-            <Component Id="cmp057C8EEA00D6CB479EB8598B3A740158" Guid="{056BA41B-A40E-4E89-9F2F-0050880A6F6B}">
+            <Component Id="cmp057C8EEA00D6CB479EB8598B3A740158" Guid="{5BD82BB4-5B4C-47D3-B198-E90CE680B51C}">
                 <File Id="filDBDC8A1D5A40184020BD7E084F66699C" KeyPath="yes" Source="$(var.COSECWebSourceDir)\main-7DDZUSOL.js" />
             </Component>
-            <Component Id="cmp8F532485437E500011107DCFD974CDF4" Guid="{FAEB5F18-3371-4C57-9A91-61E241EA93A6}">
+            <Component Id="cmp8F532485437E500011107DCFD974CDF4" Guid="{45D48EA5-BD37-4F15-8379-C0F9938BF874}">
                 <File Id="filDED0415AC962B83C029B7289767ABFAD" KeyPath="yes" Source="$(var.COSECWebSourceDir)\polyfills-FFHMD2TL.js" />
             </Component>
-            <Component Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" Guid="{C05866C9-11BC-4C93-8B1F-891FBFB24302}">
+            <Component Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" Guid="{5F470E20-AAAC-4DAA-84D1-70397C202CF9}">
                 <File Id="filA405BA7958351744ADC810274684AE78" KeyPath="yes" Source="$(var.COSECWebSourceDir)\styles-5M77VUB4.css" />
             </Component>
         </DirectoryRef>

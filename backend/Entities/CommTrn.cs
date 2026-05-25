@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace COSEC_demo.Entities
@@ -8,16 +8,16 @@ namespace COSEC_demo.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        [Column("TrnID")]
+        [Column("TrnID", TypeName = "numeric(18,0)")]
         public decimal TrnID { get; set; } 
 
         [Column("MsgStr")]
         public string? MsgStr { get; set; }
 
-        [Column("RetryCnt")]
+        [Column("RetryCnt", TypeName = "numeric(2,0)")]
         public decimal? RetryCnt { get; set; }
 
-        [Column("TrnStat")]
+        [Column("TrnStat", TypeName = "numeric(1,0)")]
         public decimal? TrnStat { get; set; }
 
         [Column("CreatedAt")]
@@ -26,10 +26,10 @@ namespace COSEC_demo.Entities
         [Column("DispatchedAt")]
         public DateTime? DispatchedAt { get; set; }
 
-        [Column("DeviceType")]
+        [Column("DeviceType", TypeName = "numeric(18,0)")]
         public decimal? DeviceType { get; set; }
 
-        [Column("DeviceID")]
+        [Column("DeviceID", TypeName = "numeric(5,0)")]
         public decimal? DeviceID { get; set; }
     }
 }
