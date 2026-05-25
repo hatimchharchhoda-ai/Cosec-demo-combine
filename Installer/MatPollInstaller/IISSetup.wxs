@@ -21,13 +21,15 @@
         <iis:WebAppPool
           Id="COSECAppPool"
           Name="COSECAppPool"
+          ManagedRuntimeVersion="v4.0"
           ManagedPipelineMode="Integrated" />
 
         <iis:WebSite
           Id="COSECWebSite"
           Description="MATINTWeb"
           Directory="COSECWEBFOLDER"
-          AutoStart="yes">
+          AutoStart="yes"
+          ConfigureIfExists="yes">
 
           <iis:WebAddress
             Id="COSECWebAddress"
@@ -40,6 +42,10 @@
             WebAppPool="COSECAppPool" />
 
         </iis:WebSite>
+
+        <RemoveFolder Id="RemoveCOSECWEBFOLDER"
+                      Directory="COSECWEBFOLDER"
+                      On="uninstall" />
 
       </Component>
     </DirectoryRef>

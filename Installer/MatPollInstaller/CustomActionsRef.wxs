@@ -25,7 +25,17 @@
                   Return="check"
                   Impersonate="no" />
 
-    <!-- Uninstall: stop and delete the service before files are removed -->
+    <!-- UNINSTALL custom actions -->
+
+    <!-- 1. Stop IIS site + app pool FIRST (before any files touched) -->
+    <CustomAction Id="RemoveIISSiteAndPool"
+              BinaryKey="CustomActBinary"
+              DllEntry="RemoveIISSiteAndPool"
+              Execute="deferred"
+              Return="ignore"
+              Impersonate="no" />
+
+    <!-- 2. Stop and delete the backend Windows service -->
     <CustomAction Id="StopAndRemoveService"
                   BinaryKey="CustomActBinary"
                   DllEntry="StopAndRemoveService"
@@ -33,18 +43,28 @@
                   Return="ignore"
                   Impersonate="no" />
 
-    <!--
-      New CA: deletes everything in COSECFOLDER except appsettings.json,
-      then removes any empty subdirectories. Runs after RemoveFiles so WiX
-      has already cleaned up its own tracked files first.
-    -->
+    <!-- 3. Setter for backend folder cleanup -->
     <CustomAction Id="SetCleanupFolderData"
                   Property="CleanupInstallFolder"
                   Value="COSECFOLDER=[COSECFOLDER]" />
 
+    <!-- 4. Deletes everything in COSECFOLDER except appsettings.json -->
     <CustomAction Id="CleanupInstallFolder"
                   BinaryKey="CustomActBinary"
                   DllEntry="CleanupInstallFolder"
+                  Execute="deferred"
+                  Return="ignore"
+                  Impersonate="no" />
+
+    <!-- 5. Setter for web folder cleanup -->
+    <CustomAction Id="SetCleanupWebFolderData"
+                  Property="CleanupWebFolder"
+                  Value="COSECWEBFOLDER=[COSECWEBFOLDER]" />
+
+    <!-- 6. Force-deletes MATINTWeb folder entirely -->
+    <CustomAction Id="CleanupWebFolder"
+                  BinaryKey="CustomActBinary"
+                  DllEntry="CleanupWebFolder"
                   Execute="deferred"
                   Return="ignore"
                   Impersonate="no" />
@@ -57,17 +77,29 @@
       <Custom Action="WriteAppSettings"
                After="InstallFiles">NOT REMOVE</Custom>
 
-      <!-- Uninstall: stop+delete service BEFORE files are removed -->
+      <!-- UNINSTALL SEQUENCE -->
+
+      <!-- 1. Stop IIS site + delete site + delete app pool -->
+      <Custom Action="RemoveIISSiteAndPool"
+              Before="StopAndRemoveService">REMOVE~="ALL"</Custom>
+
+      <!-- 2. Stop and remove the backend service -->
       <Custom Action="StopAndRemoveService"
               Before="RemoveFiles">REMOVE~="ALL"</Custom>
-      
-      <!-- Set data for cleanup CA -->
-      <Custom Action="SetCleanupFolderData"
-               After="StopAndRemoveService">REMOVE~="ALL"</Custom>
 
-      <!-- Clean folder after WiX removes its own tracked files -->
+      <!-- 3. Set data props for both cleanup CAs -->
+      <Custom Action="SetCleanupFolderData"
+              After="StopAndRemoveService">REMOVE~="ALL"</Custom>
+
+      <Custom Action="SetCleanupWebFolderData"
+              After="SetCleanupFolderData">REMOVE~="ALL"</Custom>
+
+      <!-- 4. After WiX removes tracked files, force-clean both folders -->
       <Custom Action="CleanupInstallFolder"
-               After="RemoveFiles">REMOVE~="ALL"</Custom>
+              After="RemoveFiles">REMOVE~="ALL"</Custom>
+
+      <Custom Action="CleanupWebFolder"
+              After="CleanupInstallFolder">REMOVE~="ALL"</Custom>
 
     </InstallExecuteSequence>
 

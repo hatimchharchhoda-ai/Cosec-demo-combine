@@ -11,6 +11,10 @@
     <Reference Include="Microsoft.Deployment.WindowsInstaller">
       <HintPath>C:\Program Files (x86)\WiX Toolset v3.14\SDK\Microsoft.Deployment.WindowsInstaller.dll</HintPath>
     </Reference>
+
+    <Reference Include="Microsoft.Web.Administration">
+      <HintPath>C:\Windows\System32\inetsrv\Microsoft.Web.Administration.dll</HintPath>
+    </Reference>
     
     <Reference Include="System.ServiceProcess" />
   </ItemGroup>
@@ -48,7 +52,7 @@
     <Error Condition="!Exists('$(OutDir)CustomAction.config')"
            Text="CustomAction.config not found at: $(OutDir)CustomAction.config" />
 
-    <Exec Command="&quot;$(WixSdkDir)MakeSfxCA.exe&quot; &quot;$(SfxOutput)&quot; &quot;$(SfxDll)&quot; &quot;$(SfxInput)&quot; &quot;$(WixInstallerDll)&quot; &quot;$(ConfigCryptoDll)&quot; &quot;$(OutDir)CustomAction.config&quot;"
+    <Exec Command="&quot;$(WixSdkDir)MakeSfxCA.exe&quot; &quot;$(SfxOutput)&quot; &quot;$(SfxDll)&quot; &quot;$(SfxInput)&quot; &quot;$(WixInstallerDll)&quot; &quot;$(ConfigCryptoDll)&quot; &quot;$(OutDir)CustomAction.config&quot; &quot;C:\Windows\System32\inetsrv\Microsoft.Web.Administration.dll&quot;"
           ConsoleToMSBuild="true" />
   </Target>
 

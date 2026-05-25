@@ -5,6 +5,7 @@ using System.ServiceProcess;
 using ConfigCrypto;
 using Microsoft.Deployment.WindowsInstaller;
 using FileAttributes = System.IO.FileAttributes;
+using Microsoft.Web.Administration;
 
 namespace CustomActions
 {
@@ -68,79 +69,145 @@ namespace CustomActions
         }
 
         [CustomAction]
+        public static ActionResult RemoveIISSiteAndPool(Session session)
+        {
+            try
+            {
+                // ── Remove IIS Site ──────────────────────────────────────────
+                using (ServerManager mgr = new ServerManager())
+                {
+                    // Remove site named "MATINTWeb"
+                    Site site = mgr.Sites["MATINTWeb"];
+                    if (site != null)
+                    {
+                        session.Log("RemoveIISSiteAndPool: stopping site MATINTWeb");
+                        site.Stop();
+                        mgr.Sites.Remove(site);
+                        session.Log("RemoveIISSiteAndPool: site removed");
+                    }
+                    else
+                    {
+                        session.Log("RemoveIISSiteAndPool: site MATINTWeb not found, skipping");
+                    }
+
+                    // Remove app pool named "COSECAppPool"
+                    ApplicationPool pool = mgr.ApplicationPools["COSECAppPool"];
+                    if (pool != null)
+                    {
+                        session.Log("RemoveIISSiteAndPool: stopping app pool COSECAppPool");
+                        pool.Stop();
+                        mgr.ApplicationPools.Remove(pool);
+                        session.Log("RemoveIISSiteAndPool: app pool removed");
+                    }
+                    else
+                    {
+                        session.Log("RemoveIISSiteAndPool: app pool COSECAppPool not found, skipping");
+                    }
+
+                    mgr.CommitChanges();
+                    session.Log("RemoveIISSiteAndPool: IIS changes committed");
+                }
+            }
+            catch (Exception ex)
+            {
+                session.Log($"RemoveIISSiteAndPool error (non-fatal): {ex.Message}");
+            }
+
+            return ActionResult.Success;
+        }
+
+        [CustomAction]
         public static ActionResult CleanupInstallFolder(Session session)
         {
             try
             {
-                var data = new CustomActionData(session["CustomActionData"]);
-                string installDir = data["COSECFOLDER"].TrimEnd('\\', '/');
+                string data = session.CustomActionData.ToString();
+                session.Log($"CleanupInstallFolder: CustomActionData = {data}");
 
-                if (!Directory.Exists(installDir))
+                string cosecFolder = null;
+
+                foreach (var part in data.Split(';'))
                 {
-                    session.Log($"[CleanupInstallFolder] Folder does not exist, nothing to clean: {installDir}");
-                    return ActionResult.Success;
-                }
-
-                session.Log($"[CleanupInstallFolder] Cleaning folder: {installDir}");
-
-                // Delete all files except appsettings.json
-                foreach (string file in Directory.GetFiles(installDir, "*", SearchOption.TopDirectoryOnly))
-                {
-                    string fileName = Path.GetFileName(file);
-                    if (string.Equals(fileName, "appsettings.json", StringComparison.OrdinalIgnoreCase))
+                    var kv = part.Split(new char[] { '=' }, 2);
+                    if (kv.Length == 2 && kv[0].Trim() == "COSECFOLDER")
                     {
-                        session.Log($"[CleanupInstallFolder] Preserving: {file}");
-                        continue;
-                    }
-                    try
-                    {
-                        File.SetAttributes(file, FileAttributes.Normal); // clear read-only if set
-                        File.Delete(file);
-                        session.Log($"[CleanupInstallFolder] Deleted file: {file}");
-                    }
-                    catch (Exception ex)
-                    {
-                        session.Log($"[CleanupInstallFolder] Could not delete file {file}: {ex.Message}");
+                        cosecFolder = kv[1].Trim();
+                        break;
                     }
                 }
 
-                // Delete all subdirectories recursively
-                foreach (string dir in Directory.GetDirectories(installDir))
+                session.Log($"CleanupInstallFolder: resolved path = {cosecFolder}");
+
+                if (!string.IsNullOrEmpty(cosecFolder) && Directory.Exists(cosecFolder))
                 {
-                    try
+                    foreach (var file in Directory.GetFiles(cosecFolder, "*", SearchOption.AllDirectories))
                     {
-                        Directory.Delete(dir, recursive: true);
-                        session.Log($"[CleanupInstallFolder] Deleted directory: {dir}");
+                        if (!file.EndsWith("appsettings.json", StringComparison.OrdinalIgnoreCase))
+                        {
+                            File.Delete(file);
+                            session.Log($"CleanupInstallFolder: deleted {file}");
+                        }
                     }
-                    catch (Exception ex)
+
+                    // Remove empty subdirectories
+                    foreach (var dir in Directory.GetDirectories(cosecFolder))
                     {
-                        session.Log($"[CleanupInstallFolder] Could not delete directory {dir}: {ex.Message}");
+                        if (Directory.GetFiles(dir, "*", SearchOption.AllDirectories).Length == 0)
+                        {
+                            Directory.Delete(dir, recursive: true);
+                            session.Log($"CleanupInstallFolder: removed empty dir {dir}");
+                        }
                     }
                 }
-
-                // The folder itself will have only appsettings.json left — leave it.
-                // If somehow empty (appsettings didn't exist), remove it too.
-                if (Directory.GetFiles(installDir).Length == 0 &&
-                    Directory.GetDirectories(installDir).Length == 0)
-                {
-                    try
-                    {
-                        Directory.Delete(installDir);
-                        session.Log($"[CleanupInstallFolder] Removed empty install folder: {installDir}");
-                    }
-                    catch (Exception ex)
-                    {
-                        session.Log($"[CleanupInstallFolder] Could not remove install folder: {ex.Message}");
-                    }
-                }
-
-                return ActionResult.Success;
             }
             catch (Exception ex)
             {
-                session.Log($"[CleanupInstallFolder] ERROR: {ex}");
-                return ActionResult.Success; // non-fatal
+                session.Log($"CleanupInstallFolder error (non-fatal): {ex.Message}");
             }
+
+            return ActionResult.Success;
+        }
+
+        [CustomAction]
+        public static ActionResult CleanupWebFolder(Session session)
+        {
+            try
+            {
+                // Deferred CAs can only read their CustomActionData property
+                string data = session.CustomActionData.ToString();
+                session.Log($"CleanupWebFolder: CustomActionData = {data}");
+
+                string webFolder = null;
+
+                foreach (var part in data.Split(';'))
+                {
+                    var kv = part.Split(new char[] { '=' }, 2); // max 2 splits, path may contain =
+                    if (kv.Length == 2 && kv[0].Trim() == "COSECWEBFOLDER")
+                    {
+                        webFolder = kv[1].Trim();
+                        break;
+                    }
+                }
+
+                session.Log($"CleanupWebFolder: resolved path = {webFolder}");
+
+                if (!string.IsNullOrEmpty(webFolder) && Directory.Exists(webFolder))
+                {
+                    session.Log($"CleanupWebFolder: deleting {webFolder}");
+                    Directory.Delete(webFolder, recursive: true);
+                    session.Log("CleanupWebFolder: deleted successfully");
+                }
+                else
+                {
+                    session.Log("CleanupWebFolder: folder not found or path empty, skipping");
+                }
+            }
+            catch (Exception ex)
+            {
+                session.Log($"CleanupWebFolder error (non-fatal): {ex.Message}");
+            }
+
+            return ActionResult.Success;
         }
 
         private static void RunProcess(string exe, string args, Session session)
