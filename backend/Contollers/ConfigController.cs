@@ -310,7 +310,11 @@ namespace COSEC_demo.Contollers
             _ = Task.Run(async () =>
             {
                 await Task.Delay(2000);
-                _lifetime.StopApplication();
+
+                // Exit with non-zero code so Windows Service recovery policy
+                // treats it as a failure and auto-restarts (as configured in installer)
+                Environment.Exit(1);
+                // _lifetime.StopApplication();
             });
 
             return Ok(new { success = true, message = "Database configured successfully. Service is restarting..." });
