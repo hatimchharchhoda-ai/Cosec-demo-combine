@@ -1,7 +1,7 @@
 @echo off
 REM =============================================================================
 REM  MATPOLL SYSTEM — FULL BUILD SCRIPT
-REM  Run from:  D:\COSEC-demo\Installer\MatPollInstaller\
+REM  Run from:  D:\Matrix Integrator\Installer\MatPollInstaller\
 REM
 REM  READ BEFORE RUNNING:
 REM  Not every step needs to run every time.
@@ -13,11 +13,11 @@ REM ============================================================================
 REM =============================================================================
 REM  STEP 1 — PUBLISH COSEC BACKEND                                    [ALWAYS]
 REM  Compiles COSEC-demo.csproj into a self-contained Windows exe + DLLs.
-REM  Output goes to D:\COSEC-demo\Publish\Backend\
+REM  Output goes to D:\Matrix Integrator\Publish\Backend\
 REM =============================================================================
 
 echo [1/9] Publishing COSEC backend...
-dotnet publish D:\COSEC-demo\backend\COSEC-demo.csproj -c Release -r win-x64 --self-contained true -o D:\COSEC-demo\Installer\MatPollInstaller\SourceFiles\COSEC\ 
+dotnet publish "D:\Matrix Integrator\backend\COSEC-demo.csproj" -c Release -r win-x64 --self-contained true -o "D:\Matrix Integrator\Installer\MatPollInstaller\SourceFiles\COSEC\" 
 ng build --configuration production
 
 REM =============================================================================
@@ -120,12 +120,12 @@ REM ============================================================================
 REM [IF CHANGED] - uncomment:
 REM echo [7/9] Wrapping with MakeSfxCA...
      "C:\Program Files (x86)\WiX Toolset v3.14\sdk\MakeSfxCA.exe" ^
-      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.CA.dll" ^
+      "D:\Matrix Integrator\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.CA.dll" ^
       "C:\Program Files (x86)\WiX Toolset v3.14\sdk\x64\SfxCA.dll" ^
-      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.dll" ^
+      "D:\Matrix Integrator\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\CustomActions.dll" ^
       "C:\Program Files (x86)\WiX Toolset v3.14\sdk\Microsoft.Deployment.WindowsInstaller.dll" ^
-      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\ConfigCrypto.dll" ^
-      "D:\COSEC-demo\Installer\MatPollInstaller\CustomActions\CustomAction.config"
+      "D:\Matrix Integrator\Installer\MatPollInstaller\CustomActions\bin\x64\Release\net472\ConfigCrypto.dll" ^
+      "D:\Matrix Integrator\Installer\MatPollInstaller\CustomActions\CustomAction.config"
 
 REM =============================================================================
 REM  STEP 8 — WiX CANDLE (Compile .wxs to .wixobj)                     [ALWAYS]
@@ -157,7 +157,7 @@ echo [8/9] Running WiX Candle...
 
 REM =============================================================================
 REM  STEP 9 — WiX LIGHT (Link .wixobj to .msi)                         [ALWAYS]
-REM  Links all .wixobj files into the final MatPollSystem.msi installer.
+REM  Links all .wixobj files into the final MatInt.msi installer.
 REM  Always run after candle.
 REM =============================================================================
 
@@ -173,11 +173,11 @@ echo [9/9] Running WiX Light...
     -ext WixIIsExtension ^
     -ext WixUtilExtension ^
     -ext WixUIExtension ^
-    -out MatPollSystem.msi
+    -out MatInt.msi
 
 
 echo.
 echo ============================================================
-echo  Build complete.  Output: MatPollSystem.msi
+echo  Build complete.  Output: MatInt.msi
 echo ============================================================
 echo.

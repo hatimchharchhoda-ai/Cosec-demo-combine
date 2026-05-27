@@ -2,20 +2,23 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Fragment>
         <DirectoryRef Id="COSECWEBFOLDER">
-            <Component Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" Guid="{E9970BBA-747B-4259-AD16-F8911A2DDFE5}">
+            <Component Id="cmp2D6C78BD23CFD3DF32D7ED8F63580D15" Guid="{18EE193D-9E42-4BB1-A106-8778723E158B}">
                 <File Id="fil7FB7953EBC6422C60CB12868DCC993D3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\favicon.ico" />
             </Component>
-            <Component Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" Guid="{F7AA50E5-08F7-438E-AE84-18BE0B545055}">
+            <Component Id="cmpCD1DD60AA5C0073B4B5FD221E9557007" Guid="{51790375-BFC1-44F5-97A7-CF575DA3EADD}">
                 <File Id="fil65DFF0EA3B1902D2C68637D83B3550B3" KeyPath="yes" Source="$(var.COSECWebSourceDir)\index.html" />
             </Component>
-            <Component Id="cmp057C8EEA00D6CB479EB8598B3A740158" Guid="{5BD82BB4-5B4C-47D3-B198-E90CE680B51C}">
+            <Component Id="cmp057C8EEA00D6CB479EB8598B3A740158" Guid="{5F118BB3-66BF-4956-8D61-8DC1063EB657}">
                 <File Id="filDBDC8A1D5A40184020BD7E084F66699C" KeyPath="yes" Source="$(var.COSECWebSourceDir)\main-7DDZUSOL.js" />
             </Component>
-            <Component Id="cmp8F532485437E500011107DCFD974CDF4" Guid="{45D48EA5-BD37-4F15-8379-C0F9938BF874}">
+            <Component Id="cmp8F532485437E500011107DCFD974CDF4" Guid="{79820781-FE0C-4070-9709-CB86A9EF1113}">
                 <File Id="filDED0415AC962B83C029B7289767ABFAD" KeyPath="yes" Source="$(var.COSECWebSourceDir)\polyfills-FFHMD2TL.js" />
             </Component>
-            <Component Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" Guid="{5F470E20-AAAC-4DAA-84D1-70397C202CF9}">
+            <Component Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" Guid="{2BB5277F-88E5-40A1-90EF-1576396C0090}">
                 <File Id="filA405BA7958351744ADC810274684AE78" KeyPath="yes" Source="$(var.COSECWebSourceDir)\styles-5M77VUB4.css" />
+            </Component>
+            <Component Id="cmpAFF1F2496C826217664A19416C1DE42B" Guid="{64C59626-162D-4ED8-9605-65C79929C2A1}">
+                <File Id="fil300616BB94EA7ADB547638A3694F8D1B" KeyPath="yes" Source="$(var.COSECWebSourceDir)\web.config" />
             </Component>
         </DirectoryRef>
     </Fragment>
@@ -26,6 +29,7 @@
             <ComponentRef Id="cmp057C8EEA00D6CB479EB8598B3A740158" />
             <ComponentRef Id="cmp8F532485437E500011107DCFD974CDF4" />
             <ComponentRef Id="cmpCF5CFAE784E3299631AF664B2BAFEFCF" />
+            <ComponentRef Id="cmpAFF1F2496C826217664A19416C1DE42B" />
         </ComponentGroup>
     </Fragment>
 </Wix>

@@ -28,7 +28,7 @@ echo.
 REM Safety check — make sure we are in the right folder before deleting anything
 if not exist Product.wxs (
     echo ERROR: Product.wxs not found in %CD%
-    echo Run this script from D:\COSEC-demo\Installer\MatPollInstaller\
+    echo Run this script from D:\Matrix Integrator\Installer\MatPollInstaller\
     pause
     exit /b 1
 )
@@ -40,9 +40,9 @@ REM ============================================================================
 
 echo [1] Cleaning WiX intermediates...
 
-del /f /q *.wixobj  2>nul
-del /f /q *.wixpdb  2>nul
-del /f /q *.msi     2>nul
+del /f /q *.wixobj      2>nul
+del /f /q *.wixpdb      2>nul
+del /f /q *.msi         2>nul
 
 echo     Done.
 

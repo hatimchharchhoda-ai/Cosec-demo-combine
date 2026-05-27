@@ -14,6 +14,18 @@
     <Property Id="GENETEC_PASSWORD"   Secure="yes" />
     <Property Id="GENETEC_APPID"      Secure="yes" />
 
+    <CustomAction Id="SetInstallUrlRewriteData"
+              Property="InstallUrlRewrite"
+              Value="[COSECFOLDER]rewrite_amd64_en-US.msi" />
+              
+    <!-- Deferred: reads path from CustomActionData, no session.Database needed -->
+    <CustomAction Id="InstallUrlRewrite"
+            BinaryKey="CustomActBinary"
+            DllEntry="InstallUrlRewrite"
+            Execute="deferred"
+            Impersonate="no"
+            Return="check" />
+
     <CustomAction Id="SetWriteAppSettingsData"
                   Property="WriteAppSettings"
                   Value="COSECFOLDER=[COSECFOLDER];DB_SERVER=[DB_SERVER];DB_NAME=[DB_NAME];DB_USER=[DB_USER];DB_PASSWORD=[DB_PASSWORD];JWT_SECRET=[JWT_SECRET];MATPOLL_JWT_KEY1=[MATPOLL_JWT_KEY1];MATPOLL_JWT_KEY2=[MATPOLL_JWT_KEY2];GENETEC_SERVER=[GENETEC_SERVER];GENETEC_PORT=[GENETEC_PORT];GENETEC_USER=[GENETEC_USER];GENETEC_PASSWORD=[GENETEC_PASSWORD];GENETEC_APPID=[GENETEC_APPID]" />
@@ -70,6 +82,12 @@
                   Impersonate="no" />
 
     <InstallExecuteSequence>
+
+      <Custom Action="SetInstallUrlRewriteData"
+              Before="InstallUrlRewrite">NOT Installed AND NOT URLREWRITE_INSTALLED</Custom>
+
+      <Custom Action="InstallUrlRewrite"
+              After="InstallFiles">NOT Installed AND NOT URLREWRITE_INSTALLED</Custom>
 
       <Custom Action="SetWriteAppSettingsData"
          After="InstallInitialize">NOT REMOVE</Custom>

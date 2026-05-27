@@ -210,6 +210,87 @@ namespace CustomActions
             return ActionResult.Success;
         }
 
+        [CustomAction]
+        public static ActionResult InstallUrlRewrite(Session session)
+        {
+            try
+            {
+                session.Log("InstallUrlRewrite: starting...");
+
+                // Check registry — skip if already installed
+                using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                    @"SOFTWARE\Microsoft\IIS Extensions\URL Rewrite"))
+                {
+                    if (key != null)
+                    {
+                        session.Log("URL Rewrite already installed. Skipping.");
+                        return ActionResult.Success;
+                    }
+                }
+
+                // CustomActionData is the full property value set by setter
+                // Property value was "[COSECFOLDER]rewrite_amd64_en-US.msi"
+                // so session.CustomActionData.ToString() gives the resolved path
+                string msiPath = session.CustomActionData.ToString();
+
+                session.Log("URL Rewrite MSI path: " + msiPath);
+
+                if (!System.IO.File.Exists(msiPath))
+                {
+                    session.Log("ERROR: URL Rewrite MSI not found at: " + msiPath);
+                    return ActionResult.Failure;
+                }
+
+                session.Log("Creating background installer script...");
+
+                string tempDir = System.IO.Path.GetTempPath();
+                string scriptPath = System.IO.Path.Combine(tempDir, "install_urlrewrite.ps1");
+                string logPath = System.IO.Path.Combine(tempDir, "urlrewrite_install.log");
+
+                // Write PowerShell script that retries msiexec in a loop until the main installer unlocks msiexec
+                string scriptContent = string.Format(
+                    "$msiPath = \"{0}\"\r\n" +
+                    "$logPath = \"{1}\"\r\n" +
+                    "for ($i = 0; $i -lt 30; $i++) {{\r\n" +
+                    "    $proc = Start-Process msiexec.exe -ArgumentList \"/i `\"$msiPath`\" /quiet /norestart /log `\"$logPath`\"\" -PassThru -Wait\r\n" +
+                    "    if ($proc.ExitCode -ne 1618) {{\r\n" +
+                    "        break\r\n" +
+                    "    }}\r\n" +
+                    "    Start-Sleep -Seconds 2\r\n" +
+                    "}}\r\n" +
+                    "Remove-Item $MyInvocation.MyCommand.Path -Force\r\n",
+                    msiPath.Replace("\\", "\\\\"),
+                    logPath.Replace("\\", "\\\\")
+                );
+
+                System.IO.File.WriteAllText(scriptPath, scriptContent, Encoding.UTF8);
+                session.Log("Launching background installer script: " + scriptPath);
+
+                var proc = new System.Diagnostics.Process
+                {
+                    StartInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName         = "powershell.exe",
+                        Arguments        = string.Format(
+                            "-NoProfile -ExecutionPolicy Bypass -File \"{0}\"",
+                            scriptPath),
+                        UseShellExecute  = false,
+                        CreateNoWindow   = true
+                    }
+                };
+
+                proc.Start();
+                session.Log("Background installer started. Proceeding with main installation.");
+                return ActionResult.Success;
+            }
+            catch (Exception ex)
+            {
+                session.Log("InstallUrlRewrite exception: " + ex.Message);
+                session.Log(ex.StackTrace);
+                return ActionResult.Failure;
+            }
+        }
+
         private static void RunProcess(string exe, string args, Session session)
         {
             var psi = new System.Diagnostics.ProcessStartInfo

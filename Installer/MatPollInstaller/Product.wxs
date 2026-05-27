@@ -21,6 +21,14 @@
 
     <Property Id="WIXUI_INSTALLDIR" Value="COSECFOLDER" />
 
+    <Property Id="URLREWRITE_INSTALLED">
+      <RegistrySearch Id="CheckUrlRewrite"
+                      Type="raw"
+                      Root="HKLM"
+                      Key="SOFTWARE\Microsoft\IIS Extensions\URL Rewrite"
+                      Name="Version" />
+    </Property>
+
     <UIRef Id="WixUI_InstallDir" />
 
     <UI>
@@ -42,30 +50,23 @@
       <!-- Custom progress messages -->
       <ProgressText Action="InstallInitialize">Preparing MATINT installation...</ProgressText>
       <ProgressText Action="InstallFinalize">Finalizing MATINT installation...</ProgressText>
-
       <ProgressText Action="InstallFiles">Copying MATINT application files...</ProgressText>
       <ProgressText Action="RemoveFiles">Removing MATINT application files...</ProgressText>
       <ProgressText Action="RemoveExistingProducts">Removing previous version of Matrix Integrator...</ProgressText>
-
       <ProgressText Action="InstallServices">Registering MATINT API Service...</ProgressText>
       <ProgressText Action="StartServices">Starting MATINT API Service...</ProgressText>
       <ProgressText Action="StopServices">Stopping MATINT API Service...</ProgressText>
       <ProgressText Action="DeleteServices">Unregistering MATINT API Service...</ProgressText>
-
       <ProgressText Action="WriteRegistryValues">Writing configuration to registry...</ProgressText>
       <ProgressText Action="RemoveRegistryValues">Removing registry configuration...</ProgressText>
-
       <ProgressText Action="CreateFolders">Creating required directories...</ProgressText>
       <ProgressText Action="RemoveFolders">Cleaning up directories...</ProgressText>
-
       <ProgressText Action="WriteIniValues">Writing application settings...</ProgressText>
       <ProgressText Action="SelfRegModules">Registering application components...</ProgressText>
       <ProgressText Action="CreateShortcuts">Creating shortcuts...</ProgressText>
       <ProgressText Action="RollbackCleanup">Rolling back changes...</ProgressText>
-
+      <ProgressText Action="InstallUrlRewrite">Installing IIS URL Rewrite Module...</ProgressText>
       <ProgressText Action="WriteMetabaseValues">Setting up IIS application pool and website...</ProgressText>
-      
-      <!-- Custom actions -->
       <ProgressText Action="WriteAppSettings">Configuring appsettings.json...</ProgressText>
     </UI>
 
@@ -74,6 +75,7 @@
       <ComponentGroupRef Id="COSECServiceDlls" />
       <ComponentGroupRef Id="COSECWebFiles" />
       <ComponentGroupRef Id="IISComponents" />
+      <ComponentRef Id="UrlRewriteRedist" />
     </Feature>
 
     <CustomActionRef Id="WriteAppSettings" />
@@ -95,7 +97,15 @@
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
         <Directory Id="MATRIXFOLDER" Name="Matrix">
-          <Directory Id="COSECFOLDER" Name="MATINT Matgen Service" />
+          <Directory Id="COSECFOLDER" Name="MATINT Matgen Service" >
+            <Component Id="UrlRewriteRedist"
+                      Guid="C1D2E3F4-A5B6-7890-ABCD-EF1234567890"
+                      Win64="yes">
+              <File Id="UrlRewriteMsiFile"
+                    Source="redist\rewrite_amd64_en-US.msi"
+                    KeyPath="yes" />
+            </Component>
+          </Directory>
         </Directory>
       </Directory>
 
